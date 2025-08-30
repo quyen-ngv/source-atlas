@@ -210,20 +210,20 @@ class EclipseJDTLS(LanguageServer):
         intellicode_directory_path = str(
             PurePath(os.path.abspath(os.path.dirname(__file__)), "static", dependency["relative_extraction_path"])
         )
-        os.makedirs(intellicode_directory_path, exist_ok=True)
-        intellicode_jar_path = str(PurePath(intellicode_directory_path, dependency["intellicode_jar_path"]))
-        intellisense_members_path = str(PurePath(intellicode_directory_path, dependency["intellisense_members_path"]))
-        if not all(
-            [
-                os.path.exists(intellicode_directory_path),
-                os.path.exists(intellicode_jar_path),
-                os.path.exists(intellisense_members_path),
-            ]
-        ):
+        # os.makedirs(intellicode_directory_path, exist_ok=True)
+        # intellicode_jar_path = str(PurePath(intellicode_directory_path, dependency["intellicode_jar_path"]))
+        # intellisense_members_path = str(PurePath(intellicode_directory_path, dependency["intellisense_members_path"]))
+        # if not all(
+        #     [
+        #         os.path.exists(intellicode_directory_path),
+        #         os.path.exists(intellicode_jar_path),
+        #         os.path.exists(intellisense_members_path),
+        #     ]
+        # ):
             # FileUtils.download_and_extract_archive(
             #     logger, dependency["url"], intellicode_directory_path, dependency["archiveType"]
             # )
-            pass
+            # pass
 
         # assert os.path.exists(intellicode_directory_path)
         # assert os.path.exists(intellicode_jar_path)
@@ -236,8 +236,8 @@ class EclipseJDTLS(LanguageServer):
             jre_home_path=jre_home_path,
             jdtls_launcher_jar_path=jdtls_launcher_jar_path,
             jdtls_readonly_config_path=jdtls_readonly_config_path,
-            intellicode_jar_path=intellicode_jar_path,
-            intellisense_members_path=intellisense_members_path,
+            intellicode_jar_path=None,
+            intellisense_members_path=None,
         )
 
     def _get_initialize_params(self, repository_absolute_path: str) -> InitializeParams:

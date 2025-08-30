@@ -11,7 +11,6 @@ from models.analyzer_config import AnalyzerConfig
 from processors.java_processor import JavaFileProcessor
 from utils.comment_remover import JavaCommentRemover
 from utils.dependency_graph_builder import DependencyGraphBuilder
-from utils.statistics_generator import StatisticsGenerator
 from utils.result_exporter import ResultExporter
 from utils.class_cache_builder import ClassCacheBuilder
 
@@ -39,7 +38,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             lsp_service=lsp_service if config else None, project_root = root_path
         )
         self.dependency_graph_builder = DependencyGraphBuilder(self.config)
-        self.statistics_generator = StatisticsGenerator()
         self.result_exporter = ResultExporter()
         self.class_cache_builder = ClassCacheBuilder(self.language, self.parser, self.comment_remover)
         
@@ -86,6 +84,3 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         """Export analysis results."""
         self.result_exporter.export_results(chunks, dependency_graph, output_path)
     
-    def generate_statistics(self, chunks: List[CodeChunk], dependency_graph: DependencyGraph) -> Dict:
-        """Generate analysis statistics."""
-        return self.statistics_generator.generate_statistics(chunks, dependency_graph)

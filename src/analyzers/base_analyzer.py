@@ -20,8 +20,3 @@ class BaseCodeAnalyzer(ABC):
     def export_results(self, chunks: List[CodeChunk], dependency_graph: DependencyGraph, output_path: Path) -> None:
         """Export analysis results to the specified output path."""
         pass
-    
-    @abstractmethod
-    def generate_statistics(self, chunks: List[CodeChunk], dependency_graph: DependencyGraph) -> Dict:
-        """Generate analysis statistics for the project."""
-        pass

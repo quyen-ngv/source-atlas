@@ -56,11 +56,6 @@ def main():
             output_path = Path(args["output"])
             analyzer.export_results(chunks, dependency_graph, output_path)
         
-        stats = analyzer.generate_statistics(chunks, dependency_graph)
-        logger.info(f"\nProject Statistics:")
-        logger.info(f"Total Classes: {stats['total_classes']}")
-        logger.info(f"Total Methods: {stats['total_methods']}")
-        
         logger.info(f"\nAnalysis completed successfully!")
         return 0
         
