@@ -220,13 +220,14 @@ class EclipseJDTLS(LanguageServer):
                 os.path.exists(intellisense_members_path),
             ]
         ):
-            FileUtils.download_and_extract_archive(
-                logger, dependency["url"], intellicode_directory_path, dependency["archiveType"]
-            )
+            # FileUtils.download_and_extract_archive(
+            #     logger, dependency["url"], intellicode_directory_path, dependency["archiveType"]
+            # )
+            pass
 
-        assert os.path.exists(intellicode_directory_path)
-        assert os.path.exists(intellicode_jar_path)
-        assert os.path.exists(intellisense_members_path)
+        # assert os.path.exists(intellicode_directory_path)
+        # assert os.path.exists(intellicode_jar_path)
+        # assert os.path.exists(intellisense_members_path)
 
         return RuntimeDependencyPaths(
             gradle_path=gradle_path,
@@ -384,17 +385,18 @@ class EclipseJDTLS(LanguageServer):
                 {"settings": initialize_params["initializationOptions"]["settings"]}
             )
 
-            await self.intellicode_enable_command_available.wait()
+            # we dont need intellicode 
+            # await self.intellicode_enable_command_available.wait()
 
-            java_intellisense_members_path = self.runtime_dependency_paths.intellisense_members_path
-            assert os.path.exists(java_intellisense_members_path)
-            intellicode_enable_result = await self.server.send.execute_command(
-                {
-                    "command": "java.intellicode.enable",
-                    "arguments": [True, java_intellisense_members_path],
-                }
-            )
-            assert intellicode_enable_result
+            # java_intellisense_members_path = self.runtime_dependency_paths.intellisense_members_path
+            # assert os.path.exists(java_intellisense_members_path)
+            # intellicode_enable_result = await self.server.send.execute_command(
+            #     {
+            #         "command": "java.intellicode.enable",
+            #         "arguments": [True, java_intellisense_members_path],
+            #     }
+            # )
+            # assert intellicode_enable_result
 
             # TODO: Add comments about why we wait here, and how this can be optimized
             await self.service_ready_event.wait()

@@ -4,8 +4,8 @@
   "dependency_stats": {
     "total_dependencies": 526,
     "dependency_types": {
-      "method_call": 361,
       "variable": 133,
+      "method_call": 361,
       "implements": 23,
       "extends": 8,
       "inner_class": 1

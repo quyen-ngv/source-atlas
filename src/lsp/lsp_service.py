@@ -27,7 +27,7 @@ class LSPService(ABC):
     
     @classmethod
     def create(cls, repository_root_path: str) -> "LSPService":  
-          config = MultilspyConfig.from_dict({"code_language": "java"}) # Also supports "python", "rust", "csharp", "typescript", "javascript", "go", "dart", "ruby"
+          config = MultilspyConfig.from_dict({"code_language": "java","trace_lsp_communication": "False"}) # Also supports "python", "rust", "csharp", "typescript", "javascript", "go", "dart", "ruby"
           logger = MultilspyLogger()
           lsp = SyncLanguageServer.create(config, logger, repository_root_path)
           return lsp
