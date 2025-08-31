@@ -50,12 +50,6 @@ class DependencyGraphBuilder:
                         clean_type = self._clean_type_name(var_type)
                         if clean_type and not self._is_builtin_type(clean_type):
                             graph.add_edge(chunk.full_class_name, clean_type, "variable")
-                
-                # Add inner class relationships
-                for inner_class in chunk.inner_classes:
-                    clean_type = self._clean_type_name(inner_class)
-                    if clean_type and not self._is_builtin_type(clean_type):
-                        graph.add_edge(chunk.full_class_name, clean_type, "inner_class")
         
         except Exception as e:
             logger.error(f"Error building dependency graph: {e}")

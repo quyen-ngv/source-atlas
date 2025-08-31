@@ -6,20 +6,19 @@ from tree_sitter import Parser, Language
 from tree_sitter_languages import get_language
 
 from analyzers.base_analyzer import BaseCodeAnalyzer
+from lsp.implements.java_lsp import JavaLSPService
 from models.domain_models import CodeChunk, DependencyGraph
 from models.analyzer_config import AnalyzerConfig
 from processors.java_processor import JavaFileProcessor
 from utils.comment_remover import JavaCommentRemover
 from utils.dependency_graph_builder import DependencyGraphBuilder
 from utils.result_exporter import ResultExporter
-from utils.class_cache_builder import ClassCacheBuilder
 
 logger = logging.getLogger(__name__)
 
 class JavaCodeAnalyzer(BaseCodeAnalyzer):
-    """Analyzer for Java projects, implementing the BaseCodeAnalyzer interface."""
-    
-    def __init__(self, config: AnalyzerConfig = None, lsp_service=None, root_path: str = None):
+
+    def __init__(self, config: AnalyzerConfig = None, root_path: str = None):
         super().__init__(config or AnalyzerConfig())
         
         # Initialize Tree-sitter components
@@ -33,16 +32,27 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         
         # Initialize services
         self.comment_remover = JavaCommentRemover()
+        self.lsp_service = JavaLSPService.create(str(root_path))
+        self._server_ctx = None   # để giữ context LSP
+
         self.file_processor = JavaFileProcessor(
             self.config, self.language, self.parser,
-            lsp_service=lsp_service if config else None, project_root = root_path
+            lsp_service=self.lsp_service, project_root=root_path
         )
         self.dependency_graph_builder = DependencyGraphBuilder(self.config)
         self.result_exporter = ResultExporter()
-        self.class_cache_builder = ClassCacheBuilder(self.language, self.parser, self.comment_remover)
+
+    # 👉 2 hàm context manager
+    def __enter__(self):
+        self._server_ctx = self.lsp_service.start_server()
+        self._server_ctx.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._server_ctx:
+            self._server_ctx.__exit__(exc_type, exc_val, exc_tb)
         
     def parse_project(self, root: Path, project_id: str) -> Tuple[List[CodeChunk], DependencyGraph]:
-        """Parse a Java project directory."""
         logger.info(f"Starting to parse Java project: {project_id} at {root}")
         
         # Find all Java files
@@ -52,12 +62,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         if not java_files:
             logger.warning("No Java files found")
             return [], DependencyGraph()
-        
-        # Build class cache for type resolution
-        logger.info("Building class cache for type resolution...")
-        class_cache = self.class_cache_builder.build_class_cache(java_files)
-        logger.info(f"Built class cache with {len(class_cache)} classes")
-        
+                
         # Process files
         logger.info("Processing Java files...")
         chunks = []
@@ -81,6 +86,5 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         return chunks, dependency_graph
     
     def export_results(self, chunks: List[CodeChunk], dependency_graph: DependencyGraph, output_path: Path) -> None:
-        """Export analysis results."""
         self.result_exporter.export_results(chunks, dependency_graph, output_path)
     

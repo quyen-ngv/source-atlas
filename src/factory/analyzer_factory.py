@@ -10,7 +10,7 @@ class AnalyzerFactory:
     """Factory for creating language-specific code analyzers."""
     
     @staticmethod
-    def create_analyzer(language: str, config: AnalyzerConfig, lsp_service=None, root_path: str = None):
+    def create_analyzer(language: str, config: AnalyzerConfig, root_path: str = None):
         if language.lower() == "java":
-            return JavaCodeAnalyzer(config, lsp_service, root_path)
+            return JavaCodeAnalyzer(config, root_path)
         raise ValueError(f"Unsupported language: {language}")

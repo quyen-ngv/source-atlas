@@ -40,13 +40,11 @@ def main():
         logger.info(f"Analyzing {args['language'].capitalize()} project at: {project_path}")
         
         config = AnalyzerConfigBuilder().with_comment_removal(args["remove_comments"]).build()
-        lsp_service = JavaLSPService.create(str(project_path))
-        
-        # Start the LSP server before using it
-        with lsp_service.start_server():
-            analyzer = AnalyzerFactory.create_analyzer(args["language"], config, lsp_service, project_path)
-            chunks, dependency_graph = analyzer.parse_project(project_path, args["project_id"])
-        
+
+        analyzer = AnalyzerFactory.create_analyzer(args["language"], config, project_path)
+        with analyzer as a:
+            chunks, dependency_graph = a.parse_project(project_path, args["project_id"])
+    
         # Display results (same as original)
         logger.info(f"\nAnalysis Results:")
         logger.info(f"Found {len(chunks)} classes/interfaces/enums")

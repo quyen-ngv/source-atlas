@@ -1,18 +1,14 @@
 from abc import ABC, abstractmethod
 
 class BaseCommentRemover(ABC):
-    """Abstract base class for comment removers across different languages."""
     
     @abstractmethod
     def remove_comments(self, content: str) -> str:
-        """Remove comments from source code while preserving line numbers."""
         pass
 
 class JavaCommentRemover(BaseCommentRemover):
-    """Removes comments from Java source code."""
     
     def remove_comments(self, content: str) -> str:
-        """Remove comments from Java source code while preserving line numbers."""
         lines = content.split('\n')
         result_lines = []
         in_multiline_comment = False

@@ -1,19 +1,17 @@
 import logging
 import re
-import os
 from pathlib import Path
-from typing import List, Set, Optional, Dict, Tuple, NamedTuple
+from typing import List, Optional, Tuple
 from dataclasses import dataclass
 
 from tree_sitter import Language, Parser, Node
 
-from lsp.implements.java_lsp import JavaLSPService
-from lsp.lsp_service import LSPService
-from models.domain_models import CodeChunk, Field, Method
+from models.domain_models import CodeChunk, Method
 from models.analyzer_config import AnalyzerConfig
-from processors.base_processor import BaseFileProcessor
+from processors.base_processor import BaseFileProcessor, ClassParsingContext
 from utils.comment_remover import JavaCommentRemover
 from utils.java_rest_endpoint_extractor import JavaRestEndpointExtractor
+from utils.tree_sitter_helper import extract_content
 
 logger = logging.getLogger(__name__)
 
@@ -31,15 +29,7 @@ class JavaParsingConstants:
 class MethodDependencies:
     method_calls: List[str]
     variable_usage: List[str]
-
-@dataclass
-class ClassParsingContext:
-    package: str
-    class_name: str
-    full_class_name: str
-    is_nested: bool
-    parent_class: Optional[str] = None
-    inner_classes: Tuple[str, ...] = ()
+    field_access: List[str]
 
 class JavaFileProcessor(BaseFileProcessor):
     def __init__(self, config: AnalyzerConfig, language: Language, parser: Parser,
@@ -50,46 +40,6 @@ class JavaFileProcessor(BaseFileProcessor):
         self.lsp_service = lsp_service
         self.project_root = Path(project_root).resolve() if project_root else None
 
-    # File Processing
-    def process_file(self, file_path: Path, project_id: str) -> List[CodeChunk]:
-        try:
-            content = self._read_file_content(file_path)
-            if not content.strip():
-                return []
-
-            if self.config.remove_comments:
-                content = self.comment_remover.remove_comments(content)
-
-            tree = self.parser.parse(bytes(content, 'utf8'))
-            class_nodes = self._extract_all_class_nodes(tree.root_node)
-
-            logger.info(f"real file_path {str(file_path)}")
-            return self._process_all_classes(class_nodes, content, str(file_path), tree.root_node)
-
-        except Exception as e:
-            logger.error(f"Error processing file {file_path}: {e}")
-            return []
-
-    def _read_file_content(self, file_path: Path) -> str:
-        for encoding in JavaParsingConstants.ENCODING_FALLBACKS:
-            try:
-                with open(file_path, 'r', encoding=encoding) as f:
-                    return f.read()
-            except UnicodeDecodeError:
-                continue
-
-        logger.warning(f"Could not decode file {file_path} with any encoding")
-        return ""
-
-    def _process_all_classes(self, class_nodes: List[Node], content: str,
-                             file_path: str, root_node: Node) -> List[CodeChunk]:
-        chunks = []
-        for class_node in class_nodes:
-            chunk = self._parse_class_node(class_node, content, file_path, root_node)
-            if chunk:
-                chunks.append(chunk)
-        return chunks
-
     def _extract_package(self, root_node: Node, content: str) -> str:
         try:
             package_query = self.language.query("""
@@ -99,7 +49,7 @@ class JavaFileProcessor(BaseFileProcessor):
             captures = package_query.captures(root_node)
             if captures:
                 package_node = captures[0][0]
-                return content[package_node.start_byte:package_node.end_byte]
+                return extract_content(package_node, content)
         except Exception as e:
             logger.debug(f"Error extracting package: {e}")
         return ""
@@ -119,59 +69,11 @@ class JavaFileProcessor(BaseFileProcessor):
             logger.debug(f"Error extracting class nodes: {e}")
             return []
 
-    def _parse_class_node(self, class_node: Node, content: str, file_path: str, root_node: Node) -> Optional[CodeChunk]:
-        try:
-            context = self._build_class_context(class_node, content, root_node)
-            if not context:
-                return None
-
-            implements = self._extract_implements_with_lsp(class_node, file_path)
-            extends = self._extract_extends_with_lsp(class_node, file_path)
-            methods = self._extract_class_methods(
-                class_node, content, context.package,
-                implements, extends, context.full_class_name, file_path
-            )
-
-            return CodeChunk(
-                package=context.package,
-                class_name=context.class_name,
-                full_class_name=context.full_class_name,
-                file_path=file_path,
-                content=content[class_node.start_byte:class_node.end_byte],
-                implements=implements,
-                extends=extends,
-                methods=methods,
-                is_nested=context.is_nested,
-                parent_class=context.parent_class,
-                inner_classes=context.inner_classes
-            )
-        except Exception as e:
-            logger.error(f"Error parsing class node: {e}")
-            return None
-
-    def _build_class_context(self, class_node: Node, content: str, root_node: Node) -> Optional[ClassParsingContext]:
-        class_name = self._extract_class_name(class_node, content)
-        if not class_name:
-            return None
-
-        package = self._extract_package(root_node, content)
-        is_nested = self._is_nested_class(class_node, root_node)
-        full_class_name = self._build_full_class_name(class_name, package, class_node, content, root_node)
-
-        return ClassParsingContext(
-            package=package,
-            class_name=class_name,
-            full_class_name=full_class_name,
-            is_nested=is_nested,
-            parent_class=self._get_parent_class(class_node, content, package) if is_nested else None,
-            inner_classes=self._get_direct_inner_classes(class_node, content, class_name, package)
-        )
-
     def _extract_class_name(self, class_node: Node, content: str) -> Optional[str]:
         try:
             for child in class_node.children:
                 if child.type == 'identifier':
-                    return content[child.start_byte:child.end_byte]
+                    return extract_content(child, content)
         except Exception:
             pass
         return None
@@ -182,9 +84,9 @@ class JavaFileProcessor(BaseFileProcessor):
         try:
             for child in class_node.children:
                 if child.type == 'identifier':
-                    method_name = content[child.start_byte:child.end_byte]
+                    method_name = extract_content(child, content)
                 if child.type == 'formal_parameters':
-                    method_params = content[child.start_byte:child.end_byte]
+                    method_params = extract_content(child, content)
         except Exception:
             pass
         if method_name:
@@ -229,26 +131,10 @@ class JavaFileProcessor(BaseFileProcessor):
             parent = parent.parent
         return None
 
-    def _get_direct_inner_classes(self, class_node: Node, content: str, class_name: str, package: str) -> Tuple[str, ...]:
-        inner_classes = []
-        try:
-            class_body = self._find_class_body(class_node)
-            if not class_body:
-                return tuple(inner_classes)
-
-            for child in class_body.children:
-                if child.type in JavaParsingConstants.CLASS_NODE_TYPES:
-                    inner_class_name = self._extract_class_name(child, content)
-                    if inner_class_name:
-                        full_inner_name = f"{package}.{class_name}.{inner_class_name}" if package else f"{class_name}.{inner_class_name}"
-                        inner_classes.append(full_inner_name)
-        except Exception as e:
-            logger.debug(f"Error extracting inner classes: {e}")
-        return tuple(inner_classes)
 
     def _find_class_body(self, class_node: Node) -> Optional[Node]:
         for child in class_node.children:
-            if child.type == 'class_body':
+            if child.type == 'class_body' or child.type == 'interface_body':
                 return child
         return None
 
@@ -340,14 +226,7 @@ class JavaFileProcessor(BaseFileProcessor):
 
         try:
             for child in class_body.children:
-                if child.type == 'method_declaration':
-                    method = self._process_method_node(
-                        child, content, implements, extends,
-                        full_class_name, class_node, file_path
-                    )
-                    if method:
-                        methods.append(method)
-                elif child.type == 'constructor_declaration':
+                if child.type == 'method_declaration' or child.type == 'constructor_declaration':
                     method = self._process_method_node(
                         child, content, implements, extends,
                         full_class_name, class_node, file_path
@@ -378,6 +257,7 @@ class JavaFileProcessor(BaseFileProcessor):
                 body=body,
                 method_calls=tuple(dependencies.method_calls),
                 variable_usage=tuple(dependencies.variable_usage),
+                field_access=tuple(dependencies.field_access),
                 inheritance_info=tuple(inheritance_info),
                 extends_info=tuple(extends_info),
                 endpoint=endpoint
@@ -388,11 +268,11 @@ class JavaFileProcessor(BaseFileProcessor):
 
     def _extract_method_body_and_dependencies(self, method_node: Node, content: str, file_path: str) -> Tuple[str, MethodDependencies]:
         body = ""
-        dependencies = MethodDependencies([], [])
+        dependencies = MethodDependencies([], [], [])
 
         for child in method_node.children:
-            if child.type == 'block':
-                body = content[method_node.start_byte:method_node.end_byte]
+            if child.type == 'block' or child.type == 'constructor_body':
+                body = extract_content(method_node, content)
                 dependencies = self._analyze_method_dependencies(child, file_path)
                 break
 
@@ -401,7 +281,8 @@ class JavaFileProcessor(BaseFileProcessor):
     def _analyze_method_dependencies(self, body_node: Node, file_path: str) -> MethodDependencies:
         method_calls = self._extract_method_calls(body_node, file_path)
         variable_usage = self._extract_variable_usage(body_node, file_path)
-        return MethodDependencies(method_calls, variable_usage)
+        field_access = self._extract_field_access(body_node, file_path)
+        return MethodDependencies(method_calls, variable_usage, field_access)
 
     def _extract_method_calls(self, body_node: Node, file_path: str) -> List[str]:
         method_calls = set()
@@ -422,6 +303,23 @@ class JavaFileProcessor(BaseFileProcessor):
             logger.debug(f"Error extracting method calls: {e}")
         return list(method_calls)
 
+    def _extract_field_access(self, body_node: Node, file_path: str) -> List[str]:
+        field_access = set()
+        try:
+            field_access_query = self.language.query("""
+                (field_access field: (_) @field_name)
+            """)
+            # TODO
+            captures = field_access_query.captures(body_node)
+            for node, capture_name in captures:
+                if capture_name == "field_name":
+                    field_access.add(self._resolve_field_access_with_lsp(node, file_path))
+                    if field_access:
+                        field_access.add(field_access)
+        except Exception as e:
+            logger.debug(f"Error extracting field access: {e}")
+        return list(field_access)
+
     def _extract_variable_usage(self, body_node: Node, file_path: str) -> List[str]:
         variable_usage = set()
         try:
@@ -432,13 +330,12 @@ class JavaFileProcessor(BaseFileProcessor):
                 (spread_parameter (type_identifier) @varargs_type)
                 (type_arguments (_) @generic_type)
                 (array_type element: (_) @array_element_type)
-                (field_access object: (_) @field_object field: (_) @field_name)
             """)
             captures = variable_query.captures(body_node)
             for node, capture_name in captures:
                 if capture_name in {
                     "var_type", "return_type", "param_type", "varargs_type",
-                    "generic_type", "array_element_type", "field_object", "field_name"
+                    "generic_type", "array_element_type"
                 }:
                     variable_ref = self._resolve_variable_with_lsp(node, file_path)
                     if variable_ref:
@@ -478,6 +375,41 @@ class JavaFileProcessor(BaseFileProcessor):
         except Exception as e:
             logger.debug(f"LSP variable resolution failed: {e}")
             return None
+
+    def _resolve_field_access_with_lsp(self, node: Node, file_path: str) -> Optional[str]:
+        if not self.lsp_service:
+            return None
+        
+        try:
+            line = node.start_point[0]
+            col = node.start_point[1]
+            # relative_file_path = self._get_relative_path_for_lsp(file_path)
+            
+            lsp_results = self.lsp_service.request_hover(file_path, line, col)
+            return self._extract_field_from_hover(lsp_results, file_path)
+
+        except Exception as e:
+            logger.debug(f"LSP field access resolution failed: {e}")
+            return None
+
+    def _extract_field_from_hover(self, lsp_result, file_path) -> Optional[str]:
+        if not lsp_result or "contents" not in lsp_result:
+            return None
+
+        contents = lsp_result["contents"]
+        if isinstance(contents, dict):
+            field = contents.get("value")
+        elif isinstance(contents, list) and contents:
+            if isinstance(contents[0], dict):
+                field = contents[0].get("value")
+            else:
+                field = str(contents[0])
+        elif isinstance(contents, str):
+            field = contents
+        else:
+            return None
+            
+        return field
 
     def _extract_method_from_hover(self, lsp_result, file_path) -> Optional[str]:
         if not lsp_result or "contents" not in lsp_result:
@@ -520,9 +452,16 @@ class JavaFileProcessor(BaseFileProcessor):
 
         if method_name:
             for interface in implements:
+                    interface = self._remove_prefix(interface)
                     inheritance_sources.append(f"{interface}.{method_name}")
 
         return inheritance_sources
+
+    def _remove_prefix(self, path: str) -> str:
+        prefix = "src.main.java."
+        if path.startswith(prefix):
+            path = path[len(prefix):]
+        return path
 
     def _build_extends_info(self, method_name: str, extends: Optional[str]) -> List[str]:
         """Build extends information for method"""
@@ -532,8 +471,6 @@ class JavaFileProcessor(BaseFileProcessor):
 
     # Utility Methods
     def _get_relative_path_for_lsp(self, absolute_path: str) -> str:
-        logger.info(f"absolute path {absolute_path}")
-        logger.info(f"root_path {self.project_root}")
         if not self.project_root:
             return absolute_path
 
@@ -548,7 +485,6 @@ class JavaFileProcessor(BaseFileProcessor):
             try:
                 relative_path = path.relative_to(project_root)
                 # Convert to forward slashes for consistency
-                logger.info(f"relative_path {str(relative_path).replace('\\', '/')}")
                 return str(relative_path).replace('\\', '/')
             except ValueError:
                 # If the path is not relative to project root, return the original
@@ -604,6 +540,8 @@ class JavaFileProcessor(BaseFileProcessor):
             result = str(relative).replace("\\", ".").replace("/", ".")
             if result.endswith(".java"):
                 result = result[:-5]
+
+            result = self._remove_prefix(result)
             return result
         except Exception as e:
             logger.debug(f"Error in _strip_root: {e}")

@@ -6,7 +6,6 @@ from models.domain_models import CodeChunk, DependencyGraph
 from models.analyzer_config import AnalyzerConfig
 
 class BaseCodeAnalyzer(ABC):
-    """Abstract base class for code analyzers across different programming languages."""
     
     def __init__(self, config: AnalyzerConfig):
         self.config = config

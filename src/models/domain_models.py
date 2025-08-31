@@ -22,6 +22,7 @@ class Method:
     body: str
     method_calls: Tuple[str, ...]
     variable_usage: Tuple[str, ...]
+    field_access: Tuple[str, ...]
     inheritance_info: Tuple[str, ...]
     extends_info: Tuple[str, ...]
     endpoint: Optional[RestEndpoint]
@@ -47,7 +48,6 @@ class CodeChunk:
     methods: List[Method]
     is_nested: bool
     parent_class: Optional[str]
-    inner_classes: Tuple[str, ...]
 
     def to_dict(self) -> Dict:
         """Convert CodeChunk to a JSON-serializable dictionary."""
@@ -64,6 +64,7 @@ class CodeChunk:
                 "body": method.body,
                 "method_calls": list(method.method_calls),
                 "variable_usage": list(method.variable_usage),
+                "field_access": list(method.field_access),
                 "inheritance_info": list(method.inheritance_info),
                 "extends_info": list(method.extends_info),
                 "endpoint": {
@@ -75,7 +76,6 @@ class CodeChunk:
             } for method in self.methods],
             "is_nested": self.is_nested,
             "parent_class": self.parent_class,
-            "inner_classes": list(self.inner_classes),
         }
 
 @dataclass
