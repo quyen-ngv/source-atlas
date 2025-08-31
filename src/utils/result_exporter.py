@@ -24,6 +24,7 @@ class ResultExporter:
             json.dump(chunks_data, f, indent=2, ensure_ascii=False)
     
     def _export_dependency_graph(self, dependency_graph: DependencyGraph, output_path: Path) -> None:
-        with open(output_path / 'dependency_graph.json', 'w', encoding='utf-8') as f:
-            json.dump(dependency_graph.to_dict(), f, indent=2, ensure_ascii=False)
+        # with open(output_path / 'dependency_graph.json', 'w', encoding='utf-8') as f:
+        #     json.dump(dependency_graph.to_dict(), f, indent=2, ensure_ascii=False)
+        pass
     

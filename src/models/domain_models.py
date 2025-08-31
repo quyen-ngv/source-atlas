@@ -11,8 +11,8 @@ class Field:
 
 @dataclass
 class RestEndpoint:
-    http_method: str
-    path: str
+    type: str = ""
+    path: str = ""
     produces: str = ""
     consumes: str = ""
 
@@ -67,12 +67,7 @@ class CodeChunk:
                 "field_access": list(method.field_access),
                 "inheritance_info": list(method.inheritance_info),
                 "extends_info": list(method.extends_info),
-                "endpoint": {
-                    "http_method": method.endpoint.http_method,
-                    "path": method.endpoint.path,
-                    "produces": method.endpoint.produces,
-                    "consumes": method.endpoint.consumes
-                } if method.endpoint else None
+                "endpoint": method.endpoint
             } for method in self.methods],
             "is_nested": self.is_nested,
             "parent_class": self.parent_class,

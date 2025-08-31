@@ -5,3 +5,5 @@ data/
 lib/
 src/lsp/multilspy/language_servers/eclipse_jdtls/static
 .idea
+result/
+java_spring_demo/

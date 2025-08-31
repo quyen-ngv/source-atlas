@@ -11,10 +11,11 @@ def main():
     
     print('tes')
     args = {
-        "project_path": "F:/_side_projects/source_atlas/data/repo/onestudy-server",
-        "project_id": "onestudy-server",
-        "output": "./result",
-        "language": "java",  # Can be changed to 'python' or others
+        # "project_path": "F:/_side_projects/source_atlas/data/repo/onestudy-server",
+        "project_path": "F:/01_projects/java_spring_demo",
+        "project_id": "java_spring_demo",
+        "output": "./java_spring_demo",
+        "language": "java",
         "remove_comments": True,
         "verbose": True
     }

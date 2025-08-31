@@ -9,7 +9,7 @@ from analyzers.base_analyzer import BaseCodeAnalyzer
 from lsp.implements.java_lsp import JavaLSPService
 from models.domain_models import CodeChunk, DependencyGraph
 from models.analyzer_config import AnalyzerConfig
-from processors.java_processor import JavaFileProcessor
+from processors.java.java_processor import JavaFileProcessor
 from utils.comment_remover import JavaCommentRemover
 from utils.dependency_graph_builder import DependencyGraphBuilder
 from utils.result_exporter import ResultExporter
