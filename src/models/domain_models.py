@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Dict, Tuple, Optional, Set
 
@@ -17,10 +17,20 @@ class RestEndpoint:
     consumes: str = ""
 
 @dataclass
+class MethodParam:
+    type: str = ""
+    value: str = None
+
+@dataclass
+class MethodCall:
+    name: str = ""
+    params: List[MethodParam] = field(default_factory=list)
+
+@dataclass
 class Method:
     name: str
     body: str
-    method_calls: Tuple[str, ...]
+    method_calls: Tuple[MethodCall, ...]
     variable_usage: Tuple[str, ...]
     field_access: Tuple[str, ...]
     inheritance_info: Tuple[str, ...]

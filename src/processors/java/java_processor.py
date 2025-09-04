@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from tree_sitter import Language, Parser, Node, Query, QueryCursor
 
-from models.domain_models import CodeChunk, Method
+from models.domain_models import CodeChunk, Method, MethodCall, MethodParam
 from models.analyzer_config import AnalyzerConfig
 from processors.base_processor import BaseFileProcessor, ClassParsingContext
 from processors.java.endpoint_extractor import JavaRestEndpointExtractor
@@ -286,8 +286,8 @@ class JavaFileProcessor(BaseFileProcessor):
         field_access = self._extract_field_access(body_node, file_path)
         return MethodDependencies(method_calls, variable_usage, field_access)
 
-    def _extract_method_calls(self, body_node: Node, file_path: str) -> List[str]:
-        method_calls = set()
+    def _extract_method_calls(self, body_node: Node, file_path: str) -> List[MethodCall]:
+        method_calls: List[MethodCall] = []
         try:
             method_call_query = Query(self.language, """
                 (method_invocation 
@@ -302,7 +302,7 @@ class JavaFileProcessor(BaseFileProcessor):
                     for node in nodes:
                         method_call = self._resolve_method_call_with_lsp(node, file_path)
                         if method_call:
-                            method_calls.add(method_call)
+                            method_calls.append(method_call)
 
         except Exception as e:
             logger.debug(f"Error extracting method calls: {e}")
@@ -353,7 +353,7 @@ class JavaFileProcessor(BaseFileProcessor):
             logger.debug(f"Error extracting variable usage: {e}")
         return list(variable_usage)
 
-    def _resolve_method_call_with_lsp(self, node: Node, file_path: str) -> Optional[str]:
+    def _resolve_method_call_with_lsp(self, node: Node, file_path: str) -> Optional[MethodCall]:
         if not self.lsp_service:
             return None
 
@@ -363,6 +363,7 @@ class JavaFileProcessor(BaseFileProcessor):
             # relative_file_path = self._get_relative_path_for_lsp(file_path)
 
             lsp_result = self.lsp_service.request_hover(file_path, line, col)
+
             return self._extract_method_from_hover(lsp_result)
 
         except Exception as e:
@@ -420,7 +421,7 @@ class JavaFileProcessor(BaseFileProcessor):
             
         return field
 
-    def _extract_method_from_hover(self, lsp_result) -> Optional[str]:
+    def _extract_method_from_hover(self, lsp_result) -> Optional[MethodCall]:
         if not lsp_result or "contents" not in lsp_result:
             return None
 
@@ -437,20 +438,39 @@ class JavaFileProcessor(BaseFileProcessor):
         else:
             return None
 
-        # Regex for Java method signature: return_type package.class.method(params)
-        pattern = r"^\s*(?:[\w<>\[\]]+\s+)?([\w.]+)\.([a-zA-Z][a-zA-Z0-9_]*\([^)]*\))"
-        match = re.match(pattern, method.strip())
+        if not method:
+            return None
+
+        # Ví dụ hover trả về:
+        # "public String findById(String id = \"default\", int size = 10)"
+        sig_pattern = r"([\w<>.\[\]]+\s+)?([\w.]+)\.([a-zA-Z_]\w*)\(([^)]*)\)"
+        match = re.search(sig_pattern, method.strip())
         if not match:
             return None
 
-        class_name = match.group(1)  # e.g., com.edu.onestudy.repository.QuizRepository
-        method_signature = match.group(2)  # e.g., findById(String id)
+        class_name = match.group(2)        # com.edu.repository.QuizRepository
+        method_name = match.group(3)       # findById
+        param_str = match.group(4).strip() # String id = "default", int size = 10
 
-        # Append .java to the class name
-        class_name_with_java = f"{class_name}.java"
-        if self._is_project_file(class_name_with_java):
-            return f"{class_name}.{method_signature}"
-        return None
+        params: List[MethodParam] = []
+        if param_str:
+            for p in param_str.split(","):
+                p = p.strip()
+                # parse "String id = \"default\""
+                m = re.match(r"([\w<>.\[\]]+)\s+(\w+)(?:\s*=\s*(.+))?", p)
+                if m:
+                    param_type = m.group(1)
+                    default_val = m.group(3).strip() if m.group(3) else None
+                    params.append(MethodParam(type=param_type, value=default_val))
+                else:
+                    # fallback khi không match
+                    params.append(MethodParam(type=p, value=None))
+
+        return MethodCall(
+            name=f"{class_name}.{method_name}",
+            params=params
+        )
+
 
     # Inheritance Analysis
     def _build_inheritance_info(self, method_name: str, implements: List[str], extends: Optional[str]) -> List[str]:
