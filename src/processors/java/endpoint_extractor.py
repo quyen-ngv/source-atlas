@@ -23,7 +23,7 @@ class RestAnnotationExtractor:
         return any(anno in text for anno in self.rest_annotations.keys())
 
     def extract(self, text: str, method_node: Node, content: str) -> List[RestEndpoint]:
-        method_path, http_method = "", None
+        method_path, type = "", None
 
         for anno, method in self.rest_annotations.items():
             if anno in text:
@@ -34,15 +34,15 @@ class RestAnnotationExtractor:
                     simple_path = re.search(r'@\w+\s*\(\s*["\']([^"\']*)["\']', text)
                     if simple_path:
                         method_path = simple_path.group(1)
-                http_method = method
+                type = method
                 if anno == '@RequestMapping':
                     method_match = re.search(r'method\s*=\s*RequestMethod\.(\w+)', text)
                     if method_match:
-                        http_method = method_match.group(1)
+                        type = method_match.group(1)
                 break
 
-        if http_method:
-            return [RestEndpoint(http_method=http_method, path=method_path)]
+        if type:
+            return [RestEndpoint(type=type, path=method_path)]
         return []
 
 
@@ -53,7 +53,7 @@ class KafkaAnnotationExtractor:
 
     def extract(self, text: str, method_node: Node, content: str) -> List[RestEndpoint]:
         topics = self._extract_kafka_topics(text)
-        return [RestEndpoint(http_method="KAFKA_CONSUMER", consumes=t) for t in topics]
+        return [RestEndpoint(type="KAFKA_CONSUMER", consumes=t) for t in topics]
 
     def _extract_kafka_topics(self, text: str) -> List[str]:
         m = re.search(r'\btopics\s*=\s*\{([^}]*)\}', text)
@@ -99,7 +99,7 @@ class RabbitAnnotationExtractor:
         m = re.search(r'\bqueues\s*=\s*("([^"]+)"|\'([^\']+)\')', text)
         if m:
             queues.append(m.group(2) or m.group(3))
-        return [RestEndpoint(http_method="RABBIT_CONSUMER", consumes=q) for q in queues]
+        return [RestEndpoint(type="RABBIT_CONSUMER", consumes=q) for q in queues]
 
 
 # ---- Event extractor ----
@@ -125,7 +125,7 @@ class EventAnnotationExtractor:
                     if m:
                         classes = [m.group(1).split('.')[-1]]
                         break
-        return [RestEndpoint(http_method="SPRING_EVENT_CONSUMER", consumes=ev) for ev in classes]
+        return [RestEndpoint(type="SPRING_EVENT_CONSUMER", consumes=ev) for ev in classes]
 
 
 # ---- Main orchestrator ----
@@ -166,7 +166,7 @@ class JavaRestEndpointExtractor:
 
         # post-process REST (append class_path if any)
         for ep in endpoints:
-            if ep.http_method in ("GET", "POST", "PUT", "DELETE", "PATCH", "REQUEST"):
+            if ep.type in ("GET", "POST", "PUT", "DELETE", "PATCH", "REQUEST"):
                 class_path = ""
                 if class_node:
                     for child in class_node.children:

@@ -66,8 +66,8 @@ class BaseFileProcessor(ABC):
             implements = self._extract_implements_with_lsp(class_node, file_path)
             extends = self._extract_extends_with_lsp(class_node, file_path)
             methods = self._extract_class_methods(
-                class_node, content, context.package,
-                implements, extends, context.full_class_name, file_path
+                class_node, content, implements, extends,
+                context.full_class_name, file_path
             )
 
             return CodeChunk(
@@ -89,6 +89,7 @@ class BaseFileProcessor(ABC):
 
     def _build_class_context(self, class_node: Node, content: str, root_node: Node) -> Optional[ClassParsingContext]:
         class_name = self._extract_class_name(class_node, content)
+        logger.info(f"class_name {class_name}")
         if not class_name:
             return None
 
@@ -127,7 +128,7 @@ class BaseFileProcessor(ABC):
         pass
 
     @abstractmethod
-    def _extract_class_methods(self, class_node: Node, content: str, package: str,
+    def _extract_class_methods(self, class_node: Node, content: str,
                                implements: List[str], extends: Optional[str],
                                full_class_name: str, file_path: str) -> List[Method]:
         pass

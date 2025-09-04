@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 from dataclasses import dataclass
 
-from tree_sitter import Language, Parser, Node
+from tree_sitter import Language, Parser, Node, Query, QueryCursor
 
 from models.domain_models import CodeChunk, Method
 from models.analyzer_config import AnalyzerConfig
@@ -15,7 +15,6 @@ from utils.tree_sitter_helper import extract_content
 
 logger = logging.getLogger(__name__)
 
-# Constants and Data Classes
 class JavaParsingConstants:
     CLASS_NODE_TYPES = {
         'class_declaration', 'interface_declaration',
@@ -42,29 +41,31 @@ class JavaFileProcessor(BaseFileProcessor):
 
     def _extract_package(self, root_node: Node, content: str) -> str:
         try:
-            package_query = self.language.query("""
+            package_query = Query(self.language, """
                 (package_declaration
                     (scoped_identifier) @package)
             """)
-            captures = package_query.captures(root_node)
-            if captures:
-                package_node = captures[0][0]
-                return extract_content(package_node, content)
+            query_cursor = QueryCursor(package_query)
+            captures = query_cursor.captures(root_node)
+            package_nodes = captures.get("package")
+            if package_nodes:
+                return extract_content(package_nodes[0], content)
         except Exception as e:
             logger.debug(f"Error extracting package: {e}")
         return ""
 
     def _extract_all_class_nodes(self, root_node: Node) -> List[Node]:
         try:
-            class_query = self.language.query("""
+            class_query = Query(self.language, """
                 (class_declaration) @class
                 (interface_declaration) @interface
                 (enum_declaration) @enum
                 (record_declaration) @record
                 (annotation_type_declaration) @annotation
             """)
-            captures = class_query.captures(root_node)
-            return [capture[0] for capture in captures]
+            query_cursor = QueryCursor(class_query)
+            captures = query_cursor.captures(root_node)
+            return [node for nodes in captures.values() for node in nodes]
         except Exception as e:
             logger.debug(f"Error extracting class nodes: {e}")
             return []
@@ -132,7 +133,7 @@ class JavaFileProcessor(BaseFileProcessor):
         return None
 
 
-    def _find_class_body(self, class_node: Node) -> Optional[Node]:
+    def _get_class_body(self, class_node: Node) -> Optional[Node]:
         for child in class_node.children:
             if child.type == 'class_body' or child.type == 'interface_body':
                 return child
@@ -141,7 +142,7 @@ class JavaFileProcessor(BaseFileProcessor):
     def _extract_implements_with_lsp(self, class_node: Node, file_path: str) -> Tuple[str, ...]:
         interfaces = []
         try:
-            implements_query = self.language.query("""
+            implements_query = Query(self.language, """
                 (class_declaration
                     interfaces: (super_interfaces
                         (type_list
@@ -153,19 +154,20 @@ class JavaFileProcessor(BaseFileProcessor):
                                 (type_identifier) @generic_interface))))
             """)
 
-            captures = implements_query.captures(class_node)
-            for capture in captures:
-                interface_node = capture[0]
-                resolved_interface = self._resolve_type_with_lsp(interface_node, file_path)
-                if resolved_interface:
-                    interfaces.append(resolved_interface)
+            query_cursor = QueryCursor(implements_query)
+            captures = query_cursor.captures(class_node)
+            for nodes in captures.values():
+                for node in nodes:
+                    resolved_interface = self._resolve_type_with_lsp(node, file_path)
+                    if resolved_interface:
+                        interfaces.append(resolved_interface)
         except Exception as e:
             logger.debug(f"Error extracting implements: {e}")
         return tuple(interfaces)
 
     def _extract_extends_with_lsp(self, class_node: Node, file_path: str) -> Optional[str]:
         try:
-            extends_query = self.language.query("""
+            extends_query = Query(self.language, """
                 (class_declaration
                     superclass: (superclass
                         (type_identifier) @superclass))
@@ -174,9 +176,10 @@ class JavaFileProcessor(BaseFileProcessor):
                         (generic_type
                             (type_identifier) @generic_superclass)))
             """)
-            captures = extends_query.captures(class_node)
+            query_cursor = QueryCursor(extends_query)
+            captures = query_cursor.captures(class_node)
             if captures:
-                superclass_node = captures[0][0]
+                superclass_node = captures.values()[0]
                 return self._resolve_type_with_lsp(superclass_node, file_path)
         except Exception as e:
             logger.debug(f"Error extracting extends: {e}")
@@ -189,16 +192,14 @@ class JavaFileProcessor(BaseFileProcessor):
         try:
             line = node.start_point[0]
             col = node.start_point[1]
-            # relative_file_path = self._get_relative_path_for_lsp(file_path)
-
             lsp_results = self.lsp_service.request_definition(file_path, line, col)
-            return self._process_lsp_results(lsp_results, file_path)
+            return self._process_lsp_results(lsp_results)
 
         except Exception as e:
             logger.debug(f"LSP resolution failed: {e}")
             return node.text.decode('utf8')
 
-    def _process_lsp_results(self, lsp_results, file_path: str) -> Optional[str]:
+    def _process_lsp_results(self, lsp_results) -> Optional[str]:
         if not lsp_results:
             return None
 
@@ -216,11 +217,11 @@ class JavaFileProcessor(BaseFileProcessor):
         return None
 
     # Method Processing
-    def _extract_class_methods(self, class_node: Node, content: str, package: str,
+    def _extract_class_methods(self, class_node: Node, content: str,
                                implements: List[str], extends: Optional[str],
                                full_class_name: str, file_path: str) -> List[Method]:
         methods = []
-        class_body = self._find_class_body(class_node)
+        class_body = self._get_class_body(class_node)
         if not class_body:
             return methods
 
@@ -288,18 +289,21 @@ class JavaFileProcessor(BaseFileProcessor):
     def _extract_method_calls(self, body_node: Node, file_path: str) -> List[str]:
         method_calls = set()
         try:
-            method_call_query = self.language.query("""
+            method_call_query = Query(self.language, """
                 (method_invocation 
                     name: (identifier) @method_call
                     arguments: (argument_list)
                 )
             """)
-            captures = method_call_query.captures(body_node)
-            for node, capture_name in captures:
-                if capture_name == "method_call":
-                    method_call = self._resolve_method_call_with_lsp(node, file_path)
-                    if method_call:
-                        method_calls.add(method_call)
+            query_cursor = QueryCursor(method_call_query)
+            captures = query_cursor.captures(body_node)
+            for name, nodes in captures.items():
+                if name == "method_call":
+                    for node in nodes:
+                        method_call = self._resolve_method_call_with_lsp(node, file_path)
+                        if method_call:
+                            method_calls.add(method_call)
+
         except Exception as e:
             logger.debug(f"Error extracting method calls: {e}")
         return list(method_calls)
@@ -307,15 +311,17 @@ class JavaFileProcessor(BaseFileProcessor):
     def _extract_field_access(self, body_node: Node, file_path: str) -> List[str]:
         field_access = set()
         try:
-            field_access_query = self.language.query("""
+            field_access_query = Query(self.language, """
                 (field_access field: (_) @field_name)
             """)
-            captures = field_access_query.captures(body_node)
-            for node, capture_name in captures:
+            query_cursor = QueryCursor(field_access_query)
+            captures = query_cursor.captures(body_node)
+            for capture_name, nodes in captures.items():
                 if capture_name == "field_name":
-                    resolved = self._resolve_field_access_with_lsp(node, file_path)
-                    if resolved:
-                        field_access.add(resolved)
+                    for node in nodes:
+                        resolved = self._resolve_field_access_with_lsp(node, file_path)
+                        if resolved:
+                            field_access.add(resolved)
         except Exception as e:
             logger.debug(f"Error extracting field access: {e}")
         return list(field_access)
@@ -324,7 +330,7 @@ class JavaFileProcessor(BaseFileProcessor):
     def _extract_variable_usage(self, body_node: Node, file_path: str) -> List[str]:
         variable_usage = set()
         try:
-            variable_query = self.language.query("""
+            variable_query = Query(self.language, """
                 (local_variable_declaration type: (_) @var_type)
                 (method_declaration type: (_) @return_type)
                 (formal_parameter type: (_) @param_type)
@@ -332,15 +338,17 @@ class JavaFileProcessor(BaseFileProcessor):
                 (type_arguments (_) @generic_type)
                 (array_type element: (_) @array_element_type)
             """)
-            captures = variable_query.captures(body_node)
-            for node, capture_name in captures:
+            query_cursor = QueryCursor(variable_query)
+            captures = query_cursor.captures(body_node)
+            for capture_name, nodes in captures.items():
                 if capture_name in {
                     "var_type", "return_type", "param_type", "varargs_type",
                     "generic_type", "array_element_type"
-                }:
-                    variable_ref = self._resolve_variable_with_lsp(node, file_path)
-                    if variable_ref:
-                        variable_usage.add(variable_ref)
+                }:  
+                    for node in nodes:
+                        variable_ref = self._resolve_variable_with_lsp(node, file_path)
+                        if variable_ref:
+                            variable_usage.add(variable_ref)
         except Exception as e:
             logger.debug(f"Error extracting variable usage: {e}")
         return list(variable_usage)
@@ -371,7 +379,7 @@ class JavaFileProcessor(BaseFileProcessor):
             # relative_file_path = self._get_relative_path_for_lsp(file_path)
 
             lsp_results = self.lsp_service.request_definition(file_path, line, col)
-            return self._process_lsp_results(lsp_results, file_path)
+            return self._process_lsp_results(lsp_results)
 
         except Exception as e:
             logger.debug(f"LSP variable resolution failed: {e}")

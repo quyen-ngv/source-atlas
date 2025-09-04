@@ -1,6 +1,6 @@
 loguru==0.7.3
-tree-sitter==0.20.1
-tree-sitter-languages==1.10.2
+tree-sitter==0.25.1
+tree-sitter-language-pack==0.9.0
 jedi-language-server==0.41.1
 requests==2.32.3
 psutil>=7.0.0,<8.0.0

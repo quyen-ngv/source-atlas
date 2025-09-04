@@ -1,20 +1,19 @@
 import logging
+import sys
 from pathlib import Path
 
 from factory.analyzer_factory import AnalyzerFactory
 from factory.config_builder import AnalyzerConfigBuilder
-from lsp.implements.java_lsp import JavaLSPService
-from models.domain_models import CodeChunk, DependencyGraph
+
 
 def main():
     """Example usage of the multi-language code analyzer."""
-    
-    print('tes')
+
     args = {
         # "project_path": "F:/_side_projects/source_atlas/data/repo/onestudy-server",
         "project_path": "F:/01_projects/java_spring_demo",
-        "project_id": "java_spring_demo",
-        "output": "./java_spring_demo",
+        "project_id": "demo",
+        "output": "./result",
         "language": "java",
         "remove_comments": True,
         "verbose": True
@@ -25,8 +24,8 @@ def main():
         level=logging.DEBUG,  # Always set to DEBUG to see debug messages
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler('source_atlas.log')
+            logging.StreamHandler(sys.stdout),
+            logging.FileHandler('source_atlas.log'),
         ]
     )
     

@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Tuple, List, Dict
+from typing import Tuple, List
 
-from models.domain_models import CodeChunk, DependencyGraph
 from models.analyzer_config import AnalyzerConfig
+from models.domain_models import CodeChunk, DependencyGraph
+
 
 class BaseCodeAnalyzer(ABC):
     

@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Tuple, List, Dict
 
 from tree_sitter import Parser, Language
-from tree_sitter_languages import get_language
+from tree_sitter_language_pack import get_language
 
 from analyzers.base_analyzer import BaseCodeAnalyzer
 from lsp.implements.java_lsp import JavaLSPService
@@ -24,8 +24,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         # Initialize Tree-sitter components
         try:
             self.language: Language = get_language("java")
-            self.parser = Parser()
-            self.parser.set_language(self.language)
+            self.parser = Parser(self.language)
         except Exception as e:
             logger.error(f"Failed to initialize Tree-sitter for Java: {e}")
             raise
@@ -42,7 +41,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         self.dependency_graph_builder = DependencyGraphBuilder(self.config)
         self.result_exporter = ResultExporter()
 
-    # 👉 2 hàm context manager
     def __enter__(self):
         self._server_ctx = self.lsp_service.start_server()
         self._server_ctx.__enter__()
