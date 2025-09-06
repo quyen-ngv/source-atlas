@@ -6,9 +6,9 @@ from dataclasses import dataclass
 
 from tree_sitter import Language, Parser, Node, Query, QueryCursor
 
-from models.domain_models import CodeChunk, Method, MethodCall, MethodParam
+from models.domain_models import Method, MethodCall, MethodParam
 from models.analyzer_config import AnalyzerConfig
-from processors.base_processor import BaseFileProcessor, ClassParsingContext
+from processors.base_processor import BaseFileProcessor
 from processors.java.endpoint_extractor import JavaRestEndpointExtractor
 from utils.comment_remover import JavaCommentRemover
 from utils.tree_sitter_helper import extract_content
@@ -210,16 +210,15 @@ class JavaFileProcessor(BaseFileProcessor):
             if isinstance(result, dict):
                 absolute_path = result.get('absolutePath')
                 if absolute_path and isinstance(absolute_path, str):
-                    if self._is_project_file(absolute_path):
-                        qualified_name = self._extract_qualified_name_from_lsp_result(result)
-                        if qualified_name:
-                            return qualified_name
+                    qualified_name = self._extract_qualified_name_from_lsp_result(result)
+                    if qualified_name:
+                        return qualified_name
         return None
 
     # Method Processing
     def _extract_class_methods(self, class_node: Node, content: str,
                                implements: List[str], extends: Optional[str],
-                               full_class_name: str, file_path: str) -> List[Method]:
+                               full_class_name: str,  file_path: str) -> List[Method]:
         methods = []
         class_body = self._get_class_body(class_node)
         if not class_body:
@@ -360,7 +359,6 @@ class JavaFileProcessor(BaseFileProcessor):
         try:
             line = node.start_point[0]
             col = node.start_point[1]
-            # relative_file_path = self._get_relative_path_for_lsp(file_path)
 
             lsp_result = self.lsp_service.request_hover(file_path, line, col)
 
@@ -377,7 +375,6 @@ class JavaFileProcessor(BaseFileProcessor):
         try:
             line = node.start_point[0]
             col = node.start_point[1]
-            # relative_file_path = self._get_relative_path_for_lsp(file_path)
 
             lsp_results = self.lsp_service.request_definition(file_path, line, col)
             return self._process_lsp_results(lsp_results)
@@ -393,7 +390,6 @@ class JavaFileProcessor(BaseFileProcessor):
         try:
             line = node.start_point[0]
             col = node.start_point[1]
-            # relative_file_path = self._get_relative_path_for_lsp(file_path)
             
             lsp_results = self.lsp_service.request_hover(file_path, line, col)
             return self._extract_field_from_hover(lsp_results)
@@ -522,17 +518,6 @@ class JavaFileProcessor(BaseFileProcessor):
         except Exception as e:
             logger.debug(f"Error getting relative path for LSP: {e}")
             return absolute_path
-
-    def _is_project_file(self, absolute_path: str) -> bool:
-        # logger.info(f"project_root {str(self.project_root)}")
-        # logger.info(f"absolute_path {absolute_path}")
-        # abs_norm = os.path.normpath(absolute_path)
-        # file_norm = os.path.normpath(str(self.project_root))
-        # common = os.path.commonpath([abs_norm, file_norm])
-        # return (common != os.path.dirname(file_norm) and
-        #         common != os.path.dirname(abs_norm) and
-        #         len(common) > 0)
-        return True
 
     def _extract_qualified_name_from_lsp_result(self, lsp_result: dict) -> str:
         try:

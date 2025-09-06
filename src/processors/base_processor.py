@@ -20,7 +20,6 @@ class ClassParsingContext:
     parent_class: Optional[str] = None
 
 class BaseFileProcessor(ABC):
-    """Abstract base class for processing source code files of different languages."""
     
     def __init__(self, config: AnalyzerConfig, language: Language, parser: Parser):
         self.config = config

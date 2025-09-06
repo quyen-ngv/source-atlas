@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Set
 
 @dataclass
@@ -48,16 +49,17 @@ class MethodType(Enum):
 
 @dataclass
 class CodeChunk:
-    package: str
-    class_name: str
-    full_class_name: str
+    package: Optional[str]
+    class_name: Optional[str]
+    full_class_name: Optional[str]
     file_path: str
     content: str
     implements: Tuple[str, ...]
     extends: Optional[str]
     methods: List[Method]
-    is_nested: bool
     parent_class: Optional[str]
+    is_nested: bool = False
+    is_config_file: bool = False
 
     def to_dict(self) -> Dict:
         """Convert CodeChunk to a JSON-serializable dictionary."""
@@ -82,6 +84,21 @@ class CodeChunk:
             "is_nested": self.is_nested,
             "parent_class": self.parent_class,
         }
+
+    @classmethod
+    def from_config(cls, file_path: Path) -> "CodeChunk":
+        return cls(
+            package=None,
+            class_name=None,
+            full_class_name=None,
+            file_path=str(file_path),
+            content=file_path.read_text(),
+            is_config_file=True,
+            implements=(),
+            extends=None,
+            methods=[],
+            parent_class=None
+        )
 
 @dataclass
 class DependencyGraph:

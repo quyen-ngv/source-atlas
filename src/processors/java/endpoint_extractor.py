@@ -15,7 +15,7 @@ class AnnotationDependencyExtractor(Protocol):
 
 
 # ---- REST extractor ----
-class RestAnnotationExtractor:
+class SpringBootAnnotationExtractor:
     def __init__(self, rest_annotations: dict):
         self.rest_annotations = rest_annotations
 
@@ -135,7 +135,7 @@ class JavaRestEndpointExtractor:
     def __init__(self, config: AnalyzerConfig):
         self.config = config
         self.extractors: List[AnnotationDependencyExtractor] = [
-            RestAnnotationExtractor(config.rest_annotations or {
+            SpringBootAnnotationExtractor(config.rest_annotations or {
                 '@GetMapping': 'GET',
                 '@PostMapping': 'POST',
                 '@PutMapping': 'PUT',

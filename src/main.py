@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 
 from factory.analyzer_factory import AnalyzerFactory
-from factory.config_builder import AnalyzerConfigBuilder
 
 
 def main():
@@ -37,22 +36,15 @@ def main():
         return 1
     
     try:
-        logger.info(f"Analyzing {args['language'].capitalize()} project at: {project_path}")
-        
-        config = AnalyzerConfigBuilder().with_comment_removal(args["remove_comments"]).build()
-
-        analyzer = AnalyzerFactory.create_analyzer(args["language"], config, project_path)
+        analyzer = AnalyzerFactory.create_analyzer(args["language"], str(project_path))
         with analyzer as a:
-            chunks, dependency_graph = a.parse_project(project_path, args["project_id"])
-    
-        # Display results (same as original)
-        logger.info(f"\nAnalysis Results:")
+            chunks = a.parse_project(project_path, args["project_id"])
+
         logger.info(f"Found {len(chunks)} classes/interfaces/enums")
-        logger.info(f"Dependency graph has {len(dependency_graph.nodes)} nodes and {len(dependency_graph.edges)} edges")
-        
+
         if args["output"]:
             output_path = Path(args["output"])
-            analyzer.export_results(chunks, dependency_graph, output_path)
+            analyzer.export_chunks(chunks, output_path)
         
         logger.info(f"\nAnalysis completed successfully!")
         return 0
