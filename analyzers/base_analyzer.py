@@ -1,13 +1,14 @@
-from ast import Tuple
-from dataclasses import dataclass
+import json
 import logging
 from abc import ABC, abstractmethod
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
-from models.analyzer_config import AnalyzerConfig
-from models.domain_models import CodeChunk, Method
+from models.domain_models import CodeChunk
 from tree_sitter import Language, Parser, Node
+
+from models.domain_models import Method
 
 logger = logging.getLogger(__name__)
 
@@ -19,22 +20,46 @@ class ClassParsingContext:
     is_nested: bool
     parent_class: Optional[str] = None
 
-class BaseFileProcessor(ABC):
-    
-    def __init__(self, config: AnalyzerConfig, language: Language, parser: Parser):
-        self.config = config
+class BaseCodeAnalyzer(ABC):
+
+    def __init__(self, language: Language, parser: Parser):
         self.language = language
         self.parser = parser
         self.comment_remover = None
-    
+
+    def parse_project(self, root: Path, project_id: str) -> List[CodeChunk]:
+        """
+        Template method: orchestrates scanning and processing.
+        Subclasses override `_get_code_files` and `_process_file`.
+        """
+        logger.info(f"Starting analysis for project '{project_id}' at {root}")
+
+        code_files = self._get_code_files(root)
+        if not code_files:
+            logger.warning("No source files found")
+            return []
+
+        logger.info(f"Found {len(code_files)} source files")
+        chunks: List[CodeChunk] = []
+
+        for i, file in enumerate(code_files):
+            logger.debug(f"[{i+1}/{len(code_files)}] Processing file: {file}")
+            try:
+                file_chunks = self.process_file(file, project_id)
+                chunks.extend(file_chunks)
+            except Exception as e:
+                logger.error(f"Error processing {file}: {e}", exc_info=True)
+
+        logger.info(f"Extracted {len(chunks)} code chunks total")
+        return chunks
+
     def process_file(self, file_path: Path, project_id: str) -> List[CodeChunk]:
         try:
             content = self._read_file_content(file_path)
             if not content.strip():
                 return []
 
-            if self.config.remove_comments:
-                content = self.comment_remover.remove_comments(content)
+            content = self.comment_remover.remove_comments(content)
 
             tree = self.parser.parse(bytes(content, 'utf8'))
             class_nodes = self._extract_all_class_nodes(tree.root_node)
@@ -45,7 +70,6 @@ class BaseFileProcessor(ABC):
         except Exception as e:
             logger.error(f"Error processing file {file_path}: {e}")
             return []
-
 
     def _process_all_classes(self, class_nodes: List[Node], content: str,
                              file_path: str, root_node: Node) -> List[CodeChunk]:
@@ -113,7 +137,22 @@ class BaseFileProcessor(ABC):
         except UnicodeDecodeError:
             with open(file_path, 'r', encoding='latin1') as f:
                 return f.read()
-    
+
+    def export_chunks(self, chunks: List[CodeChunk], output_path: Path) -> None:
+
+        logger.info(f"Exporting {len(chunks)} chunks to {output_path}")
+        output_path.mkdir(parents=True, exist_ok=True)
+        chunks_data = [asdict(c) for c in chunks]
+
+        with open(output_path / "chunks.json", "w", encoding="utf-8") as f:
+            json.dump(chunks_data, f, indent=2, ensure_ascii=False)
+
+    # ---- extension points ----
+    @abstractmethod
+    def _get_code_files(self, root: Path) -> List[Path]:
+        """Return a list of relevant source files."""
+        pass
+
     @abstractmethod
     def _extract_all_class_nodes(self, root_node: Node) -> List[Node]:
         pass

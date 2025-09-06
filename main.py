@@ -12,7 +12,7 @@ def main():
         # "project_path": "F:/_side_projects/source_atlas/data/repo/onestudy-server",
         "project_path": "F:/01_projects/java_spring_demo",
         "project_id": "demo",
-        "output": "./result",
+        "output": "./output",
         "language": "java",
         "remove_comments": True,
         "verbose": True

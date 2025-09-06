@@ -1,15 +1,17 @@
 import logging
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
-from dataclasses import dataclass
 
-from tree_sitter import Language, Parser, Node, Query, QueryCursor
-
+from analyzers.base_analyzer import BaseCodeAnalyzer
+from lsp.implements.java_lsp import JavaLSPService
+from models.domain_models import CodeChunk
 from models.domain_models import Method, MethodCall, MethodParam
-from models.analyzer_config import AnalyzerConfig
-from processors.base_processor import BaseFileProcessor
-from processors.java.endpoint_extractor import JavaRestEndpointExtractor
+from extractors.java.java_extractor import JavaEndpointExtractor
+from tree_sitter import Language, Parser, Node, Query, QueryCursor
+from tree_sitter_language_pack import get_language
+from utils.comment_remover import JavaCommentRemover
 from utils.comment_remover import JavaCommentRemover
 from utils.tree_sitter_helper import extract_content
 
@@ -30,14 +32,42 @@ class MethodDependencies:
     variable_usage: List[str]
     field_access: List[str]
 
-class JavaFileProcessor(BaseFileProcessor):
-    def __init__(self, config: AnalyzerConfig, language: Language, parser: Parser,
-                 lsp_service=None, project_root: str = None):
-        super().__init__(config, language, parser)
+class JavaCodeAnalyzerConstant:
+    JAVA_CONFIG_EXTENSIONS = {
+        "*.sql", "*.yml", "*.yaml", "*.xml"
+    }
+
+    JAVA_EXTENSION = "*.java"
+
+
+class JavaCodeAnalyzer(BaseCodeAnalyzer):
+
+    def __init__(self, root_path: str = None):
+        # Tree-sitter setup
+        language: Language = get_language("java")
+        parser = Parser(language)
+        super().__init__(language, parser)
+
+        # Services
         self.comment_remover = JavaCommentRemover()
-        self.endpoint_extractor = JavaRestEndpointExtractor(config)
-        self.lsp_service = lsp_service
-        self.project_root = Path(project_root).resolve() if project_root else None
+        self.lsp_service = JavaLSPService.create(str(root_path))
+        self._server_ctx = None
+        self.comment_remover = JavaCommentRemover()
+        self.endpoint_extractor = JavaEndpointExtractor()
+        self.project_root = Path(root_path).resolve() if root_path else None
+
+    def __enter__(self):
+        self._server_ctx = self.lsp_service.start_server()
+        self._server_ctx.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._server_ctx:
+            self._server_ctx.__exit__(exc_type, exc_val, exc_tb)
+
+    # ---- extension points ----
+    def _get_code_files(self, root: Path) -> List[Path]:
+        return list(root.rglob(JavaCodeAnalyzerConstant.JAVA_EXTENSION))
 
     def _extract_package(self, root_node: Node, content: str) -> str:
         try:
@@ -343,7 +373,7 @@ class JavaFileProcessor(BaseFileProcessor):
                 if capture_name in {
                     "var_type", "return_type", "param_type", "varargs_type",
                     "generic_type", "array_element_type"
-                }:  
+                }:
                     for node in nodes:
                         variable_ref = self._resolve_variable_with_lsp(node, file_path)
                         if variable_ref:
@@ -386,11 +416,11 @@ class JavaFileProcessor(BaseFileProcessor):
     def _resolve_field_access_with_lsp(self, node: Node, file_path: str) -> Optional[str]:
         if not self.lsp_service:
             return None
-        
+
         try:
             line = node.start_point[0]
             col = node.start_point[1]
-            
+
             lsp_results = self.lsp_service.request_hover(file_path, line, col)
             return self._extract_field_from_hover(lsp_results)
 
@@ -414,7 +444,7 @@ class JavaFileProcessor(BaseFileProcessor):
             field = contents
         else:
             return None
-            
+
         return field
 
     def _extract_method_from_hover(self, lsp_result) -> Optional[MethodCall]:
@@ -477,8 +507,8 @@ class JavaFileProcessor(BaseFileProcessor):
 
         if method_name:
             for interface in implements:
-                    interface = self._remove_prefix(interface)
-                    inheritance_sources.append(f"{interface}.{method_name}")
+                interface = self._remove_prefix(interface)
+                inheritance_sources.append(f"{interface}.{method_name}")
 
         return inheritance_sources
 
@@ -502,11 +532,11 @@ class JavaFileProcessor(BaseFileProcessor):
         try:
             path = Path(absolute_path).resolve()
             project_root = self.project_root
-            
+
             # Ensure both paths are absolute
             if not path.is_absolute():
                 path = path.resolve()
-            
+
             try:
                 relative_path = path.relative_to(project_root)
                 # Convert to forward slashes for consistency
@@ -525,12 +555,12 @@ class JavaFileProcessor(BaseFileProcessor):
             if not absolute_path:
                 logger.debug("No absolutePath found in LSP result")
                 return ""
-            
+
             # Ensure absolute_path is a string
             if not isinstance(absolute_path, str):
                 logger.debug(f"absolutePath is not a string: {type(absolute_path)}")
                 return ""
-                
+
             return self._strip_root(absolute_path)
         except Exception as e:
             logger.debug(f"Failed to extract qualified name from LSP result: {e}")
@@ -541,7 +571,7 @@ class JavaFileProcessor(BaseFileProcessor):
             if not absolute_path or not isinstance(absolute_path, str):
                 logger.debug(f"Invalid absolute_path: {absolute_path}")
                 return ""
-                
+
             abs_path = Path(absolute_path).resolve()
             root = Path(self.project_root).resolve()
 

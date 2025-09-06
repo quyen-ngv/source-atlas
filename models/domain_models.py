@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional, Set
+from typing import List, Dict, Tuple, Optional
 
 @dataclass
 class Field:
@@ -99,28 +99,3 @@ class CodeChunk:
             methods=[],
             parent_class=None
         )
-
-@dataclass
-class DependencyGraph:
-    nodes: Dict[str, CodeChunk]  # Maps class names to CodeChunk objects
-    edges: Set[Tuple[str, str, str]]  # (source, target, relationship)
-
-    def __init__(self):
-        self.nodes = {}
-        self.edges = set()
-    
-    def add_node(self, class_name: str, chunk: CodeChunk) -> None:
-        """Add a node to the graph."""
-        self.nodes[class_name] = chunk
-    
-    def add_edge(self, source: str, target: str, relationship: str) -> None:
-        """Add an edge to the graph."""
-        self.edges.add((source, target, relationship))
-    
-    def to_dict(self) -> Dict:
-        """Convert DependencyGraph to a JSON-serializable dictionary."""
-        return {
-            "nodes": {name: chunk.to_dict() for name, chunk in self.nodes.items()},
-            "edges": [{"source": source, "target": target, "relationship": rel} 
-                      for source, target, rel in self.edges]
-        }
