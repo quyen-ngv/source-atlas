@@ -1,0 +1,399 @@
+[
+  {
+    "package": "com.edu.java_spring_demo.service",
+    "class_name": "CommonService",
+    "full_class_name": "com.edu.java_spring_demo.service.CommonService",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\service\\CommonService.java",
+    "content": "public interface CommonService {\n    List<Person> getPersons();\n\n    List<Person> getPerson2(Map<String, String> map);\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.edu.java_spring_demo.service.CommonService.getPersons()",
+        "body": "",
+        "method_calls": [],
+        "variable_usage": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": []
+      },
+      {
+        "name": "com.edu.java_spring_demo.service.CommonService.getPerson2(Map<String, String> map)",
+        "body": "",
+        "method_calls": [],
+        "variable_usage": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": []
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "is_config_file": false
+  },
+  {
+    "package": "com.edu.java_spring_demo.dto",
+    "class_name": "Person",
+    "full_class_name": "com.edu.java_spring_demo.dto.Person",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\dto\\Person.java",
+    "content": "@Data\n@AllArgsConstructor\n@NoArgsConstructor\npublic class Person {\n\n    private UUID id;\n\n    private String name;\n\n    private LocalDateTime birthday;\n\n    private String address;\n\n    private String email;\n\n    private String phone;\n\n    private String job;\n\n    private String company;\n\n    private String description;\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "is_config_file": false
+  },
+  {
+    "package": "com.edu.java_spring_demo.type",
+    "class_name": "Constant",
+    "full_class_name": "com.edu.java_spring_demo.type.Constant",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\type\\Constant.java",
+    "content": "public class Constant {\n\n    public static final String COUNTRY = \"VN\";\n\n    public static class Regex {\n        public static final String EMAIL = \"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$\";\n        public static final String PHONE = \"^(\\\\+84|0)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-5]|9[0-4|6-9])[0-9]{7}$\";\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "is_config_file": false
+  },
+  {
+    "package": "com.edu.java_spring_demo.type",
+    "class_name": "Regex",
+    "full_class_name": "com.edu.java_spring_demo.type.Constant.Regex",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\type\\Constant.java",
+    "content": "public static class Regex {\n        public static final String EMAIL = \"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$\";\n        public static final String PHONE = \"^(\\\\+84|0)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-5]|9[0-4|6-9])[0-9]{7}$\";\n    }",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      "com.edu.java_spring_demo.type.Constant"
+    ],
+    "is_nested": true,
+    "is_config_file": false
+  },
+  {
+    "package": "com.edu.java_spring_demo.type",
+    "class_name": "Job",
+    "full_class_name": "com.edu.java_spring_demo.type.Job",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\type\\Job.java",
+    "content": "@Getter\npublic enum Job {\n    IT(\"it\"),\n    DOCTOR(\"doctor\"),\n    SALE(\"sale\");\n\n    private final String value;\n\n    Job(String value) {\n        this.value = value;\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "is_config_file": false
+  },
+  {
+    "package": "com.edu.java_spring_demo",
+    "class_name": "JavaSpringDemoApplicationTests",
+    "full_class_name": "com.edu.java_spring_demo.JavaSpringDemoApplicationTests",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\test\\java\\com\\edu\\java_spring_demo\\JavaSpringDemoApplicationTests.java",
+    "content": "@SpringBootTest\nclass JavaSpringDemoApplicationTests {\n\n    @Test\n    void contextLoads() {\n    }\n\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.edu.java_spring_demo.JavaSpringDemoApplicationTests.contextLoads()",
+        "body": "@Test\n    void contextLoads() {\n    }",
+        "method_calls": [],
+        "variable_usage": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": []
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "is_config_file": false
+  },
+  {
+    "package": "com.edu.java_spring_demo.dto",
+    "class_name": "BaseResponse",
+    "full_class_name": "com.edu.java_spring_demo.dto.BaseResponse",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\dto\\BaseResponse.java",
+    "content": "@Data\npublic class BaseResponse<T> {\n\n    private Meta meta;\n\n    private T data;\n\n    public BaseResponse(T data) {\n        this.data = data;\n    }\n\n    @Data\n    public static class Meta {\n        private int code;\n        private String message;\n\n        public Meta(int code, String message) {\n            this.code = code;\n            this.message = message;\n        }\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.edu.java_spring_demo.dto.BaseResponse.BaseResponse(T data)",
+        "body": "public BaseResponse(T data) {\n        this.data = data;\n    }",
+        "method_calls": [],
+        "variable_usage": [],
+        "field_access": [
+          "T data"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": []
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "is_config_file": false
+  },
+  {
+    "package": "com.edu.java_spring_demo.dto",
+    "class_name": "Meta",
+    "full_class_name": "com.edu.java_spring_demo.dto.BaseResponse.Meta",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\dto\\BaseResponse.java",
+    "content": "@Data\n    public static class Meta {\n        private int code;\n        private String message;\n\n        public Meta(int code, String message) {\n            this.code = code;\n            this.message = message;\n        }\n    }",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.edu.java_spring_demo.dto.BaseResponse.Meta.Meta(int code, String message)",
+        "body": "public Meta(int code, String message) {\n            this.code = code;\n            this.message = message;\n        }",
+        "method_calls": [],
+        "variable_usage": [],
+        "field_access": [
+          "String message",
+          "int code"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": []
+      }
+    ],
+    "parent_class": [
+      "com.edu.java_spring_demo.dto.BaseResponse"
+    ],
+    "is_nested": true,
+    "is_config_file": false
+  },
+  {
+    "package": "com.edu.java_spring_demo.service",
+    "class_name": "DemoConsumer",
+    "full_class_name": "com.edu.java_spring_demo.service.DemoConsumer",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\service\\DemoConsumer.java",
+    "content": "@Service\npublic class DemoConsumer {\n\n    @KafkaListener(topics = \"demo-topic\", groupId = \"demo-group\")\n    public void consume(String message) {\n        System.out.println(\"📩 Received: \" + message);\n    }\n}\n",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.edu.java_spring_demo.service.DemoConsumer.consume(String message)",
+        "body": "@KafkaListener(topics = \"demo-topic\", groupId = \"demo-group\")\n    public void consume(String message) {\n        System.out.println(\"📩 Received: \" + message);\n    }\n}\n",
+        "method_calls": [],
+        "variable_usage": [],
+        "field_access": [
+          "PrintStream out"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "KAFKA_CONSUMER",
+            "path": "",
+            "produces": "",
+            "consumes": "demo-topic"
+          }
+        ]
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "is_config_file": false
+  },
+  {
+    "package": "com.edu.java_spring_demo",
+    "class_name": "JavaSpringDemoApplication",
+    "full_class_name": "com.edu.java_spring_demo.JavaSpringDemoApplication",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\JavaSpringDemoApplication.java",
+    "content": "@SpringBootApplication\npublic class JavaSpringDemoApplication {\n\n    public static void main(String[] args) {\n        System.out.println(Constant.COUNTRY);\n        SpringApplication.run(JavaSpringDemoApplication.class, args);\n    }\n\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.edu.java_spring_demo.JavaSpringDemoApplication.main(String[] args)",
+        "body": "public static void main(String[] args) {\n        System.out.println(Constant.COUNTRY);\n        SpringApplication.run(JavaSpringDemoApplication.class, args);\n    }",
+        "method_calls": [],
+        "variable_usage": [],
+        "field_access": [
+          "PrintStream out",
+          "String COUNTRY = \"VN\""
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": []
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "is_config_file": false
+  },
+  {
+    "package": "com.edu.java_spring_demo.service",
+    "class_name": "CommonServiceImpl",
+    "full_class_name": "com.edu.java_spring_demo.service.CommonServiceImpl",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\service\\CommonServiceImpl.java",
+    "content": "@Service\n@Slf4j\npublic class CommonServiceImpl implements CommonService {\n\n    @Override\n    public List<Person> getPersons() {\n        log.info(\"constant {}\", Constant.COUNTRY);\n        log.info(\"constant regex {}\", Constant.Regex.EMAIL);\n        return List.of();\n    }\n\n    @Override\n    public List<Person> getPerson2(Map<String, String> map) {\n        return List.of();\n    }\n\n}",
+    "implements": [
+      "com.edu.java_spring_demo.service.CommonService"
+    ],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.edu.java_spring_demo.service.CommonServiceImpl.getPersons()",
+        "body": "@Override\n    public List<Person> getPersons() {\n        log.info(\"constant {}\", Constant.COUNTRY);\n        log.info(\"constant regex {}\", Constant.Regex.EMAIL);\n        return List.of();\n    }",
+        "method_calls": [],
+        "variable_usage": [],
+        "field_access": [
+          "com.edu.java_spring_demo.type.Constant.Regex",
+          "String COUNTRY = \"VN\"",
+          "String EMAIL = \"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$\""
+        ],
+        "inheritance_info": [
+          "com.edu.java_spring_demo.service.CommonService.getPersons()"
+        ],
+        "extends_info": [],
+        "endpoint": []
+      },
+      {
+        "name": "com.edu.java_spring_demo.service.CommonServiceImpl.getPerson2(Map<String, String> map)",
+        "body": "@Override\n    public List<Person> getPerson2(Map<String, String> map) {\n        return List.of();\n    }",
+        "method_calls": [],
+        "variable_usage": [],
+        "field_access": [],
+        "inheritance_info": [
+          "com.edu.java_spring_demo.service.CommonService.getPerson2(Map<String, String> map)"
+        ],
+        "extends_info": [],
+        "endpoint": []
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "is_config_file": false
+  },
+  {
+    "package": "com.edu.java_spring_demo.controller",
+    "class_name": "CommonController",
+    "full_class_name": "com.edu.java_spring_demo.controller.CommonController",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\controller\\CommonController.java",
+    "content": "@RestController\n@RequestMapping(\"/api/v1\")\n@Slf4j\npublic class CommonController {\n\n    private final CommonService commonService;\n\n    private final KafkaTemplate<String, String> kafkaTemplate;\n\n    private static final String topic1 = \"topic1\";\n\n    public CommonController(CommonService commonService, KafkaTemplate<String, String> kafkaTemplate) {\n        this.kafkaTemplate = kafkaTemplate;\n        log.info(\"CommonController initialized {}\", Constant.Regex.EMAIL);\n        this.commonService = commonService;\n    }\n\n    @GetMapping(\"/persons\")\n    public BaseResponse<List<Person>> getPersons(String topicName) {\n        String topic = \"demo-topic\";\n        kafkaTemplate.send(topic, \"Hello from CommonController!\");\n        kafkaTemplate.send(topic1, \"Hello from CommonController!\");\n        kafkaTemplate.send(topicName, \"Hello from CommonController!\");\n        return new BaseResponse<>(commonService.getPersons());\n    }\n\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.edu.java_spring_demo.controller.CommonController.CommonController(CommonService commonService, KafkaTemplate<String, String> kafkaTemplate)",
+        "body": "public CommonController(CommonService commonService, KafkaTemplate<String, String> kafkaTemplate) {\n        this.kafkaTemplate = kafkaTemplate;\n        log.info(\"CommonController initialized {}\", Constant.Regex.EMAIL);\n        this.commonService = commonService;\n    }",
+        "method_calls": [],
+        "variable_usage": [],
+        "field_access": [
+          "CommonService commonService",
+          "com.edu.java_spring_demo.type.Constant.Regex",
+          "String EMAIL = \"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$\"",
+          "KafkaTemplate<String, String> kafkaTemplate"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": []
+      },
+      {
+        "name": "com.edu.java_spring_demo.controller.CommonController.getPersons(String topicName)",
+        "body": "@GetMapping(\"/persons\")\n    public BaseResponse<List<Person>> getPersons(String topicName) {\n        String topic = \"demo-topic\";\n        kafkaTemplate.send(topic, \"Hello from CommonController!\");\n        kafkaTemplate.send(topic1, \"Hello from CommonController!\");\n        kafkaTemplate.send(topicName, \"Hello from CommonController!\");\n        return new BaseResponse<>(commonService.getPersons());\n    }",
+        "method_calls": [
+          {
+            "name": "com.edu.java_spring_demo.service.CommonService.getPersons()",
+            "params": []
+          }
+        ],
+        "variable_usage": [
+          "F:\\_side_projects\\source_atlas\\.contents.java.base\\java.lang\\String.class"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/v1/persons",
+            "produces": "",
+            "consumes": ""
+          }
+        ]
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "is_config_file": false
+  },
+  {
+    "package": "com.edu.java_spring_demo.service",
+    "class_name": "DemoProducer",
+    "full_class_name": "com.edu.java_spring_demo.service.DemoProducer",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\service\\DemoProducer.java",
+    "content": "@Service\npublic class DemoProducer {\n    private final KafkaTemplate<String, String> kafkaTemplate;\n\n    private final CommonService commonService;\n\n    public DemoProducer(KafkaTemplate<String, String> kafkaTemplate, CommonService commonService) {\n        this.kafkaTemplate = kafkaTemplate;\n        this.commonService = commonService;\n    }\n\n    public void sendMessage(String message) {\n        kafkaTemplate.send(\"demo-topic\", message);\n        commonService.getPersons();\n        Map<String,String> m = new HashMap<>();\n        commonService.getPerson2(m);\n        System.out.println(\"✅ Sent: \" + message);\n    }\n}\n",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.edu.java_spring_demo.service.DemoProducer.DemoProducer(KafkaTemplate<String, String> kafkaTemplate, CommonService commonService)",
+        "body": "public DemoProducer(KafkaTemplate<String, String> kafkaTemplate, CommonService commonService) {\n        this.kafkaTemplate = kafkaTemplate;\n        this.commonService = commonService;\n    }",
+        "method_calls": [],
+        "variable_usage": [],
+        "field_access": [
+          "CommonService commonService",
+          "KafkaTemplate<String, String> kafkaTemplate"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": []
+      },
+      {
+        "name": "com.edu.java_spring_demo.service.DemoProducer.sendMessage(String message)",
+        "body": "public void sendMessage(String message) {\n        kafkaTemplate.send(\"demo-topic\", message);\n        commonService.getPersons();\n        Map<String,String> m = new HashMap<>();\n        commonService.getPerson2(m);\n        System.out.println(\"✅ Sent: \" + message);\n    }\n}",
+        "method_calls": [
+          {
+            "name": "com.edu.java_spring_demo.service.CommonService.getPersons()",
+            "params": []
+          },
+          {
+            "name": "com.edu.java_spring_demo.service.CommonService.getPerson2(Map<String, String> map)",
+            "params": []
+          }
+        ],
+        "variable_usage": [
+          "F:\\_side_projects\\source_atlas\\.contents.java.base\\java.util\\Map.class",
+          "F:\\_side_projects\\source_atlas\\.contents.java.base\\java.lang\\String.class"
+        ],
+        "field_access": [
+          "PrintStream out"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": []
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "is_config_file": false
+  }
+]

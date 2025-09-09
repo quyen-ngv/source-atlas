@@ -1,21 +1,30 @@
 import re
 from typing import List
-from models.domain_models import RestEndpoint
+
 from tree_sitter import Node
 
+from models.domain_models import RestEndpoint
+
+
+class SpringBootAnnotationConfig:
+    SPRING_BOOT_REST_ANNOTATION = {
+        '@GetMapping': 'GET',
+        '@PostMapping': 'POST',
+        '@PutMapping': 'PUT',
+        '@DeleteMapping': 'DELETE',
+        '@PatchMapping': 'PATCH',
+        '@RequestMapping': 'REQUEST',
+    }
 
 class SpringBootAnnotationExtractor:
-    def __init__(self, rest_annotations: dict):
-        self.rest_annotations = rest_annotations
-
     def supports(self, text: str) -> bool:
-        return any(anno in text for anno in self.rest_annotations.keys())
+        return any(anno in text for anno in SpringBootAnnotationConfig.SPRING_BOOT_REST_ANNOTATION.keys())
 
     def extract(self, text: str, class_node: Node, method_node: Node, content: str) -> List[RestEndpoint]:
         method_path, type = "", None
 
         # --- method-level path ---
-        for anno, method in self.rest_annotations.items():
+        for anno, method in SpringBootAnnotationConfig.SPRING_BOOT_REST_ANNOTATION.items():
             if anno in text:
                 path_match = re.search(r'(?:value\s*=\s*)?["\']([^"\']*)["\']', text)
                 if path_match:

@@ -4,18 +4,129 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from analyzers.base_analyzer import BaseCodeAnalyzer
-from lsp.implements.java_lsp import JavaLSPService
-from models.domain_models import CodeChunk
-from models.domain_models import Method, MethodCall, MethodParam
-from extractors.java.java_extractor import JavaEndpointExtractor
 from tree_sitter import Language, Parser, Node, Query, QueryCursor
 from tree_sitter_language_pack import get_language
-from utils.comment_remover import JavaCommentRemover
+
+from analyzers.base_analyzer import BaseCodeAnalyzer
+from extractors.java.java_extractor import JavaEndpointExtractor
+from lsp.implements.java_lsp import JavaLSPService
+from models.domain_models import Method, MethodCall, MethodParam
 from utils.comment_remover import JavaCommentRemover
 from utils.tree_sitter_helper import extract_content
 
 logger = logging.getLogger(__name__)
+
+class JavaBuiltinPackages:
+    # Core Java packages
+    JAVA_CORE_PACKAGES = {
+        'java.lang',
+        'java.util',
+        'java.io',
+        'java.nio',
+        'java.net',
+        'java.time',
+        'java.math',
+        'java.text',
+        'java.security',
+        'java.sql',
+        'java.beans',
+        'java.awt',
+        'java.swing',
+        'java.applet',
+        'java.rmi',
+        'java.lang.reflect',
+        'java.lang.annotation',
+        'java.util.concurrent',
+        'java.util.function',
+        'java.util.stream',
+        'java.util.regex',
+        'java.nio.file',
+        'java.nio.charset',
+        'java.security.cert',
+        'java.time.format',
+        'java.time.temporal',
+        'java.time.chrono',
+        'java.time.zone'
+    }
+
+    # Java EE / Jakarta EE packages
+    JAVA_EE_PACKAGES = {
+        'javax.servlet',
+        'javax.persistence',
+        'javax.validation',
+        'javax.annotation',
+        'javax.inject',
+        'javax.ejb',
+        'javax.jms',
+        'javax.mail',
+        'javax.xml',
+        'javax.ws.rs',
+        'jakarta.servlet',
+        'jakarta.persistence',
+        'jakarta.validation',
+        'jakarta.annotation',
+        'jakarta.inject',
+        'jakarta.ejb',
+        'jakarta.jms',
+        'jakarta.mail',
+        'jakarta.xml',
+        'jakarta.ws.rs'
+    }
+
+    # Spring Framework packages
+    SPRING_PACKAGES = {
+        'org.springframework',
+        'org.springframework.boot',
+        'org.springframework.context',
+        'org.springframework.beans',
+        'org.springframework.web',
+        'org.springframework.data',
+        'org.springframework.security',
+        'org.springframework.transaction',
+        'org.springframework.util',
+        'org.springframework.core',
+        'org.springframework.aop',
+        'org.springframework.jdbc',
+        'org.springframework.orm',
+        'org.springframework.jms',
+        'org.springframework.cache',
+        'org.springframework.test'
+    }
+
+    # Common third-party library packages
+    COMMON_LIBRARY_PACKAGES = {
+        'org.slf4j',
+        'org.apache.commons',
+        'org.apache.logging',
+        'com.fasterxml.jackson',
+        'com.google.gson',
+        'org.junit',
+        'org.mockito',
+        'org.hibernate',
+        'com.mysql',
+        'org.postgresql',
+        'redis.clients',
+        'com.mongodb',
+        'org.apache.kafka',
+        'org.apache.http',
+        'okhttp3',
+        'retrofit2'
+    }
+
+    # Tất cả packages cần exclude
+    ALL_BUILTIN_PACKAGES = (
+            JAVA_CORE_PACKAGES |
+            JAVA_EE_PACKAGES |
+            SPRING_PACKAGES |
+            COMMON_LIBRARY_PACKAGES
+    )
+
+    # Primitive types và wrapper classes
+    JAVA_PRIMITIVES = {
+        'boolean', 'byte', 'char', 'short', 'int', 'long', 'float', 'double',
+        'Boolean', 'Byte', 'Character', 'Short', 'Integer', 'Long', 'Float', 'Double',
+        'String', 'Object', 'Class', 'Void'
+    }
 
 class JavaParsingConstants:
     CLASS_NODE_TYPES = {
@@ -55,6 +166,12 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         self.comment_remover = JavaCommentRemover()
         self.endpoint_extractor = JavaEndpointExtractor()
         self.project_root = Path(root_path).resolve() if root_path else None
+        self.builtin_packages = (
+                JavaBuiltinPackages.JAVA_CORE_PACKAGES |
+                JavaBuiltinPackages.JAVA_EE_PACKAGES |
+                JavaBuiltinPackages.SPRING_PACKAGES |
+                JavaBuiltinPackages.COMMON_LIBRARY_PACKAGES
+        )
 
     def __enter__(self):
         self._server_ctx = self.lsp_service.start_server()
@@ -277,7 +394,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
 
             body, dependencies = self._extract_method_body_and_dependencies(method_node, content, file_path)
             endpoint = self.endpoint_extractor.extract_from_method(method_node, content, class_node)
-            logger.info(f"endpoint {endpoint}")
 
             # Build inheritance info
             inheritance_info = self._build_inheritance_info(method_name, implements, extends)
@@ -310,9 +426,9 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         return body, dependencies
 
     def _analyze_method_dependencies(self, body_node: Node, file_path: str) -> MethodDependencies:
-        method_calls = self._extract_method_calls(body_node, file_path)
-        variable_usage = self._extract_variable_usage(body_node, file_path)
-        field_access = self._extract_field_access(body_node, file_path)
+        method_calls = self.filter(self._extract_method_calls(body_node, file_path))
+        variable_usage = self.filter(self._extract_variable_usage(body_node, file_path))
+        field_access = self.filter(self._extract_field_access(body_node, file_path))
         return MethodDependencies(method_calls, variable_usage, field_access)
 
     def _extract_method_calls(self, body_node: Node, file_path: str) -> List[MethodCall]:
@@ -321,17 +437,21 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             method_call_query = Query(self.language, """
                 (method_invocation 
                     name: (identifier) @method_call
-                    arguments: (argument_list)
+                    arguments: (argument_list) @args
                 )
             """)
             query_cursor = QueryCursor(method_call_query)
-            captures = query_cursor.captures(body_node)
-            for name, nodes in captures.items():
-                if name == "method_call":
-                    for node in nodes:
-                        method_call = self._resolve_method_call_with_lsp(node, file_path)
-                        if method_call:
-                            method_calls.append(method_call)
+            matches = query_cursor.matches(body_node)
+
+            for match in matches:
+                item = match[1]
+                method_node = item.get("method_call")[0]
+                args_node = item.get("args")[0]
+
+                if method_node:
+                    method_call = self._resolve_method_call_with_lsp(method_node, args_node, file_path)
+                    if method_call:
+                        method_calls.append(method_call)
 
         except Exception as e:
             logger.debug(f"Error extracting method calls: {e}")
@@ -382,7 +502,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             logger.debug(f"Error extracting variable usage: {e}")
         return list(variable_usage)
 
-    def _resolve_method_call_with_lsp(self, node: Node, file_path: str) -> Optional[MethodCall]:
+    def _resolve_method_call_with_lsp(self, node: Node, args: Node, file_path: str) -> Optional[MethodCall]:
         if not self.lsp_service:
             return None
 
@@ -390,9 +510,58 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             line = node.start_point[0]
             col = node.start_point[1]
 
+            args_val = extract_content(args, Path(file_path).read_text())
+            logger.info(f"args_val {args_val}")
+
             lsp_result = self.lsp_service.request_hover(file_path, line, col)
 
-            return self._extract_method_from_hover(lsp_result)
+            if not lsp_result or "contents" not in lsp_result:
+                return None
+
+            contents = lsp_result["contents"]
+            if isinstance(contents, dict):
+                method = contents.get("value")
+            elif isinstance(contents, list) and contents:
+                if isinstance(contents[0], dict):
+                    method = contents[0].get("value")
+                else:
+                    method = str(contents[0])
+            elif isinstance(contents, str):
+                method = contents
+            else:
+                return None
+
+            if not method:
+                return None
+
+            # Ví dụ hover trả về:
+            # "String findById(String id, int size)"
+            sig_pattern = r'^\s*(?P<return>[\w<>, ?]+)\s+(?P<full>\w+(?:\.\w+)*\.\w+\s*\([^)]*\))'
+            match = re.search(sig_pattern, method.strip())
+            if not match:
+                return None
+
+            full_method_def = match.group("full")
+
+            params: List[MethodParam] = []
+            # TODO: extract value in method call
+            # if args_val:
+                # for p in args_val.split(","):
+                #     p = p.strip()
+                #     # parse "String id = \"default\""
+                #     m = re.match(r"([\w<>.\[\]]+)\s+(\w+)(?:\s*=\s*(.+))?", p)
+                #     if m:
+                #         param_type = m.group(1)
+                #         default_val = m.group(3).strip() if m.group(3) else None
+                #         params.append(MethodParam(type=param_type, value=default_val))
+                #     else:
+                #         # fallback khi không match
+                #         params.append(MethodParam(type=p, value=None))
+
+            return MethodCall(
+                name=full_method_def,
+                params=params
+            )
 
         except Exception as e:
             logger.debug(f"LSP method call resolution failed: {e}")
@@ -446,57 +615,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             return None
 
         return field
-
-    def _extract_method_from_hover(self, lsp_result) -> Optional[MethodCall]:
-        if not lsp_result or "contents" not in lsp_result:
-            return None
-
-        contents = lsp_result["contents"]
-        if isinstance(contents, dict):
-            method = contents.get("value")
-        elif isinstance(contents, list) and contents:
-            if isinstance(contents[0], dict):
-                method = contents[0].get("value")
-            else:
-                method = str(contents[0])
-        elif isinstance(contents, str):
-            method = contents
-        else:
-            return None
-
-        if not method:
-            return None
-
-        # Ví dụ hover trả về:
-        # "public String findById(String id = \"default\", int size = 10)"
-        sig_pattern = r"([\w<>.\[\]]+\s+)?([\w.]+)\.([a-zA-Z_]\w*)\(([^)]*)\)"
-        match = re.search(sig_pattern, method.strip())
-        if not match:
-            return None
-
-        class_name = match.group(2)        # com.edu.repository.QuizRepository
-        method_name = match.group(3)       # findById
-        param_str = match.group(4).strip() # String id = "default", int size = 10
-
-        params: List[MethodParam] = []
-        if param_str:
-            for p in param_str.split(","):
-                p = p.strip()
-                # parse "String id = \"default\""
-                m = re.match(r"([\w<>.\[\]]+)\s+(\w+)(?:\s*=\s*(.+))?", p)
-                if m:
-                    param_type = m.group(1)
-                    default_val = m.group(3).strip() if m.group(3) else None
-                    params.append(MethodParam(type=param_type, value=default_val))
-                else:
-                    # fallback khi không match
-                    params.append(MethodParam(type=p, value=None))
-
-        return MethodCall(
-            name=f"{class_name}.{method_name}",
-            params=params
-        )
-
 
     # Inheritance Analysis
     def _build_inheritance_info(self, method_name: str, implements: List[str], extends: Optional[str]) -> List[str]:
@@ -560,7 +678,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             if not isinstance(absolute_path, str):
                 logger.debug(f"absolutePath is not a string: {type(absolute_path)}")
                 return ""
-
+            absolute_path = absolute_path.replace('\\\\', '.')
             return self._strip_root(absolute_path)
         except Exception as e:
             logger.debug(f"Failed to extract qualified name from LSP result: {e}")
@@ -618,3 +736,30 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         except Exception as e:
             logger.debug(f"Failed to extract qualified name from external path {absolute_path}: {e}")
             return class_name
+
+    def filter(self, items: list) -> list:
+        filtered, seen = [], set()
+
+        for item in items:
+            # Nếu là object có attribute name
+            if hasattr(item, "name"):
+                name = item.name
+            elif isinstance(item, str):
+                name = item
+            else:
+                continue
+
+            # Loại primitive
+            if name in JavaBuiltinPackages.JAVA_PRIMITIVES:
+                continue
+
+            # Loại built-in package
+            if any(name.startswith(pkg + ".") or name == pkg for pkg in self.builtin_packages):
+                continue
+
+            # Tránh duplicate
+            if name not in seen:
+                filtered.append(item)
+                seen.add(name)
+
+        return filtered

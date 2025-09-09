@@ -1,14 +1,16 @@
 import json
 import logging
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from models.domain_models import CodeChunk
 from tree_sitter import Language, Parser, Node
 
+from models.domain_models import CodeChunk
 from models.domain_models import Method
+from threading import Lock
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +28,10 @@ class BaseCodeAnalyzer(ABC):
         self.language = language
         self.parser = parser
         self.comment_remover = None
+        self.max_workers = 8
+        self._lock = Lock()
 
     def parse_project(self, root: Path, project_id: str) -> List[CodeChunk]:
-        """
-        Template method: orchestrates scanning and processing.
-        Subclasses override `_get_code_files` and `_process_file`.
-        """
         logger.info(f"Starting analysis for project '{project_id}' at {root}")
 
         code_files = self._get_code_files(root)
@@ -42,13 +42,27 @@ class BaseCodeAnalyzer(ABC):
         logger.info(f"Found {len(code_files)} source files")
         chunks: List[CodeChunk] = []
 
-        for i, file in enumerate(code_files):
-            logger.debug(f"[{i+1}/{len(code_files)}] Processing file: {file}")
-            try:
-                file_chunks = self.process_file(file, project_id)
-                chunks.extend(file_chunks)
-            except Exception as e:
-                logger.error(f"Error processing {file}: {e}", exc_info=True)
+        # Use ThreadPoolExecutor for parallel processing
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            # Submit all file processing tasks
+            future_to_file = {
+                executor.submit(self.process_file, file, project_id): file
+                for file in code_files
+            }
+
+            # Collect results as they complete
+            for i, future in enumerate(as_completed(future_to_file), 1):
+                file = future_to_file[future]
+
+                with self._lock:  # Thread-safe logging
+                    logger.debug(f"[{i}/{len(code_files)}] Completed processing file: {file}")
+
+                try:
+                    file_chunks = future.result()
+                    chunks.extend(file_chunks)
+                except Exception as e:
+                    with self._lock:
+                        logger.error(f"Error processing {file}: {e}", exc_info=True)
 
         logger.info(f"Extracted {len(chunks)} code chunks total")
         return chunks

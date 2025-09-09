@@ -15,14 +15,7 @@ class JavaEndpointExtractor:
 
     def __init__(self):
         self.extractors: List[AnnotationDependencyExtractor] = [
-            SpringBootAnnotationExtractor({
-                '@GetMapping': 'GET',
-                '@PostMapping': 'POST',
-                '@PutMapping': 'PUT',
-                '@DeleteMapping': 'DELETE',
-                '@PatchMapping': 'PATCH',
-                '@RequestMapping': 'REQUEST',
-            }),
+            SpringBootAnnotationExtractor(),
             KafkaAnnotationExtractor(),
             RabbitAnnotationExtractor(),
             EventAnnotationExtractor(),
