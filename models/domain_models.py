@@ -32,7 +32,7 @@ class Method:
     name: str
     body: str
     method_calls: Tuple[MethodCall, ...]
-    variable_usage: Tuple[str, ...]
+    used_types: Tuple[str, ...]
     field_access: Tuple[str, ...]
     inheritance_info: Tuple[str, ...]
     extends_info: Tuple[str, ...]
@@ -75,7 +75,7 @@ class CodeChunk:
                 "name": method.name,
                 "body": method.body,
                 "method_calls": list(method.method_calls),
-                "variable_usage": list(method.variable_usage),
+                "used_types": list(method.used_types),
                 "field_access": list(method.field_access),
                 "inheritance_info": list(method.inheritance_info),
                 "extends_info": list(method.extends_info),

@@ -9,10 +9,10 @@ def main():
     """Example usage of the multi-language code analyzer."""
 
     args = {
-        # "project_path": "F:/01_projects/onestudy",
-        "project_path": "F:/01_projects/java_spring_demo",
-        "project_id": "demo",
-        "output": "./output/demo",
+        "project_path": "F:/01_projects/onestudy",
+        # "project_path": "F:/01_projects/java_spring_demo",
+        "project_id": "onestudy",
+        "output": "./output/onestudy",
         "language": "java",
         "remove_comments": True,
         "verbose": True

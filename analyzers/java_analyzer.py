@@ -140,7 +140,7 @@ class JavaParsingConstants:
 @dataclass
 class MethodDependencies:
     method_calls: List[str]
-    variable_usage: List[str]
+    used_types: List[str]
     field_access: List[str]
 
 class JavaCodeAnalyzerConstant:
@@ -403,7 +403,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 name=f"{full_class_name}.{method_name}",
                 body=body,
                 method_calls=tuple(dependencies.method_calls),
-                variable_usage=tuple(dependencies.variable_usage),
+                used_types=tuple(dependencies.used_types),
                 field_access=tuple(dependencies.field_access),
                 inheritance_info=tuple(inheritance_info),
                 extends_info=tuple(extends_info),
@@ -427,9 +427,9 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
 
     def _analyze_method_dependencies(self, body_node: Node, file_path: str) -> MethodDependencies:
         method_calls = self.filter(self._extract_method_calls(body_node, file_path))
-        variable_usage = self.filter(self._extract_variable_usage(body_node, file_path))
+        used_types = self.filter(self._extract_used_types(body_node, file_path))
         field_access = self.filter(self._extract_field_access(body_node, file_path))
-        return MethodDependencies(method_calls, variable_usage, field_access)
+        return MethodDependencies(method_calls, used_types, field_access)
 
     def _extract_method_calls(self, body_node: Node, file_path: str) -> List[MethodCall]:
         method_calls: List[MethodCall] = []
@@ -476,8 +476,8 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         return list(field_access)
 
 
-    def _extract_variable_usage(self, body_node: Node, file_path: str) -> List[str]:
-        variable_usage = set()
+    def _extract_used_types(self, body_node: Node, file_path: str) -> List[str]:
+        used_types = set()
         try:
             variable_query = Query(self.language, """
                 (local_variable_declaration type: (_) @var_type)
@@ -495,12 +495,12 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                     "generic_type", "array_element_type"
                 }:
                     for node in nodes:
-                        variable_ref = self._resolve_variable_with_lsp(node, file_path)
+                        variable_ref = self._resolve_used_type_with_lsp(node, file_path)
                         if variable_ref:
-                            variable_usage.add(variable_ref)
+                            used_types.add(variable_ref)
         except Exception as e:
             logger.debug(f"Error extracting variable usage: {e}")
-        return list(variable_usage)
+        return list(used_types)
 
     def _resolve_method_call_with_lsp(self, node: Node, args: Node, file_path: str) -> Optional[MethodCall]:
         if not self.lsp_service:
@@ -534,8 +534,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             if not method:
                 return None
 
-            # Ví dụ hover trả về:
-            # "String findById(String id, int size)"
             sig_pattern = r'^\s*(?P<return>[\w<>, ?]+)\s+(?P<full>\w+(?:\.\w+)*\.\w+\s*\([^)]*\))'
             match = re.search(sig_pattern, method.strip())
             if not match:
@@ -567,7 +565,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             logger.debug(f"LSP method call resolution failed: {e}")
             return None
 
-    def _resolve_variable_with_lsp(self, node: Node, file_path: str) -> Optional[str]:
+    def _resolve_used_type_with_lsp(self, node: Node, file_path: str) -> Optional[str]:
         if not self.lsp_service:
             return None
 
@@ -699,7 +697,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 logger.debug(f"abs path {abs_path}")
                 return str(abs_path)
 
-            result = str(relative).replace("\\", ".").replace("/", ".")
+            result = str(relative).replace("\\\\",".").replace("\\", ".").replace("/", ".")
             if result.endswith(".java"):
                 result = result[:-5]
 
@@ -755,6 +753,9 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
 
             # Loại built-in package
             if any(name.startswith(pkg + ".") or name == pkg for pkg in self.builtin_packages):
+                continue
+
+            if name.startswith("contents") or name.startswith("\\\\contents") or "contents.java.base" in name:
                 continue
 
             # Tránh duplicate
