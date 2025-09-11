@@ -8,6 +8,7 @@ from typing import List, Optional, Tuple
 
 from tree_sitter import Language, Parser, Node
 
+from database.neo4j_impl import get_neo4j_connection
 from models.domain_models import CodeChunk
 from models.domain_models import Method
 from threading import Lock
@@ -65,6 +66,8 @@ class BaseCodeAnalyzer(ABC):
                         logger.error(f"Error processing {file}: {e}", exc_info=True)
 
         logger.info(f"Extracted {len(chunks)} code chunks total")
+
+        self._build_knowledge_graph(chunks)
         return chunks
 
     def process_file(self, file_path: Path, project_id: str) -> List[CodeChunk]:
@@ -205,3 +208,7 @@ class BaseCodeAnalyzer(ABC):
     @abstractmethod
     def _get_parent_class(self, class_node: Node, content: str, package: str) -> Optional[str]:
         pass
+
+    def _build_knowledge_graph(self, chunks: List[CodeChunk]):
+        neo4j_conn = get_neo4j_connection()
+        neo4j_conn.import_code_chunks(chunks, 50)

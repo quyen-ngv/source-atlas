@@ -5,8 +5,7 @@ from neo4j.graph import Node
 from typing import List, Dict, Tuple
 from loguru import logger
 
-# Type alias for clarity
-CodeChunk = Dict[str, object]
+from models.domain_models import CodeChunk
 
 # Global Neo4j connection instance
 _neo4j_connection = None
@@ -60,50 +59,59 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
         node_data = []
 
         for chunk in batch:
-            project_id = chunk.get('project_id', '')
+            chunk = chunk.to_dict()
             file_path = chunk.get('file_path', '')
-            class_name = chunk.get('class_name', '')
-            method_name = chunk.get('method_name', '')
-            chunk_type = chunk.get('chunk_type', '')
-            content = chunk.get('content', '')
-            endpoints = chunk.get('endpoints', [])
-            summary = chunk.get('summary', '')
-            endpoint = str(endpoints)
+            class_name = chunk.get('full_class_name', '')
+            content = escape_for_cypher(chunk.get('content', ''))
 
             # Determine node type
-            if chunk_type == "controller" and method_name and endpoint:
-                node_type = "EndpointNode"
-            elif chunk_type == 'configuration':
+            if chunk.get('is_config_file'):
                 node_type = "ConfigurationNode"
-            elif method_name:
-                node_type = "MethodNode"
             else:
                 node_type = "ClassNode"
 
             node_data.append({
                 'node_type': node_type,
-                'project_id': project_id,
                 'file_path': file_path,
                 'class_name': class_name,
-                'method_name': method_name,
-                'chunk_type': chunk_type,
                 'content': content,
-                'endpoint': endpoint,
-                'summary': summary
             })
+
+            # Process methods within this chunk
+            methods = chunk.get('methods', [])
+            for method in methods:
+                method_file_path = chunk.get('file_path', '')
+                method_class_name = chunk.get('full_class_name', '')
+                method_name = method.get('name', '')
+                method_body = escape_for_cypher(method.get('body', ''))
+                method_field_access = str(method.get('field_access', []))
+                method_content = method_body + " " + method_field_access
+
+                # Determine method node type based on endpoint info
+                endpoints = method.get('endpoint', [])
+                if chunk.get('is_config_file'):
+                    method_node_type = "ConfigurationNode"
+                elif endpoints:
+                    method_node_type = "EndpointNode"
+                else:
+                    method_node_type = "MethodNode"
+
+                node_data.append({
+                    'node_type': method_node_type,
+                    'file_path': method_file_path,
+                    'class_name': method_class_name,
+                    'method_name': method_name,
+                    'content': method_content,
+                })
 
         # Create batch insert query
         batch_query = """
         UNWIND $nodes AS node
         CALL apoc.create.node([node.node_type], {
-            project_id: node.project_id,
             file_path: node.file_path,
             class_name: node.class_name,
-            method_name: node.method_name,
-            chunk_type: node.chunk_type,
-            content: node.content,
-            endpoint: node.endpoint,
-            summary: node.summary
+            method_name: CASE WHEN node.method_name IS NOT NULL THEN node.method_name ELSE null END,
+            content: node.content
         }) YIELD node AS created_node
         RETURN count(created_node)
         """
@@ -111,184 +119,148 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
         all_queries.append((batch_query, {'nodes': node_data}))
 
     # Phase 2: Create relationships using batch processing
-
     for i in range(0, len(chunks), batch_size):
         batch = chunks[i:i+batch_size]
 
         # Collect all relationships for this batch
         call_rels = []
-        called_by_rels = []
         implement_rels = []
-        implemented_by_rels = []
         extend_rels = []
-        extended_by_rels = []
         use_rels = []
-        used_by_rels = []
+        has_rels = []
 
         for chunk in batch:
-            class_name = chunk.get('class_name', '')
-            method_name = chunk.get('method_name', '')
+            chunk = chunk.to_dict()
+            chunk_class_name = chunk.get('full_class_name', '')
 
-            # CALL relationships
-            for call in chunk.get('calls', []):
-                if '.' in call:
-                    called_class, called_method = call.rsplit('.', 1)
-                    call_rels.append({
-                        'source_class': class_name,
-                        'source_method': method_name,
-                        'target_class': called_class,
-                        'target_method': called_method
-                    })
-
-            # CALLED_BY relationships
-            for called in chunk.get('called_by', []):
-                if '.' in called:
-                    caller_class, caller_method = called.rsplit('.', 1)
-                    called_by_rels.append({
-                        'source_class': class_name,
-                        'source_method': method_name,
-                        'target_class': caller_class,
-                        'target_method': caller_method
-                    })
-
-            # IMPLEMENT relationships
+            # Process implements relationships at class level
             for impl in chunk.get('implements', []):
-                if '.' in impl:
-                    impl_class, impl_method = impl.rsplit('.', 1)
-                    implement_rels.append({
-                        'source_class': class_name,
-                        'source_method': method_name,
-                        'target_class': impl_class,
-                        'target_method': impl_method
+                implement_rels.append({
+                    'source_class': chunk_class_name,
+                    'target_class': impl
+                })
+
+            # Process extends relationships at class level
+            extends = chunk.get('extends')
+            if extends:
+                extend_rels.append({
+                    'source_class': chunk_class_name,
+                    'target_class': extends
+                })
+
+            for used_method in chunk.get('methods', []):
+                if used_method:
+                    has_rels.append({
+                        'source_class': chunk_class_name,
+                        'target_method': used_method.get('name', '')
                     })
 
-            # IMPLEMENTED_BY relationships
-            for impl_by in chunk.get('implemented_by', []):
-                implemented_by_rels.append({
-                    'source_class': class_name,
-                    'source_method': method_name,
-                    'target_class': impl_by,
-                    'target_method': method_name
-                })
+            # Process method-level relationships
+            methods = chunk.get('methods', [])
+            for method in methods:
+                method_name = method.get('name', '')
 
-            # EXTEND relationships
-            for extend in chunk.get('extends', []):
-                if '.' in extend:
-                    extend_class, extend_method = extend.rsplit('.', 1)
-                    extend_rels.append({
-                        'source_class': class_name,
-                        'source_method': method_name,
-                        'target_class': extend_class,
-                        'target_method': extend_method
-                    })
+                # CALL relationships from method_calls
+                for call in method.get('method_calls', []):
+                    call_name = call.get('name', '')
+                    if call_name:
+                        call_rels.append({
+                            'source_class': chunk_class_name,
+                            'source_method': method_name,
+                            'target_method': call_name
+                        })
 
-            # EXTENDED_BY relationships
-            for extended_by in chunk.get('extended_by', []):
-                extended_by_rels.append({
-                    'source_class': class_name,
-                    'source_method': method_name,
-                    'target_class': extended_by,
-                    'target_method': method_name
-                })
+                # IMPLEMENT relationships from inheritance_info
+                for inheritance in method.get('inheritance_info', []):
+                    if inheritance:
+                        implement_rels.append({
+                            'source_class': chunk_class_name,
+                            'source_method': method_name,
+                            'target_method': inheritance
+                        })
 
-            # USE relationships
-            for var in chunk.get('vars', []):
-                use_rels.append({
-                    'source_class': class_name,
-                    'source_method': method_name,
-                    'target_class': var
-                })
-
-            for used_by in chunk.get('vars', []):
-                used_by_rels.append({
-                    'source_class': used_by,
-                    'target_class': class_name,
-                    'target_method': method_name
-                })
+                # USE relationships from used_types
+                for used_type in method.get('used_types', []):
+                    if used_type:
+                        use_rels.append({
+                            'source_class': chunk_class_name,
+                            'source_method': method_name,
+                            'target_class': used_type
+                        })
 
         # Create batch queries for each relationship type
         if call_rels:
             call_query = """
             UNWIND $relationships AS rel
             MATCH (source {class_name: rel.source_class, method_name: rel.source_method})
-            MATCH (target {class_name: rel.target_class, method_name: rel.target_method})
+            MATCH (target {method_name: rel.target_method})
             MERGE (source)-[:CALL]->(target)
             """
             all_queries.append((call_query, {'relationships': call_rels}))
 
-        if called_by_rels:
-            called_by_query = """
-            UNWIND $relationships AS rel
-            MATCH (source {class_name: rel.source_class, method_name: rel.source_method})
-            MATCH (target {class_name: rel.target_class, method_name: rel.target_method})
-            MERGE (source)-[:CALLED_BY]->(target)
-            """
-            all_queries.append((called_by_query, {'relationships': called_by_rels}))
-
         if implement_rels:
-            implement_query = """
-            UNWIND $relationships AS rel
-            MATCH (source {class_name: rel.source_class, method_name: rel.source_method})
-            MATCH (target {class_name: rel.target_class, method_name: rel.target_method})
-            MERGE (source)-[:IMPLEMENT]->(target)
-            """
-            all_queries.append((implement_query, {'relationships': implement_rels}))
+            # Handle class-level implements
+            class_implement_rels = [rel for rel in implement_rels if 'source_method' not in rel]
+            if class_implement_rels:
+                class_implement_query = """
+                UNWIND $relationships AS rel
+                MATCH (source {class_name: rel.source_class})
+                WHERE source.method_name IS NULL
+                MATCH (target {class_name: rel.target_class})
+                WHERE target.method_name IS NULL
+                MERGE (source)-[:IMPLEMENT]->(target)
+                """
+                all_queries.append((class_implement_query, {'relationships': class_implement_rels}))
 
-        if implemented_by_rels:
-            implemented_by_query = """
-            UNWIND $relationships AS rel
-            MATCH (source {class_name: rel.source_class, method_name: rel.source_method})
-            MATCH (target {class_name: rel.target_class, method_name: rel.target_method})
-            MERGE (source)-[:IMPLEMENTED_BY]->(target)
-            """
-            all_queries.append((implemented_by_query, {'relationships': implemented_by_rels}))
+            # Handle method-level implements
+            method_implement_rels = [rel for rel in implement_rels if 'source_method' in rel]
+            if method_implement_rels:
+                method_implement_query = """
+                UNWIND $relationships AS rel
+                MATCH (source {class_name: rel.source_class, method_name: rel.source_method})
+                MATCH (target {method_name: rel.target_method})
+                MERGE (source)-[:IMPLEMENT]->(target)
+                """
+                all_queries.append((method_implement_query, {'relationships': method_implement_rels}))
 
         if extend_rels:
             extend_query = """
             UNWIND $relationships AS rel
-            MATCH (source {class_name: rel.source_class, method_name: rel.source_method})
-            MATCH (target {class_name: rel.target_class, method_name: rel.target_method})
+            MATCH (source {class_name: rel.source_class})
+            WHERE source.method_name IS NULL
+            MATCH (target {class_name: rel.target_class})
+            WHERE target.method_name IS NULL
             MERGE (source)-[:EXTEND]->(target)
             """
             all_queries.append((extend_query, {'relationships': extend_rels}))
 
-        if extended_by_rels:
-            extended_by_query = """
-            UNWIND $relationships AS rel
-            MATCH (source {class_name: rel.source_class, method_name: rel.source_method})
-            MATCH (target {class_name: rel.target_class, method_name: rel.target_method})
-            MERGE (source)-[:EXTENDED_BY]->(target)
-            """
-            all_queries.append((extended_by_query, {'relationships': extended_by_rels}))
-
         if use_rels:
             use_query = """
             UNWIND $relationships AS rel
-            MATCH (source {class_name: rel.source_class})
-            WHERE (rel.source_method IS NULL OR source.method_name = rel.source_method)
+            MATCH (source {class_name: rel.source_class, method_name: rel.source_method})
             MATCH (target {class_name: rel.target_class})
             WHERE target.method_name IS NULL
             MERGE (source)-[:USE]->(target)
             """
             all_queries.append((use_query, {'relationships': use_rels}))
 
-        if used_by_rels:
-            used_by_query = """
+        if has_rels:
+            use_query = """
             UNWIND $relationships AS rel
             MATCH (source {class_name: rel.source_class})
-            MATCH (target {class_name: rel.target_class})
-            WHERE target.method_name = rel.target_method
-            MERGE (source)-[:USED_BY]->(target)
+            MATCH (target {method_name: rel.target_method})
+            WHERE target.method_name IS NOT NULL
+            MERGE (source)-[:USE]->(target)
             """
-            all_queries.append((used_by_query, {'relationships': used_by_rels}))
+            all_queries.append((use_query, {'relationships': has_rels}))
 
     return all_queries
 
 class Neo4jConnection:
     def __init__(self):
-        uri = os.getenv("APP_NEO4J_URI")
-        user = os.getenv("APP_NEO4J_USER")
-        password = os.getenv("APP_NEO4J_PASSWORD")
+        uri = os.getenv("APP_NEO4J_URI","bolt://localhost:7687")
+        user = os.getenv("APP_NEO4J_USER","neo4j")
+        password = os.getenv("APP_NEO4J_PASSWORD","your_password")
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
 
     def close(self):
@@ -330,6 +302,7 @@ class Neo4jConnection:
             "CREATE INDEX IF NOT EXISTS FOR (n:ClassNode) ON (n.class_name)",
             "CREATE INDEX IF NOT EXISTS FOR (n:EndpointNode) ON (n.class_name)",
             "CREATE INDEX IF NOT EXISTS FOR (n:MethodNode) ON (n.class_name)",
+            "CREATE INDEX IF NOT EXISTS FOR (n:ConfigurationNode) ON (n.class_name)",
         ]
 
         with self.driver.session() as session:
@@ -442,14 +415,13 @@ class Neo4jConnection:
             print(f"Error deleting project data in batches: {str(e)}")
             raise e
 
-    def find_endpoint_node(self, class_name: str, method_name: str | None, project_id: str) -> List[Node]:
-        logger.info(f"Finding endpoint node for class: {class_name}, method: {method_name}, project_id: {project_id}")
+    def find_endpoint_node(self, class_name: str, method_name: str | None) -> List[Node]:
+        logger.info(f"Finding endpoint node for class: {class_name}, method: {method_name}")
         with self.driver.session() as session:
             # Single query that handles both null and non-null method_name
             query = """
             MATCH path = (start)-[:IMPLEMENT|EXTEND|USED_BY|CALLED_BY*1..]->(endpoint:EndpointNode)
             WHERE start.class_name = $class_name 
-            AND start.project_id = $project_id
             AND (
                 ($method_name IS NULL AND start.method_name IS NULL) 
                 OR 
@@ -460,14 +432,13 @@ class Neo4jConnection:
 
             result = session.run(query, {
                 'class_name': class_name,
-                'method_name': method_name,
-                'project_id': project_id
+                'method_name': method_name
             })
 
             return [record['endpoint'] for record in result]
 
-    def find_related_nodes(self, class_name: str, method_name: str, project_id: str) -> List[Node]:
-        logger.info(f"Finding related nodes for class: {class_name}, method: {method_name}, project_id: {project_id}")
+    def find_related_nodes(self, class_name: str, method_name: str) -> List[Node]:
+        logger.info(f"Finding related nodes for class: {class_name}, method: {method_name}")
         with self.driver.session() as session:
             query = """
             MATCH (endpoint:EndpointNode {class_name: $class_name, method_name: $method_name})
@@ -484,14 +455,14 @@ class Neo4jConnection:
             UNWIND node_list AS node
             RETURN DISTINCT node
             """
-            result = session.run(query, {'class_name': class_name, 'method_name': method_name, 'project_id': project_id})
+            result = session.run(query, {'class_name': class_name, 'method_name': method_name})
             return [record['node'] for record in result]
 
-    def find_configuration_node(self, project_id: str) -> List[Node]:
+    def find_configuration_node(self) -> List[Node]:
         with self.driver.session() as session:
             query = """
-            MATCH (configuration:ConfigurationNode {project_id: $project_id})
+            MATCH (configuration:ConfigurationNode)
             RETURN configuration
             """
-            result = session.run(query, {'project_id': project_id})
+            result = session.run(query)
             return [record['configuration'] for record in result]

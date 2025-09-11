@@ -3,12 +3,14 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
 
+
 @dataclass
 class Field:
     name: str
     type: str
     full_type: str
     annotations: Tuple[str, ...]
+
 
 @dataclass
 class RestEndpoint:
@@ -17,15 +19,24 @@ class RestEndpoint:
     produces: str = ""
     consumes: str = ""
 
+
 @dataclass
 class MethodParam:
     type: str = ""
     value: str = None
 
+
 @dataclass
 class MethodCall:
     name: str = ""
     params: List[MethodParam] = field(default_factory=list)
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "params": self.params
+        }
+
 
 @dataclass
 class Method:
@@ -38,6 +49,19 @@ class Method:
     extends_info: Tuple[str, ...]
     endpoint: Optional[RestEndpoint]
 
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "body": self.body,
+            "method_calls": self.method_calls,
+            "used_types": self.used_types,
+            "field_access": self.field_access,
+            "inheritance_fino": self.inheritance_info,
+            "extends_info": self.extends_info,
+            "endpoint": self.endpoint
+        }
+
+
 class MethodType(Enum):
     REGULAR = "regular"
     GETTER = "getter"
@@ -46,6 +70,7 @@ class MethodType(Enum):
     STATIC = "static"
     REST_ENDPOINT = "rest_endpoint"
     OVERRIDE = "override"
+
 
 @dataclass
 class CodeChunk:
@@ -74,7 +99,8 @@ class CodeChunk:
             "methods": [{
                 "name": method.name,
                 "body": method.body,
-                "method_calls": list(method.method_calls),
+                "method_calls": [{"name": method_call.name,
+                                  "params": method_call.params} for method_call in method.method_calls],
                 "used_types": list(method.used_types),
                 "field_access": list(method.field_access),
                 "inheritance_info": list(method.inheritance_info),

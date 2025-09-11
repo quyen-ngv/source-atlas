@@ -164,8 +164,8 @@
         "method_calls": [],
         "used_types": [],
         "field_access": [
-          "int code",
-          "String message"
+          "String message",
+          "int code"
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -214,35 +214,6 @@
     "is_config_file": false
   },
   {
-    "package": "com.edu.java_spring_demo",
-    "class_name": "JavaSpringDemoApplication",
-    "full_class_name": "com.edu.java_spring_demo.JavaSpringDemoApplication",
-    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\JavaSpringDemoApplication.java",
-    "content": "@SpringBootApplication\npublic class JavaSpringDemoApplication {\n\n    public static void main(String[] args) {\n        System.out.println(Constant.COUNTRY);\n        SpringApplication.run(JavaSpringDemoApplication.class, args);\n    }\n\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [
-      {
-        "name": "com.edu.java_spring_demo.JavaSpringDemoApplication.main(String[] args)",
-        "body": "public static void main(String[] args) {\n        System.out.println(Constant.COUNTRY);\n        SpringApplication.run(JavaSpringDemoApplication.class, args);\n    }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [
-          "PrintStream out",
-          "String COUNTRY = \"VN\""
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": []
-      }
-    ],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "is_config_file": false
-  },
-  {
     "package": "com.edu.java_spring_demo.service",
     "class_name": "CommonServiceImpl",
     "full_class_name": "com.edu.java_spring_demo.service.CommonServiceImpl",
@@ -259,9 +230,9 @@
         "method_calls": [],
         "used_types": [],
         "field_access": [
-          "String EMAIL = \"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$\"",
+          "String COUNTRY = \"VN\"",
           "com.edu.java_spring_demo.type.Constant.Regex",
-          "String COUNTRY = \"VN\""
+          "String EMAIL = \"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$\""
         ],
         "inheritance_info": [
           "com.edu.java_spring_demo.service.CommonService.getPersons()"
@@ -289,6 +260,35 @@
     "is_config_file": false
   },
   {
+    "package": "com.edu.java_spring_demo",
+    "class_name": "JavaSpringDemoApplication",
+    "full_class_name": "com.edu.java_spring_demo.JavaSpringDemoApplication",
+    "file_path": "F:\\01_projects\\java_spring_demo\\src\\main\\java\\com\\edu\\java_spring_demo\\JavaSpringDemoApplication.java",
+    "content": "@SpringBootApplication\npublic class JavaSpringDemoApplication {\n\n    public static void main(String[] args) {\n        System.out.println(Constant.COUNTRY);\n        SpringApplication.run(JavaSpringDemoApplication.class, args);\n    }\n\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.edu.java_spring_demo.JavaSpringDemoApplication.main(String[] args)",
+        "body": "public static void main(String[] args) {\n        System.out.println(Constant.COUNTRY);\n        SpringApplication.run(JavaSpringDemoApplication.class, args);\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "String COUNTRY = \"VN\"",
+          "PrintStream out"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": []
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "is_config_file": false
+  },
+  {
     "package": "com.edu.java_spring_demo.controller",
     "class_name": "CommonController",
     "full_class_name": "com.edu.java_spring_demo.controller.CommonController",
@@ -303,8 +303,8 @@
         "method_calls": [],
         "used_types": [],
         "field_access": [
-          "String EMAIL = \"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$\"",
           "KafkaTemplate<String, String> kafkaTemplate",
+          "String EMAIL = \"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$\"",
           "com.edu.java_spring_demo.type.Constant.Regex",
           "CommonService commonService"
         ],
@@ -321,9 +321,7 @@
             "params": []
           }
         ],
-        "used_types": [
-          "F:\\_side_projects\\source_atlas\\.contents.java.base\\java.lang\\String.class"
-        ],
+        "used_types": [],
         "field_access": [],
         "inheritance_info": [],
         "extends_info": [],
@@ -378,10 +376,7 @@
             "params": []
           }
         ],
-        "used_types": [
-          "F:\\_side_projects\\source_atlas\\.contents.java.base\\java.lang\\String.class",
-          "F:\\_side_projects\\source_atlas\\.contents.java.base\\java.util\\Map.class"
-        ],
+        "used_types": [],
         "field_access": [
           "PrintStream out"
         ],
