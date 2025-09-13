@@ -1,11 +1,11 @@
 import uuid
-import os
 from neo4j import GraphDatabase
 from neo4j.graph import Node
 from typing import List, Dict, Tuple
 from loguru import logger
+from config import config
 
-from models.domain_models import CodeChunk
+from models.domain_models import CodeChunk, MethodType
 
 # Global Neo4j connection instance
 _neo4j_connection = None
@@ -59,13 +59,12 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
         node_data = []
 
         for chunk in batch:
-            chunk = chunk.to_dict()
-            file_path = chunk.get('file_path', '')
-            class_name = chunk.get('full_class_name', '')
-            content = escape_for_cypher(chunk.get('content', ''))
+            file_path = chunk.file_path
+            class_name = chunk.full_class_name
+            content = escape_for_cypher(chunk.content)
 
             # Determine node type
-            if chunk.get('is_config_file'):
+            if chunk.is_config_file:
                 node_type = "ConfigurationNode"
             else:
                 node_type = "ClassNode"
@@ -78,18 +77,18 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
             })
 
             # Process methods within this chunk
-            methods = chunk.get('methods', [])
+            methods = chunk.methods
             for method in methods:
-                method_file_path = chunk.get('file_path', '')
-                method_class_name = chunk.get('full_class_name', '')
-                method_name = method.get('name', '')
-                method_body = escape_for_cypher(method.get('body', ''))
-                method_field_access = str(method.get('field_access', []))
+                method_file_path = chunk.file_path
+                method_class_name = chunk.full_class_name
+                method_name = method.name
+                method_body = escape_for_cypher(method.body)
+                method_field_access = str(method.field_access)
                 method_content = method_body + " " + method_field_access
 
                 # Determine method node type based on endpoint info
-                endpoints = method.get('endpoint', [])
-                if chunk.get('is_config_file'):
+                endpoints = method.endpoint
+                if chunk.is_config_file:
                     method_node_type = "ConfigurationNode"
                 elif endpoints:
                     method_node_type = "EndpointNode"
@@ -130,39 +129,40 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
         has_rels = []
 
         for chunk in batch:
-            chunk = chunk.to_dict()
-            chunk_class_name = chunk.get('full_class_name', '')
+            chunk_class_name = chunk.full_class_name
 
             # Process implements relationships at class level
-            for impl in chunk.get('implements', []):
+            for impl in chunk.implements:
                 implement_rels.append({
                     'source_class': chunk_class_name,
                     'target_class': impl
                 })
 
             # Process extends relationships at class level
-            extends = chunk.get('extends')
+            extends = chunk.extends
             if extends:
                 extend_rels.append({
                     'source_class': chunk_class_name,
                     'target_class': extends
                 })
 
-            for used_method in chunk.get('methods', []):
+            for used_method in chunk.methods:
                 if used_method:
                     has_rels.append({
                         'source_class': chunk_class_name,
-                        'target_method': used_method.get('name', '')
+                        'target_class': chunk_class_name,
+                        'target_method': used_method.name
                     })
 
             # Process method-level relationships
-            methods = chunk.get('methods', [])
+            methods = chunk.methods
             for method in methods:
-                method_name = method.get('name', '')
+
+                method_name = method.name
 
                 # CALL relationships from method_calls
-                for call in method.get('method_calls', []):
-                    call_name = call.get('name', '')
+                for call in method.method_calls:
+                    call_name = call.name
                     if call_name:
                         call_rels.append({
                             'source_class': chunk_class_name,
@@ -171,7 +171,7 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
                         })
 
                 # IMPLEMENT relationships from inheritance_info
-                for inheritance in method.get('inheritance_info', []):
+                for inheritance in method.inheritance_info:
                     if inheritance:
                         implement_rels.append({
                             'source_class': chunk_class_name,
@@ -180,14 +180,14 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
                         })
 
                 # USE relationships from used_types
-                for used_type in method.get('used_types', []):
+                for used_type in method.used_types:
                     if used_type:
                         use_rels.append({
                             'source_class': chunk_class_name,
                             'source_method': method_name,
                             'target_class': used_type
                         })
-
+        logger.info(f"use_rels {use_rels}")
         # Create batch queries for each relationship type
         if call_rels:
             call_query = """
@@ -248,9 +248,10 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
             use_query = """
             UNWIND $relationships AS rel
             MATCH (source {class_name: rel.source_class})
+            MATCH (target {class_name: rel.target_class})
             MATCH (target {method_name: rel.target_method})
-            WHERE target.method_name IS NOT NULL
-            MERGE (source)-[:USE]->(target)
+            WHERE target.method_name IS NOT NULL and source.method_name IS NULL
+            MERGE (source)-[:HAS]->(target)
             """
             all_queries.append((use_query, {'relationships': has_rels}))
 
@@ -258,10 +259,13 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
 
 class Neo4jConnection:
     def __init__(self):
-        uri = os.getenv("APP_NEO4J_URI","bolt://localhost:7687")
-        user = os.getenv("APP_NEO4J_USER","neo4j")
-        password = os.getenv("APP_NEO4J_PASSWORD","your_password")
-        self.driver = GraphDatabase.driver(uri, auth=(user, password))
+        self.driver = GraphDatabase.driver(
+            config.APP_NEO4J_URL,
+            auth=(config.APP_NEO4J_USER, config.APP_NEO4J_PASSWORD),
+            max_connection_lifetime=config.NEO4J_MAX_CONNECTION_LIFETIME,
+            max_connection_pool_size=config.NEO4J_MAX_CONNECTION_POOL_SIZE,
+            connection_timeout=config.NEO4J_CONNECTION_TIMEOUT
+        )
 
     def close(self):
         self.driver.close()

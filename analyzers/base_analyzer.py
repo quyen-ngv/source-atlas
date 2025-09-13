@@ -2,8 +2,9 @@ import json
 import logging
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
+from threading import Lock
 from typing import List, Optional, Tuple
 
 from tree_sitter import Language, Parser, Node
@@ -11,9 +12,10 @@ from tree_sitter import Language, Parser, Node
 from database.neo4j_impl import get_neo4j_connection
 from models.domain_models import CodeChunk
 from models.domain_models import Method
-from threading import Lock
+from utils.common import convert
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ClassParsingContext:
@@ -23,13 +25,14 @@ class ClassParsingContext:
     is_nested: bool
     parent_class: Optional[str] = None
 
+
 class BaseCodeAnalyzer(ABC):
 
     def __init__(self, language: Language, parser: Parser):
         self.language = language
         self.parser = parser
         self.comment_remover = None
-        self.max_workers = 8
+        self.max_workers = 16
         self._lock = Lock()
 
     def parse_project(self, root: Path, project_id: str) -> List[CodeChunk]:
@@ -126,7 +129,6 @@ class BaseCodeAnalyzer(ABC):
             logger.error(f"Error parsing class node: {e}")
             return None
 
-
     def _build_class_context(self, class_node: Node, content: str, root_node: Node) -> Optional[ClassParsingContext]:
         class_name = self._extract_class_name(class_node, content)
         logger.info(f"class_name {class_name}")
@@ -136,7 +138,7 @@ class BaseCodeAnalyzer(ABC):
         package = self._extract_package(root_node, content)
         is_nested = self._is_nested_class(class_node, root_node)
         full_class_name = self._build_full_class_name(class_name, package, class_node, content, root_node)
-        parent_class=self._get_parent_class(class_node, content, package) if is_nested else None,
+        parent_class = self._get_parent_class(class_node, content, package) if is_nested else None,
 
         return ClassParsingContext(
             package=package,
@@ -159,8 +161,7 @@ class BaseCodeAnalyzer(ABC):
 
         logger.info(f"Exporting {len(chunks)} chunks to {output_path}")
         output_path.mkdir(parents=True, exist_ok=True)
-        chunks_data = [asdict(c) for c in chunks]
-
+        chunks_data = [convert(c) for c in chunks]
         with open(output_path / "chunks.json", "w", encoding="utf-8") as f:
             json.dump(chunks_data, f, indent=2, ensure_ascii=False)
 

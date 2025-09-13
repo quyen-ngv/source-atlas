@@ -10,7 +10,7 @@ from tree_sitter_language_pack import get_language
 from analyzers.base_analyzer import BaseCodeAnalyzer
 from extractors.java.java_extractor import JavaEndpointExtractor
 from lsp.implements.java_lsp import JavaLSPService
-from models.domain_models import Method, MethodCall, MethodParam
+from models.domain_models import Method, MethodCall, MethodParam, MethodType
 from utils.comment_remover import JavaCommentRemover
 from utils.tree_sitter_helper import extract_content
 
@@ -326,7 +326,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             query_cursor = QueryCursor(extends_query)
             captures = query_cursor.captures(class_node)
             if captures:
-                superclass_node = captures.values()[0]
+                superclass_node = captures.get('superclass')[0] or captures.get('generic_superclass')[0]
                 return self._resolve_type_with_lsp(superclass_node, file_path)
         except Exception as e:
             logger.debug(f"Error extracting extends: {e}")
@@ -379,6 +379,10 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                         full_class_name, class_node, file_path
                     )
                     if method:
+                        if child.type == 'constructor_declaration':
+                            method.type = MethodType.CONSTRUCTOR
+                        else:
+                            method.type = MethodType.REGULAR
                         methods.append(method)
         except Exception as e:
             logger.debug(f"Error extracting class methods: {e}")
@@ -407,7 +411,8 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 field_access=tuple(dependencies.field_access),
                 inheritance_info=tuple(inheritance_info),
                 extends_info=tuple(extends_info),
-                endpoint=endpoint
+                endpoint=endpoint,
+                type=None
             )
         except Exception as e:
             logger.debug(f"Error processing method node: {e}")
@@ -415,12 +420,11 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
 
     def _extract_method_body_and_dependencies(self, method_node: Node, content: str, file_path: str) -> Tuple[str, MethodDependencies]:
         body = ""
-        dependencies = MethodDependencies([], [], [])
+        dependencies = self._analyze_method_dependencies(method_node, file_path)
 
         for child in method_node.children:
             if child.type == 'block' or child.type == 'constructor_body':
                 body = extract_content(method_node, content)
-                dependencies = self._analyze_method_dependencies(child, file_path)
                 break
 
         return body, dependencies
@@ -511,8 +515,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             col = node.start_point[1]
 
             args_val = extract_content(args, Path(file_path).read_text())
-            logger.info(f"args_val {args_val}")
-
             lsp_result = self.lsp_service.request_hover(file_path, line, col)
 
             if not lsp_result or "contents" not in lsp_result:
@@ -694,7 +696,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             try:
                 relative = abs_path.relative_to(root)
             except ValueError:
-                logger.debug(f"abs path {abs_path}")
                 return str(abs_path)
 
             result = str(relative).replace("\\\\",".").replace("\\", ".").replace("/", ".")

@@ -1,5 +1,6 @@
 import logging
 import sys
+import time
 from pathlib import Path
 
 from factory.analyzer_factory import AnalyzerFactory
@@ -7,10 +8,11 @@ from factory.analyzer_factory import AnalyzerFactory
 
 def main():
     """Example usage of the multi-language code analyzer."""
+    start_time = time.perf_counter()
 
     args = {
         # "project_path": "F:/01_projects/onestudy",
-        "project_path": "F:/01_projects/java_spring_demo",
+        "project_path": "F:/01_projects/spring-demo",
         "project_id": "demo",
         "output": "./output/demo",
         "language": "java",
@@ -47,8 +49,11 @@ def main():
             analyzer.export_chunks(chunks, output_path)
         
         logger.info(f"\nAnalysis completed successfully!")
+
+        elapsed = time.perf_counter() - start_time
+        logger.info(f"Analysis completed successfully in {elapsed:.2f} seconds!")
         return 0
-        
+
     except Exception as e:
         logger.error(f"Error analyzing project: {e}")
         import traceback

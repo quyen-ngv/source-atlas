@@ -3,7 +3,6 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
 
-
 @dataclass
 class Field:
     name: str
@@ -37,6 +36,14 @@ class MethodCall:
             "params": self.params
         }
 
+class MethodType(Enum):
+    REGULAR = "regular"
+    GETTER = "getter"
+    SETTER = "setter"
+    CONSTRUCTOR = "constructor"
+    STATIC = "static"
+    REST_ENDPOINT = "rest_endpoint"
+    OVERRIDE = "override"
 
 @dataclass
 class Method:
@@ -48,6 +55,7 @@ class Method:
     inheritance_info: Tuple[str, ...]
     extends_info: Tuple[str, ...]
     endpoint: Optional[RestEndpoint]
+    type: MethodType
 
     def to_dict(self):
         return {
@@ -58,19 +66,9 @@ class Method:
             "field_access": self.field_access,
             "inheritance_fino": self.inheritance_info,
             "extends_info": self.extends_info,
-            "endpoint": self.endpoint
+            "endpoint": self.endpoint,
+            "type": self.type
         }
-
-
-class MethodType(Enum):
-    REGULAR = "regular"
-    GETTER = "getter"
-    SETTER = "setter"
-    CONSTRUCTOR = "constructor"
-    STATIC = "static"
-    REST_ENDPOINT = "rest_endpoint"
-    OVERRIDE = "override"
-
 
 @dataclass
 class CodeChunk:
@@ -105,7 +103,8 @@ class CodeChunk:
                 "field_access": list(method.field_access),
                 "inheritance_info": list(method.inheritance_info),
                 "extends_info": list(method.extends_info),
-                "endpoint": method.endpoint
+                "endpoint": method.endpoint,
+                "type": method.type
             } for method in self.methods],
             "is_nested": self.is_nested,
             "parent_class": self.parent_class,
