@@ -453,10 +453,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                         full_class_name, class_node, file_path, import_mapping
                     )
                     if method:
-                        if child.type == 'constructor_declaration':
-                            method.type = ChunkType.CONSTRUCTOR
-                        else:
-                            method.type = ChunkType.REGULAR
                         methods.append(method)
         except Exception as e:
             logger.debug(f"Error extracting class methods: {e}")
