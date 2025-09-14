@@ -414,13 +414,13 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             line = node.start_point[0]
             col = node.start_point[1]
             lsp_results = self.lsp_service.request_definition(file_path, line, col)
-            return self._process_lsp_results(lsp_results)
+            return self._resolve_lsp_type_response(lsp_results)
 
         except Exception as e:
             logger.debug(f"LSP resolution failed: {e}")
             return node.text.decode('utf8')
 
-    def _process_lsp_results(self, lsp_results, type_name: str = None) -> Optional[str]:
+    def _resolve_lsp_type_response(self, lsp_results, type_name: str = None) -> Optional[str]:
         if not lsp_results:
             return None
 
@@ -672,7 +672,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             col = node.start_point[1]
 
             lsp_results = self.lsp_service.request_definition(file_path, line, col)
-            return self._process_lsp_results(lsp_results, type_name)
+            return self._resolve_lsp_type_response(lsp_results, type_name)
 
         except Exception as e:
             logger.debug(f"LSP variable resolution failed: {e}")
