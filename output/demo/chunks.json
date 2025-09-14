@@ -1,66 +1,6 @@
 [
   {
     "package": "com.example.springdemo.entity",
-    "class_name": "OrderItem",
-    "full_class_name": "com.example.springdemo.entity.OrderItem",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\OrderItem.java",
-    "content": "@Entity\n@Table(name = \"order_items\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class OrderItem {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"order_id\", nullable = false)\n    private Order order;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"product_id\", nullable = false)\n    private Product product;\n    \n    @Column(nullable = false)\n    private Integer quantity;\n    \n    @Column(precision = 10, scale = 2)\n    private BigDecimal unitPrice;\n    \n    @Column(precision = 10, scale = 2)\n    private BigDecimal totalPrice;\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.entity",
-    "class_name": "User",
-    "full_class_name": "com.example.springdemo.entity.User",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\User.java",
-    "content": "@Entity\n@Table(name = \"users\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class User {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @Column(unique = true, nullable = false)\n    private String username;\n    \n    @Column(unique = true, nullable = false)\n    private String email;\n    \n    private String firstName;\n    private String lastName;\n    \n    @Enumerated(EnumType.STRING)\n    private UserRole role;\n    \n    @Enumerated(EnumType.STRING)\n    private UserStatus status;\n    \n    @OneToMany(mappedBy = \"user\", cascade = CascadeType.ALL, fetch = FetchType.LAZY)\n    private List<Order> orders = new ArrayList<>();\n    \n    @OneToMany(mappedBy = \"user\", cascade = CascadeType.ALL, fetch = FetchType.LAZY)\n    private List<Notification> notifications = new ArrayList<>();\n    \n    @CreationTimestamp\n    private LocalDateTime createdAt;\n    \n    @UpdateTimestamp\n    private LocalDateTime updatedAt;\n    \n    public enum UserRole {\n        ADMIN, MANAGER, CUSTOMER, GUEST\n    }\n    \n    public enum UserStatus {\n        ACTIVE, INACTIVE, SUSPENDED, PENDING\n    }\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.entity",
-    "class_name": "UserRole",
-    "full_class_name": "com.example.springdemo.entity.User.UserRole",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\User.java",
-    "content": "public enum UserRole {\n        ADMIN, MANAGER, CUSTOMER, GUEST\n    }",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      "com.example.springdemo.entity.User"
-    ],
-    "is_nested": true,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.entity",
-    "class_name": "UserStatus",
-    "full_class_name": "com.example.springdemo.entity.User.UserStatus",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\User.java",
-    "content": "public enum UserStatus {\n        ACTIVE, INACTIVE, SUSPENDED, PENDING\n    }",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      "com.example.springdemo.entity.User"
-    ],
-    "is_nested": true,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.entity",
     "class_name": "OrderEvent",
     "full_class_name": "com.example.springdemo.entity.OrderEvent",
     "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\OrderEvent.java",
@@ -85,6 +25,126 @@
     "methods": [],
     "parent_class": [
       "com.example.springdemo.entity.OrderEvent"
+    ],
+    "is_nested": true,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.config",
+    "class_name": "JpaConfig",
+    "full_class_name": "com.example.springdemo.config.JpaConfig",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\config\\JpaConfig.java",
+    "content": "@Configuration\n@EnableJpaRepositories(basePackages = \"com.example.springdemo.repository\")\n@EnableJpaAuditing\n@EnableTransactionManagement\npublic class JpaConfig {\n    \n    \n    \n}",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "configuration"
+  },
+  {
+    "package": "com.example.springdemo.entity",
+    "class_name": "OrderItem",
+    "full_class_name": "com.example.springdemo.entity.OrderItem",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\OrderItem.java",
+    "content": "@Entity\n@Table(name = \"order_items\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class OrderItem {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"order_id\", nullable = false)\n    private Order order;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"product_id\", nullable = false)\n    private Product product;\n    \n    @Column(nullable = false)\n    private Integer quantity;\n    \n    @Column(precision = 10, scale = 2)\n    private BigDecimal unitPrice;\n    \n    @Column(precision = 10, scale = 2)\n    private BigDecimal totalPrice;\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.entity",
+    "class_name": "Notification",
+    "full_class_name": "com.example.springdemo.entity.Notification",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\Notification.java",
+    "content": "@Entity\n@Table(name = \"notifications\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class Notification {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"user_id\", nullable = false)\n    private User user;\n    \n    @Column(nullable = false)\n    private String title;\n    \n    @Column(columnDefinition = \"TEXT\")\n    private String message;\n    \n    @Enumerated(EnumType.STRING)\n    private NotificationType type;\n    \n    @Enumerated(EnumType.STRING)\n    private NotificationStatus status;\n    \n    private String metadata;\n    \n    @CreationTimestamp\n    private LocalDateTime createdAt;\n    \n    public enum NotificationType {\n        ORDER_UPDATE, PAYMENT_CONFIRMATION, SHIPMENT_TRACKING, PROMOTION, SYSTEM_ALERT\n    }\n    \n    public enum NotificationStatus {\n        UNREAD, READ, ARCHIVED\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.entity",
+    "class_name": "NotificationType",
+    "full_class_name": "com.example.springdemo.entity.Notification.NotificationType",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\Notification.java",
+    "content": "public enum NotificationType {\n        ORDER_UPDATE, PAYMENT_CONFIRMATION, SHIPMENT_TRACKING, PROMOTION, SYSTEM_ALERT\n    }",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      "com.example.springdemo.entity.Notification"
+    ],
+    "is_nested": true,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.entity",
+    "class_name": "NotificationStatus",
+    "full_class_name": "com.example.springdemo.entity.Notification.NotificationStatus",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\Notification.java",
+    "content": "public enum NotificationStatus {\n        UNREAD, READ, ARCHIVED\n    }",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      "com.example.springdemo.entity.Notification"
+    ],
+    "is_nested": true,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.entity",
+    "class_name": "Order",
+    "full_class_name": "com.example.springdemo.entity.Order",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\Order.java",
+    "content": "@Entity\n@Table(name = \"orders\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class Order {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @Column(unique = true, nullable = false)\n    private String orderNumber;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"user_id\", nullable = false)\n    private User user;\n    \n    @OneToMany(mappedBy = \"order\", cascade = CascadeType.ALL, fetch = FetchType.LAZY)\n    private List<OrderItem> orderItems = new ArrayList<>();\n    \n    @Column(precision = 10, scale = 2)\n    private BigDecimal totalAmount;\n    \n    @Enumerated(EnumType.STRING)\n    private OrderStatus status;\n    \n    @Enumerated(EnumType.STRING)\n    private PaymentStatus paymentStatus;\n    \n    @OneToMany(mappedBy = \"order\", cascade = CascadeType.ALL, fetch = FetchType.LAZY)\n    private List<OrderEvent> events = new ArrayList<>();\n    \n    @CreationTimestamp\n    private LocalDateTime createdAt;\n    \n    @UpdateTimestamp\n    private LocalDateTime updatedAt;\n    \n    public enum OrderStatus {\n        PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED\n    }\n    \n    public enum PaymentStatus {\n        PENDING, PAID, FAILED, REFUNDED, PARTIALLY_REFUNDED\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.entity",
+    "class_name": "OrderStatus",
+    "full_class_name": "com.example.springdemo.entity.Order.OrderStatus",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\Order.java",
+    "content": "public enum OrderStatus {\n        PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED\n    }",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      "com.example.springdemo.entity.Order"
+    ],
+    "is_nested": true,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.entity",
+    "class_name": "PaymentStatus",
+    "full_class_name": "com.example.springdemo.entity.Order.PaymentStatus",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\Order.java",
+    "content": "public enum PaymentStatus {\n        PENDING, PAID, FAILED, REFUNDED, PARTIALLY_REFUNDED\n    }",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      "com.example.springdemo.entity.Order"
     ],
     "is_nested": true,
     "type": "regular"
@@ -136,10 +196,10 @@
   },
   {
     "package": "com.example.springdemo.entity",
-    "class_name": "Order",
-    "full_class_name": "com.example.springdemo.entity.Order",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\Order.java",
-    "content": "@Entity\n@Table(name = \"orders\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class Order {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @Column(unique = true, nullable = false)\n    private String orderNumber;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"user_id\", nullable = false)\n    private User user;\n    \n    @OneToMany(mappedBy = \"order\", cascade = CascadeType.ALL, fetch = FetchType.LAZY)\n    private List<OrderItem> orderItems = new ArrayList<>();\n    \n    @Column(precision = 10, scale = 2)\n    private BigDecimal totalAmount;\n    \n    @Enumerated(EnumType.STRING)\n    private OrderStatus status;\n    \n    @Enumerated(EnumType.STRING)\n    private PaymentStatus paymentStatus;\n    \n    @OneToMany(mappedBy = \"order\", cascade = CascadeType.ALL, fetch = FetchType.LAZY)\n    private List<OrderEvent> events = new ArrayList<>();\n    \n    @CreationTimestamp\n    private LocalDateTime createdAt;\n    \n    @UpdateTimestamp\n    private LocalDateTime updatedAt;\n    \n    public enum OrderStatus {\n        PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED\n    }\n    \n    public enum PaymentStatus {\n        PENDING, PAID, FAILED, REFUNDED, PARTIALLY_REFUNDED\n    }\n}",
+    "class_name": "User",
+    "full_class_name": "com.example.springdemo.entity.User",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\User.java",
+    "content": "@Entity\n@Table(name = \"users\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class User {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @Column(unique = true, nullable = false)\n    private String username;\n    \n    @Column(unique = true, nullable = false)\n    private String email;\n    \n    private String firstName;\n    private String lastName;\n    \n    @Enumerated(EnumType.STRING)\n    private UserRole role;\n    \n    @Enumerated(EnumType.STRING)\n    private UserStatus status;\n    \n    @OneToMany(mappedBy = \"user\", cascade = CascadeType.ALL, fetch = FetchType.LAZY)\n    private List<Order> orders = new ArrayList<>();\n    \n    @OneToMany(mappedBy = \"user\", cascade = CascadeType.ALL, fetch = FetchType.LAZY)\n    private List<Notification> notifications = new ArrayList<>();\n    \n    @CreationTimestamp\n    private LocalDateTime createdAt;\n    \n    @UpdateTimestamp\n    private LocalDateTime updatedAt;\n    \n    public enum UserRole {\n        ADMIN, MANAGER, CUSTOMER, GUEST\n    }\n    \n    public enum UserStatus {\n        ACTIVE, INACTIVE, SUSPENDED, PENDING\n    }\n}",
     "implements": [],
     "extends": null,
     "methods": [],
@@ -151,90 +211,30 @@
   },
   {
     "package": "com.example.springdemo.entity",
-    "class_name": "OrderStatus",
-    "full_class_name": "com.example.springdemo.entity.Order.OrderStatus",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\Order.java",
-    "content": "public enum OrderStatus {\n        PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED\n    }",
+    "class_name": "UserRole",
+    "full_class_name": "com.example.springdemo.entity.User.UserRole",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\User.java",
+    "content": "public enum UserRole {\n        ADMIN, MANAGER, CUSTOMER, GUEST\n    }",
     "implements": [],
     "extends": null,
     "methods": [],
     "parent_class": [
-      "com.example.springdemo.entity.Order"
+      "com.example.springdemo.entity.User"
     ],
     "is_nested": true,
     "type": "regular"
   },
   {
     "package": "com.example.springdemo.entity",
-    "class_name": "PaymentStatus",
-    "full_class_name": "com.example.springdemo.entity.Order.PaymentStatus",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\Order.java",
-    "content": "public enum PaymentStatus {\n        PENDING, PAID, FAILED, REFUNDED, PARTIALLY_REFUNDED\n    }",
+    "class_name": "UserStatus",
+    "full_class_name": "com.example.springdemo.entity.User.UserStatus",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\User.java",
+    "content": "public enum UserStatus {\n        ACTIVE, INACTIVE, SUSPENDED, PENDING\n    }",
     "implements": [],
     "extends": null,
     "methods": [],
     "parent_class": [
-      "com.example.springdemo.entity.Order"
-    ],
-    "is_nested": true,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.config",
-    "class_name": "JpaConfig",
-    "full_class_name": "com.example.springdemo.config.JpaConfig",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\config\\JpaConfig.java",
-    "content": "@Configuration\n@EnableJpaRepositories(basePackages = \"com.example.springdemo.repository\")\n@EnableJpaAuditing\n@EnableTransactionManagement\npublic class JpaConfig {\n    \n    \n    \n}",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "configuration"
-  },
-  {
-    "package": "com.example.springdemo.entity",
-    "class_name": "Notification",
-    "full_class_name": "com.example.springdemo.entity.Notification",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\Notification.java",
-    "content": "@Entity\n@Table(name = \"notifications\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class Notification {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"user_id\", nullable = false)\n    private User user;\n    \n    @Column(nullable = false)\n    private String title;\n    \n    @Column(columnDefinition = \"TEXT\")\n    private String message;\n    \n    @Enumerated(EnumType.STRING)\n    private NotificationType type;\n    \n    @Enumerated(EnumType.STRING)\n    private NotificationStatus status;\n    \n    private String metadata;\n    \n    @CreationTimestamp\n    private LocalDateTime createdAt;\n    \n    public enum NotificationType {\n        ORDER_UPDATE, PAYMENT_CONFIRMATION, SHIPMENT_TRACKING, PROMOTION, SYSTEM_ALERT\n    }\n    \n    public enum NotificationStatus {\n        UNREAD, READ, ARCHIVED\n    }\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.entity",
-    "class_name": "NotificationType",
-    "full_class_name": "com.example.springdemo.entity.Notification.NotificationType",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\Notification.java",
-    "content": "public enum NotificationType {\n        ORDER_UPDATE, PAYMENT_CONFIRMATION, SHIPMENT_TRACKING, PROMOTION, SYSTEM_ALERT\n    }",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      "com.example.springdemo.entity.Notification"
-    ],
-    "is_nested": true,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.entity",
-    "class_name": "NotificationStatus",
-    "full_class_name": "com.example.springdemo.entity.Notification.NotificationStatus",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\Notification.java",
-    "content": "public enum NotificationStatus {\n        UNREAD, READ, ARCHIVED\n    }",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      "com.example.springdemo.entity.Notification"
+      "com.example.springdemo.entity.User"
     ],
     "is_nested": true,
     "type": "regular"
@@ -268,31 +268,31 @@
   },
   {
     "package": "com.example.springdemo.observer",
-    "class_name": "NotificationEvent",
-    "full_class_name": "com.example.springdemo.observer.NotificationEvent",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\observer\\NotificationEvent.java",
-    "content": "public class NotificationEvent extends ApplicationEvent {\n    \n    private final String eventType;\n    private final Object notificationData;\n    \n    public NotificationEvent(Object source, String eventType, Object notificationData) {\n        super(source);\n        this.eventType = eventType;\n        this.notificationData = notificationData;\n    }\n    \n    public String getEventType() {\n        return eventType;\n    }\n    \n    public Object getNotificationData() {\n        return notificationData;\n    }\n}",
+    "class_name": "UserEvent",
+    "full_class_name": "com.example.springdemo.observer.UserEvent",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\observer\\UserEvent.java",
+    "content": "public class UserEvent extends ApplicationEvent {\n    \n    private final String eventType;\n    private final Object userData;\n    \n    public UserEvent(Object source, String eventType, Object userData) {\n        super(source);\n        this.eventType = eventType;\n        this.userData = userData;\n    }\n    \n    public String getEventType() {\n        return eventType;\n    }\n    \n    public Object getUserData() {\n        return userData;\n    }\n}",
     "implements": [],
     "extends": "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class",
     "methods": [
       {
-        "name": "com.example.springdemo.observer.NotificationEvent.NotificationEvent(Object source, String eventType, Object notificationData)",
-        "body": "public NotificationEvent(Object source, String eventType, Object notificationData) {\n        super(source);\n        this.eventType = eventType;\n        this.notificationData = notificationData;\n    }",
+        "name": "com.example.springdemo.observer.UserEvent.UserEvent(Object source, String eventType, Object userData)",
+        "body": "public UserEvent(Object source, String eventType, Object userData) {\n        super(source);\n        this.eventType = eventType;\n        this.userData = userData;\n    }",
         "method_calls": [],
         "used_types": [],
         "field_access": [
           "String eventType",
-          "Object notificationData"
+          "Object userData"
         ],
         "inheritance_info": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.NotificationEvent(Object source, String eventType, Object notificationData)"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.UserEvent(Object source, String eventType, Object userData)"
         ],
         "extends_info": [],
         "endpoint": [],
         "type": "regular"
       },
       {
-        "name": "com.example.springdemo.observer.NotificationEvent.getEventType()",
+        "name": "com.example.springdemo.observer.UserEvent.getEventType()",
         "body": "public String getEventType() {\n        return eventType;\n    }",
         "method_calls": [],
         "used_types": [],
@@ -305,13 +305,13 @@
         "type": "regular"
       },
       {
-        "name": "com.example.springdemo.observer.NotificationEvent.getNotificationData()",
-        "body": "public Object getNotificationData() {\n        return notificationData;\n    }",
+        "name": "com.example.springdemo.observer.UserEvent.getUserData()",
+        "body": "public Object getUserData() {\n        return userData;\n    }",
         "method_calls": [],
         "used_types": [],
         "field_access": [],
         "inheritance_info": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.getNotificationData()"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.getUserData()"
         ],
         "extends_info": [],
         "endpoint": [],
@@ -384,31 +384,31 @@
   },
   {
     "package": "com.example.springdemo.observer",
-    "class_name": "UserEvent",
-    "full_class_name": "com.example.springdemo.observer.UserEvent",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\observer\\UserEvent.java",
-    "content": "public class UserEvent extends ApplicationEvent {\n    \n    private final String eventType;\n    private final Object userData;\n    \n    public UserEvent(Object source, String eventType, Object userData) {\n        super(source);\n        this.eventType = eventType;\n        this.userData = userData;\n    }\n    \n    public String getEventType() {\n        return eventType;\n    }\n    \n    public Object getUserData() {\n        return userData;\n    }\n}",
+    "class_name": "NotificationEvent",
+    "full_class_name": "com.example.springdemo.observer.NotificationEvent",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\observer\\NotificationEvent.java",
+    "content": "public class NotificationEvent extends ApplicationEvent {\n    \n    private final String eventType;\n    private final Object notificationData;\n    \n    public NotificationEvent(Object source, String eventType, Object notificationData) {\n        super(source);\n        this.eventType = eventType;\n        this.notificationData = notificationData;\n    }\n    \n    public String getEventType() {\n        return eventType;\n    }\n    \n    public Object getNotificationData() {\n        return notificationData;\n    }\n}",
     "implements": [],
     "extends": "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class",
     "methods": [
       {
-        "name": "com.example.springdemo.observer.UserEvent.UserEvent(Object source, String eventType, Object userData)",
-        "body": "public UserEvent(Object source, String eventType, Object userData) {\n        super(source);\n        this.eventType = eventType;\n        this.userData = userData;\n    }",
+        "name": "com.example.springdemo.observer.NotificationEvent.NotificationEvent(Object source, String eventType, Object notificationData)",
+        "body": "public NotificationEvent(Object source, String eventType, Object notificationData) {\n        super(source);\n        this.eventType = eventType;\n        this.notificationData = notificationData;\n    }",
         "method_calls": [],
         "used_types": [],
         "field_access": [
-          "Object userData",
+          "Object notificationData",
           "String eventType"
         ],
         "inheritance_info": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.UserEvent(Object source, String eventType, Object userData)"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.NotificationEvent(Object source, String eventType, Object notificationData)"
         ],
         "extends_info": [],
         "endpoint": [],
         "type": "regular"
       },
       {
-        "name": "com.example.springdemo.observer.UserEvent.getEventType()",
+        "name": "com.example.springdemo.observer.NotificationEvent.getEventType()",
         "body": "public String getEventType() {\n        return eventType;\n    }",
         "method_calls": [],
         "used_types": [],
@@ -421,13 +421,13 @@
         "type": "regular"
       },
       {
-        "name": "com.example.springdemo.observer.UserEvent.getUserData()",
-        "body": "public Object getUserData() {\n        return userData;\n    }",
+        "name": "com.example.springdemo.observer.NotificationEvent.getNotificationData()",
+        "body": "public Object getNotificationData() {\n        return notificationData;\n    }",
         "method_calls": [],
         "used_types": [],
         "field_access": [],
         "inheritance_info": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.getUserData()"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.getNotificationData()"
         ],
         "extends_info": [],
         "endpoint": [],
@@ -494,72 +494,6 @@
       {
         "name": "com.example.springdemo.observer.NotificationEventListener.handleNotificationRead(NotificationEvent notificationEvent)",
         "body": "private void handleNotificationRead(NotificationEvent notificationEvent) {\n        log.info(\"Processing notification read event\");\n        \n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.observer.NotificationEvent"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      }
-    ],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.observer",
-    "class_name": "EventPublisher",
-    "full_class_name": "com.example.springdemo.observer.EventPublisher",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\observer\\EventPublisher.java",
-    "content": "@Component\n@RequiredArgsConstructor\n@Slf4j\npublic class EventPublisher {\n    \n    private final ApplicationEventPublisher applicationEventPublisher;\n    \n    public void publishEvent(Object event) {\n        log.info(\"Publishing event: {}\", event.getClass().getSimpleName());\n        applicationEventPublisher.publishEvent(event);\n    }\n    \n    public void publishOrderEvent(String eventType, Object orderData) {\n        OrderEvent orderEvent = new OrderEvent(this, eventType, orderData);\n        publishEvent(orderEvent);\n    }\n    \n    public void publishUserEvent(String eventType, Object userData) {\n        UserEvent userEvent = new UserEvent(this, eventType, userData);\n        publishEvent(userEvent);\n    }\n    \n    public void publishNotificationEvent(String eventType, Object notificationData) {\n        NotificationEvent notificationEvent = new NotificationEvent(this, eventType, notificationData);\n        publishEvent(notificationEvent);\n    }\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [
-      {
-        "name": "com.example.springdemo.observer.EventPublisher.publishEvent(Object event)",
-        "body": "public void publishEvent(Object event) {\n        log.info(\"Publishing event: {}\", event.getClass().getSimpleName());\n        applicationEventPublisher.publishEvent(event);\n    }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.observer.EventPublisher.publishOrderEvent(String eventType, Object orderData)",
-        "body": "public void publishOrderEvent(String eventType, Object orderData) {\n        OrderEvent orderEvent = new OrderEvent(this, eventType, orderData);\n        publishEvent(orderEvent);\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.observer.OrderEvent"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.observer.EventPublisher.publishUserEvent(String eventType, Object userData)",
-        "body": "public void publishUserEvent(String eventType, Object userData) {\n        UserEvent userEvent = new UserEvent(this, eventType, userData);\n        publishEvent(userEvent);\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.observer.UserEvent"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.observer.EventPublisher.publishNotificationEvent(String eventType, Object notificationData)",
-        "body": "public void publishNotificationEvent(String eventType, Object notificationData) {\n        NotificationEvent notificationEvent = new NotificationEvent(this, eventType, notificationData);\n        publishEvent(notificationEvent);\n    }",
         "method_calls": [],
         "used_types": [
           "com.example.springdemo.observer.NotificationEvent"
@@ -746,6 +680,72 @@
     "type": "regular"
   },
   {
+    "package": "com.example.springdemo.observer",
+    "class_name": "EventPublisher",
+    "full_class_name": "com.example.springdemo.observer.EventPublisher",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\observer\\EventPublisher.java",
+    "content": "@Component\n@RequiredArgsConstructor\n@Slf4j\npublic class EventPublisher {\n    \n    private final ApplicationEventPublisher applicationEventPublisher;\n    \n    public void publishEvent(Object event) {\n        log.info(\"Publishing event: {}\", event.getClass().getSimpleName());\n        applicationEventPublisher.publishEvent(event);\n    }\n    \n    public void publishOrderEvent(String eventType, Object orderData) {\n        OrderEvent orderEvent = new OrderEvent(this, eventType, orderData);\n        publishEvent(orderEvent);\n    }\n    \n    public void publishUserEvent(String eventType, Object userData) {\n        UserEvent userEvent = new UserEvent(this, eventType, userData);\n        publishEvent(userEvent);\n    }\n    \n    public void publishNotificationEvent(String eventType, Object notificationData) {\n        NotificationEvent notificationEvent = new NotificationEvent(this, eventType, notificationData);\n        publishEvent(notificationEvent);\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.springdemo.observer.EventPublisher.publishEvent(Object event)",
+        "body": "public void publishEvent(Object event) {\n        log.info(\"Publishing event: {}\", event.getClass().getSimpleName());\n        applicationEventPublisher.publishEvent(event);\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.observer.EventPublisher.publishOrderEvent(String eventType, Object orderData)",
+        "body": "public void publishOrderEvent(String eventType, Object orderData) {\n        OrderEvent orderEvent = new OrderEvent(this, eventType, orderData);\n        publishEvent(orderEvent);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.observer.OrderEvent"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.observer.EventPublisher.publishUserEvent(String eventType, Object userData)",
+        "body": "public void publishUserEvent(String eventType, Object userData) {\n        UserEvent userEvent = new UserEvent(this, eventType, userData);\n        publishEvent(userEvent);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.observer.UserEvent"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.observer.EventPublisher.publishNotificationEvent(String eventType, Object notificationData)",
+        "body": "public void publishNotificationEvent(String eventType, Object notificationData) {\n        NotificationEvent notificationEvent = new NotificationEvent(this, eventType, notificationData);\n        publishEvent(notificationEvent);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.observer.NotificationEvent"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
     "package": "com.example.springdemo.event",
     "class_name": "NotificationEventConsumer",
     "full_class_name": "com.example.springdemo.event.NotificationEventConsumer",
@@ -767,8 +767,8 @@
           "com.example.springdemo.entity.Notification"
         ],
         "field_access": [
-          "String RECEIVED_KEY = \"kafka_receivedMessageKey\"",
-          "String RECEIVED_TOPIC = \"kafka_receivedTopic\""
+          "String RECEIVED_TOPIC = \"kafka_receivedTopic\"",
+          "String RECEIVED_KEY = \"kafka_receivedMessageKey\""
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -847,8 +847,8 @@
           "com.example.springdemo.entity.User"
         ],
         "field_access": [
-          "String RECEIVED_KEY = \"kafka_receivedMessageKey\"",
-          "String RECEIVED_TOPIC = \"kafka_receivedTopic\""
+          "String RECEIVED_TOPIC = \"kafka_receivedTopic\"",
+          "String RECEIVED_KEY = \"kafka_receivedMessageKey\""
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -950,8 +950,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Notification",
-          "com.example.springdemo.entity.Notification.NotificationType"
+          "com.example.springdemo.entity.Notification.NotificationType",
+          "com.example.springdemo.entity.Notification"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -964,8 +964,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Notification",
-          "com.example.springdemo.entity.Notification.NotificationStatus"
+          "com.example.springdemo.entity.Notification.NotificationStatus",
+          "com.example.springdemo.entity.Notification"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -978,8 +978,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Notification",
-          "com.example.springdemo.entity.Notification.NotificationStatus"
+          "com.example.springdemo.entity.Notification.NotificationStatus",
+          "com.example.springdemo.entity.Notification"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -1030,61 +1030,6 @@
     "type": "regular"
   },
   {
-    "package": "com.example.springdemo.service.strategy",
-    "class_name": "PricingStrategy",
-    "full_class_name": "com.example.springdemo.service.strategy.PricingStrategy",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\service\\strategy\\PricingStrategy.java",
-    "content": "public interface PricingStrategy {\n    \n    BigDecimal calculatePrice(Order order, User user);\n    \n    String getStrategyName();\n    \n    boolean isApplicable(User user, Order order);\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [
-      {
-        "name": "com.example.springdemo.service.strategy.PricingStrategy.calculatePrice(Order order, User user)",
-        "body": "",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.strategy.PricingStrategy.getStrategyName()",
-        "body": "",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.strategy.PricingStrategy.isApplicable(User user, Order order)",
-        "body": "",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      }
-    ],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
     "package": "com.example.springdemo.repository",
     "class_name": "ProductRepository",
     "full_class_name": "com.example.springdemo.repository.ProductRepository",
@@ -1098,8 +1043,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Product.ProductCategory",
-          "com.example.springdemo.entity.Product"
+          "com.example.springdemo.entity.Product",
+          "com.example.springdemo.entity.Product.ProductCategory"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -1112,8 +1057,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Product.ProductStatus",
-          "com.example.springdemo.entity.Product"
+          "com.example.springdemo.entity.Product",
+          "com.example.springdemo.entity.Product.ProductStatus"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -1206,6 +1151,61 @@
   },
   {
     "package": "com.example.springdemo.service.strategy",
+    "class_name": "PricingStrategy",
+    "full_class_name": "com.example.springdemo.service.strategy.PricingStrategy",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\service\\strategy\\PricingStrategy.java",
+    "content": "public interface PricingStrategy {\n    \n    BigDecimal calculatePrice(Order order, User user);\n    \n    String getStrategyName();\n    \n    boolean isApplicable(User user, Order order);\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.springdemo.service.strategy.PricingStrategy.calculatePrice(Order order, User user)",
+        "body": "",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.strategy.PricingStrategy.getStrategyName()",
+        "body": "",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.strategy.PricingStrategy.isApplicable(User user, Order order)",
+        "body": "",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.service.strategy",
     "class_name": "BulkPricingStrategy",
     "full_class_name": "com.example.springdemo.service.strategy.BulkPricingStrategy",
     "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\service\\strategy\\BulkPricingStrategy.java",
@@ -1225,8 +1225,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [],
         "inheritance_info": [
@@ -1259,8 +1259,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [],
         "inheritance_info": [
@@ -1346,8 +1346,8 @@
         "method_calls": [],
         "used_types": [
           "com.example.springdemo.entity.User.UserRole",
-          "com.example.springdemo.entity.User.UserStatus",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserStatus"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -1397,7 +1397,9 @@
         "name": "com.example.springdemo.repository.UserRepository.existsByEmail(String email)",
         "body": "",
         "method_calls": [],
-        "used_types": [],
+        "used_types": [
+          "com.example.springdemo.repository.UserRepository.boolean"
+        ],
         "field_access": [],
         "inheritance_info": [],
         "extends_info": [],
@@ -1433,8 +1435,8 @@
           "com.example.springdemo.entity.Order"
         ],
         "field_access": [
-          "String RECEIVED_KEY = \"kafka_receivedMessageKey\"",
-          "String RECEIVED_TOPIC = \"kafka_receivedTopic\""
+          "String RECEIVED_TOPIC = \"kafka_receivedTopic\"",
+          "String RECEIVED_KEY = \"kafka_receivedMessageKey\""
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -1558,8 +1560,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [],
         "inheritance_info": [
@@ -1592,13 +1594,13 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserRole",
-          "CUSTOMER",
-          "GUEST"
+          "GUEST",
+          "CUSTOMER"
         ],
         "inheritance_info": [
           "com.example.springdemo.service.strategy.PricingStrategy.isApplicable(User user, Order order)"
@@ -1756,8 +1758,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Order.PaymentStatus",
-          "com.example.springdemo.entity.Order"
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.Order.PaymentStatus"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -1866,11 +1868,11 @@
           "F:\\_side_projects\\source_atlas\\.contents.spring-kafka-3.1.0.jar\\org.springframework.kafka.core\\ProducerFactory.class.ProducerFactory<String, Object>"
         ],
         "field_access": [
-          "String VALUE_SERIALIZER_CLASS_CONFIG = \"value.serializer\"",
-          "String ACKS_CONFIG = \"acks\"",
           "String ENABLE_IDEMPOTENCE_CONFIG = \"enable.idempotence\"",
           "String KEY_SERIALIZER_CLASS_CONFIG = \"key.serializer\"",
+          "String VALUE_SERIALIZER_CLASS_CONFIG = \"value.serializer\"",
           "String RETRIES_CONFIG = \"retries\"",
+          "String ACKS_CONFIG = \"acks\"",
           "String BOOTSTRAP_SERVERS_CONFIG = \"bootstrap.servers\""
         ],
         "inheritance_info": [],
@@ -1899,13 +1901,13 @@
           "F:\\_side_projects\\source_atlas\\.contents.spring-kafka-3.1.0.jar\\org.springframework.kafka.core\\ConsumerFactory.class.ConsumerFactory<String, Object>"
         ],
         "field_access": [
-          "String GROUP_ID_CONFIG = \"group.id\"",
-          "String KEY_DESERIALIZER_CLASS_CONFIG = \"key.deserializer\"",
-          "String AUTO_OFFSET_RESET_CONFIG = \"auto.offset.reset\"",
-          "String VALUE_DESERIALIZER_CLASS_CONFIG = \"value.deserializer\"",
-          "String TRUSTED_PACKAGES = \"spring.json.trusted.packages\"",
           "String ENABLE_AUTO_COMMIT_CONFIG = \"enable.auto.commit\"",
-          "String BOOTSTRAP_SERVERS_CONFIG = \"bootstrap.servers\""
+          "String TRUSTED_PACKAGES = \"spring.json.trusted.packages\"",
+          "String VALUE_DESERIALIZER_CLASS_CONFIG = \"value.deserializer\"",
+          "String KEY_DESERIALIZER_CLASS_CONFIG = \"key.deserializer\"",
+          "String BOOTSTRAP_SERVERS_CONFIG = \"bootstrap.servers\"",
+          "String AUTO_OFFSET_RESET_CONFIG = \"auto.offset.reset\"",
+          "String GROUP_ID_CONFIG = \"group.id\""
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -1953,8 +1955,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [],
         "inheritance_info": [
@@ -1987,12 +1989,12 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [
-          "com.example.springdemo.entity.User.UserRole",
           "ADMIN",
+          "com.example.springdemo.entity.User.UserRole",
           "MANAGER"
         ],
         "inheritance_info": [
@@ -2014,13 +2016,13 @@
     "class_name": "NotificationController",
     "full_class_name": "com.example.springdemo.controller.NotificationController",
     "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\controller\\NotificationController.java",
-    "content": "@RestController\n@RequestMapping(\"/api/notifications\")\n@RequiredArgsConstructor\n@Slf4j\npublic class NotificationController {\n    \n    private final NotificationService notificationService;\n    \n    @PostMapping\n    public ResponseEntity<Notification> createNotification(@RequestBody CreateNotificationRequest request) {\n        log.info(\"Creating notification for user: {}\", request.getUserId());\n        \n        try {\n            \n            \n            com.example.springdemo.entity.User user = new com.example.springdemo.entity.User();\n            user.setId(request.getUserId());\n\n            var name = new User();\n            Notification notification = notificationService.createNotification(\n                    user,\n                    request.getTitle(),\n                    request.getMessage(),\n                    Notification.NotificationType.valueOf(request.getType()),\n                    request.getMetadata()\n            );\n            return ResponseEntity.ok(notification);\n        } catch (Exception e) {\n            log.error(\"Error creating notification: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @PutMapping(\"/{notificationId}/read\")\n    public ResponseEntity<Notification> markAsRead(@PathVariable Long notificationId) {\n        log.info(\"Marking notification as read: {}\", notificationId);\n        \n        try {\n            Notification notification = notificationService.markAsRead(notificationId);\n            return ResponseEntity.ok(notification);\n        } catch (Exception e) {\n            log.error(\"Error marking notification as read: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @GetMapping(\"/user/{userId}\")\n    public ResponseEntity<List<Notification>> getNotificationsByUser(@PathVariable Long userId) {\n        log.info(\"Getting notifications for user: {}\", userId);\n        \n        List<Notification> notifications = notificationService.getNotificationsByUser(userId);\n        return ResponseEntity.ok(notifications);\n    }\n    \n    @GetMapping(\"/user/{userId}/unread\")\n    public ResponseEntity<List<Notification>> getUnreadNotificationsByUser(@PathVariable Long userId) {\n        log.info(\"Getting unread notifications for user: {}\", userId);\n        \n        List<Notification> notifications = notificationService.getUnreadNotificationsByUser(userId);\n        return ResponseEntity.ok(notifications);\n    }\n    \n    @GetMapping(\"/user/{userId}/unread-count\")\n    public ResponseEntity<Long> getUnreadNotificationCount(@PathVariable Long userId) {\n        log.info(\"Getting unread notification count for user: {}\", userId);\n        \n        Long count = notificationService.getUnreadNotificationCount(userId);\n        return ResponseEntity.ok(count);\n    }\n    \n    \n    public static class CreateNotificationRequest {\n        private Long userId;\n        private String title;\n        private String message;\n        private String type;\n        private String metadata;\n        \n        \n        public Long getUserId() { return userId; }\n        public void setUserId(Long userId) { this.userId = userId; }\n        \n        public String getTitle() { return title; }\n        public void setTitle(String title) { this.title = title; }\n        \n        public String getMessage() { return message; }\n        public void setMessage(String message) { this.message = message; }\n        \n        public String getType() { return type; }\n        public void setType(String type) { this.type = type; }\n        \n        public String getMetadata() { return metadata; }\n        public void setMetadata(String metadata) { this.metadata = metadata; }\n    }\n}",
+    "content": "@RestController\n@RequestMapping(\"/api/notifications\")\n@RequiredArgsConstructor\n@Slf4j\npublic class NotificationController {\n    \n    private final NotificationService notificationService;\n\n    private final String test = \"ABC\";\n    \n    @PostMapping\n    public ResponseEntity<Notification> createNotification(@RequestBody CreateNotificationRequest request) {\n        log.info(\"Creating notification for user: {}\", request.getUserId());\n        \n        try {\n            \n            \n            com.example.springdemo.entity.User user = new com.example.springdemo.entity.User();\n            user.setId(request.getUserId());\n\n            var name = new User();\n            Notification notification = notificationService.createNotification(\n                    user,\n                    request.getTitle(),\n                    request.getMessage(),\n                    Notification.NotificationType.valueOf(request.getType()),\n                    request.getMetadata()\n            );\n            notification.setTitle(request.getTitle());\n            return ResponseEntity.ok(notification);\n        } catch (Exception e) {\n            log.error(\"Error creating notification: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @PutMapping(\"/{notificationId}/read\")\n    public ResponseEntity<Notification> markAsRead(@PathVariable Long notificationId) {\n        log.info(\"Marking notification as read: {}\", notificationId);\n        \n        try {\n            Notification notification = notificationService.markAsRead(notificationId);\n            return ResponseEntity.ok(notification);\n        } catch (Exception e) {\n            log.error(\"Error marking notification as read: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @GetMapping(\"/user/{userId}\")\n    public ResponseEntity<List<Notification>> getNotificationsByUser(@PathVariable Long userId) {\n        log.info(\"Getting notifications for user: {}\", userId);\n        \n        List<Notification> notifications = notificationService.getNotificationsByUser(userId);\n        return ResponseEntity.ok(notifications);\n    }\n    \n    @GetMapping(\"/user/{userId}/unread\")\n    public ResponseEntity<List<Notification>> getUnreadNotificationsByUser(@PathVariable Long userId) {\n        log.info(\"Getting unread notifications for user: {}\", userId);\n        \n        List<Notification> notifications = notificationService.getUnreadNotificationsByUser(userId);\n        return ResponseEntity.ok(notifications);\n    }\n    \n    @GetMapping(\"/user/{userId}/unread-count\")\n    public ResponseEntity<Long> getUnreadNotificationCount(@PathVariable Long userId) {\n        log.info(\"Getting unread notification count for user: {}\", userId);\n        \n        Long count = notificationService.getUnreadNotificationCount(userId);\n        return ResponseEntity.ok(count);\n    }\n    \n    \n    public static class CreateNotificationRequest {\n        private Long userId;\n        private String title;\n        private String message;\n        private String type;\n        private String metadata;\n        \n        \n        public Long getUserId() { return userId; }\n        public void setUserId(Long userId) { this.userId = userId; }\n        \n        public String getTitle() { return title; }\n        public void setTitle(String title) { this.title = title; }\n        \n        public String getMessage() { return message; }\n        public void setMessage(String message) { this.message = message; }\n        \n        public String getType() { return type; }\n        public void setType(String type) { this.type = type; }\n        \n        public String getMetadata() { return metadata; }\n        public void setMetadata(String metadata) { this.metadata = metadata; }\n    }\n}",
     "implements": [],
     "extends": null,
     "methods": [
       {
         "name": "com.example.springdemo.controller.NotificationController.createNotification(@RequestBody CreateNotificationRequest request)",
-        "body": "@PostMapping\n    public ResponseEntity<Notification> createNotification(@RequestBody CreateNotificationRequest request) {\n        log.info(\"Creating notification for user: {}\", request.getUserId());\n        \n        try {\n            \n            \n            com.example.springdemo.entity.User user = new com.example.springdemo.entity.User();\n            user.setId(request.getUserId());\n\n            var name = new User();\n            Notification notification = notificationService.createNotification(\n                    user,\n                    request.getTitle(),\n                    request.getMessage(),\n                    Notification.NotificationType.valueOf(request.getType()),\n                    request.getMetadata()\n            );\n            return ResponseEntity.ok(notification);\n        } catch (Exception e) {\n            log.error(\"Error creating notification: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
+        "body": "@PostMapping\n    public ResponseEntity<Notification> createNotification(@RequestBody CreateNotificationRequest request) {\n        log.info(\"Creating notification for user: {}\", request.getUserId());\n        \n        try {\n            \n            \n            com.example.springdemo.entity.User user = new com.example.springdemo.entity.User();\n            user.setId(request.getUserId());\n\n            var name = new User();\n            Notification notification = notificationService.createNotification(\n                    user,\n                    request.getTitle(),\n                    request.getMessage(),\n                    Notification.NotificationType.valueOf(request.getType()),\n                    request.getMetadata()\n            );\n            notification.setTitle(request.getTitle());\n            return ResponseEntity.ok(notification);\n        } catch (Exception e) {\n            log.error(\"Error creating notification: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
         "method_calls": [
           {
             "name": "com.example.springdemo.controller.NotificationController.CreateNotificationRequest.getUserId()",
@@ -2049,13 +2051,17 @@
           {
             "name": "com.example.springdemo.controller.NotificationController.CreateNotificationRequest.getMetadata()",
             "params": []
+          },
+          {
+            "name": "com.example.springdemo.entity.Notification.setTitle(String title)",
+            "params": []
           }
         ],
         "used_types": [
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Notification>",
+          "com.example.springdemo.entity.User",
           "com.example.springdemo.controller.NotificationController.CreateNotificationRequest",
-          "com.example.springdemo.entity.Notification",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.Notification"
         ],
         "field_access": [
           "com.example.springdemo.entity.Notification.NotificationType"
@@ -2075,12 +2081,7 @@
       {
         "name": "com.example.springdemo.controller.NotificationController.markAsRead(@PathVariable Long notificationId)",
         "body": "@PutMapping(\"/{notificationId}/read\")\n    public ResponseEntity<Notification> markAsRead(@PathVariable Long notificationId) {\n        log.info(\"Marking notification as read: {}\", notificationId);\n        \n        try {\n            Notification notification = notificationService.markAsRead(notificationId);\n            return ResponseEntity.ok(notification);\n        } catch (Exception e) {\n            log.error(\"Error marking notification as read: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.service.NotificationService.markAsRead(Long notificationId)",
-            "params": []
-          }
-        ],
+        "method_calls": [],
         "used_types": [
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Notification>",
           "com.example.springdemo.entity.Notification"
@@ -2122,12 +2123,7 @@
       {
         "name": "com.example.springdemo.controller.NotificationController.getUnreadNotificationsByUser(@PathVariable Long userId)",
         "body": "@GetMapping(\"/user/{userId}/unread\")\n    public ResponseEntity<List<Notification>> getUnreadNotificationsByUser(@PathVariable Long userId) {\n        log.info(\"Getting unread notifications for user: {}\", userId);\n        \n        List<Notification> notifications = notificationService.getUnreadNotificationsByUser(userId);\n        return ResponseEntity.ok(notifications);\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.service.NotificationService.getUnreadNotificationsByUser(Long userId)",
-            "params": []
-          }
-        ],
+        "method_calls": [],
         "used_types": [
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Notification>>",
           "com.example.springdemo.entity.Notification"
@@ -2268,10 +2264,10 @@
         "name": "com.example.springdemo.controller.NotificationController.CreateNotificationRequest.setType(String type)",
         "body": "public void setType(String type) { this.type = type; }",
         "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.controller.NotificationController.String"
+        "used_types": [],
+        "field_access": [
+          "String type"
         ],
-        "field_access": [],
         "inheritance_info": [],
         "extends_info": [],
         "endpoint": [],
@@ -2294,7 +2290,7 @@
         "method_calls": [],
         "used_types": [],
         "field_access": [
-          "String type - com.example.springdemo.controller.NotificationController.CreateNotificationRequest.setMessage(String)"
+          "String metadata"
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -2306,6 +2302,485 @@
       "com.example.springdemo.controller.NotificationController"
     ],
     "is_nested": true,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.controller",
+    "class_name": "OrderController",
+    "full_class_name": "com.example.springdemo.controller.OrderController",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\controller\\OrderController.java",
+    "content": "@RestController\n@RequestMapping(\"/api/orders\")\n@RequiredArgsConstructor\n@Slf4j\npublic class OrderController {\n    \n    private final OrderService orderService;\n    \n    @PostMapping\n    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {\n        log.info(\"Creating order for user: {} with products: {}\", request.getUserId(), request.getProductIds());\n        \n        try {\n            Order order = orderService.createOrder(\n                    request.getUserId(), \n                    request.getProductIds(), \n                    request.getQuantities()\n            );\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error creating order: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @PutMapping(\"/{orderId}/status\")\n    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long orderId, \n                                                  @RequestBody Map<String, String> request) {\n        log.info(\"Updating order status for order: {} to {}\", orderId, request.get(\"status\"));\n        \n        try {\n            Order.OrderStatus status = Order.OrderStatus.valueOf(request.get(\"status\"));\n            Order order = orderService.updateOrderStatus(orderId, status);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error updating order status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @PutMapping(\"/{orderId}/payment\")\n    public ResponseEntity<Order> processPayment(@PathVariable Long orderId, \n                                               @RequestBody Map<String, String> request) {\n        log.info(\"Processing payment for order: {} with status: {}\", orderId, request.get(\"paymentStatus\"));\n        \n        try {\n            Order.PaymentStatus paymentStatus = Order.PaymentStatus.valueOf(request.get(\"paymentStatus\"));\n            Order order = orderService.processPayment(orderId, paymentStatus);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error processing payment: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @GetMapping(\"/user/{userId}\")\n    public ResponseEntity<List<Order>> getOrdersByUser(@PathVariable Long userId) {\n        log.info(\"Getting orders for user: {}\", userId);\n        \n        List<Order> orders = orderService.getOrdersByUser(userId);\n        return ResponseEntity.ok(orders);\n    }\n    \n    @GetMapping(\"/status/{status}\")\n    public ResponseEntity<List<Order>> getOrdersByStatus(@PathVariable String status) {\n        log.info(\"Getting orders with status: {}\", status);\n        \n        try {\n            Order.OrderStatus orderStatus = Order.OrderStatus.valueOf(status);\n            List<Order> orders = orderService.getOrdersByStatus(orderStatus);\n            return ResponseEntity.ok(orders);\n        } catch (Exception e) {\n            log.error(\"Error getting orders by status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @GetMapping(\"/number/{orderNumber}\")\n    public ResponseEntity<Order> getOrderByNumber(@PathVariable String orderNumber) {\n        log.info(\"Getting order by number: {}\", orderNumber);\n        \n        Optional<Order> order = orderService.getOrderByNumber(orderNumber);\n        return order.map(ResponseEntity::ok)\n                   .orElse(ResponseEntity.notFound().build());\n    }\n    \n    \n    public static class CreateOrderRequest {\n        private Long userId;\n        private List<Long> productIds;\n        private List<Integer> quantities;\n        \n        \n        public Long getUserId() { return userId; }\n        public void setUserId(Long userId) { this.userId = userId; }\n        \n        public List<Long> getProductIds() { return productIds; }\n        public void setProductIds(List<Long> productIds) { this.productIds = productIds; }\n        \n        public List<Integer> getQuantities() { return quantities; }\n        public void setQuantities(List<Integer> quantities) { this.quantities = quantities; }\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.springdemo.controller.OrderController.createOrder(@RequestBody CreateOrderRequest request)",
+        "body": "@PostMapping\n    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {\n        log.info(\"Creating order for user: {} with products: {}\", request.getUserId(), request.getProductIds());\n        \n        try {\n            Order order = orderService.createOrder(\n                    request.getUserId(), \n                    request.getProductIds(), \n                    request.getQuantities()\n            );\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error creating order: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getUserId()",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getProductIds()",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.service.OrderService.createOrder(Long userId, List<Long> productIds, List<Integer> quantities)",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getQuantities()",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.controller.OrderController.CreateOrderRequest",
+          "com.example.springdemo.entity.Order",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "POST",
+            "path": "/api/orders",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.updateOrderStatus(@PathVariable Long orderId, \n                                                  @RequestBody Map<String, String> request)",
+        "body": "@PutMapping(\"/{orderId}/status\")\n    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long orderId, \n                                                  @RequestBody Map<String, String> request) {\n        log.info(\"Updating order status for order: {} to {}\", orderId, request.get(\"status\"));\n        \n        try {\n            Order.OrderStatus status = Order.OrderStatus.valueOf(request.get(\"status\"));\n            Order order = orderService.updateOrderStatus(orderId, status);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error updating order status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.Order.OrderStatus",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>"
+        ],
+        "field_access": [
+          "com.example.springdemo.entity.Order.OrderStatus"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "PUT",
+            "path": "/api/orders/{orderId}/status",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.processPayment(@PathVariable Long orderId, \n                                               @RequestBody Map<String, String> request)",
+        "body": "@PutMapping(\"/{orderId}/payment\")\n    public ResponseEntity<Order> processPayment(@PathVariable Long orderId, \n                                               @RequestBody Map<String, String> request) {\n        log.info(\"Processing payment for order: {} with status: {}\", orderId, request.get(\"paymentStatus\"));\n        \n        try {\n            Order.PaymentStatus paymentStatus = Order.PaymentStatus.valueOf(request.get(\"paymentStatus\"));\n            Order order = orderService.processPayment(orderId, paymentStatus);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error processing payment: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.service.OrderService.processPayment(Long orderId, PaymentStatus paymentStatus)",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.entity.Order.PaymentStatus",
+          "com.example.springdemo.entity.Order",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>"
+        ],
+        "field_access": [
+          "com.example.springdemo.entity.Order.PaymentStatus"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "PUT",
+            "path": "/api/orders/{orderId}/payment",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.getOrdersByUser(@PathVariable Long userId)",
+        "body": "@GetMapping(\"/user/{userId}\")\n    public ResponseEntity<List<Order>> getOrdersByUser(@PathVariable Long userId) {\n        log.info(\"Getting orders for user: {}\", userId);\n        \n        List<Order> orders = orderService.getOrdersByUser(userId);\n        return ResponseEntity.ok(orders);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Order>>",
+          "com.example.springdemo.entity.Order"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/orders/user/{userId}",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.getOrdersByStatus(@PathVariable String status)",
+        "body": "@GetMapping(\"/status/{status}\")\n    public ResponseEntity<List<Order>> getOrdersByStatus(@PathVariable String status) {\n        log.info(\"Getting orders with status: {}\", status);\n        \n        try {\n            Order.OrderStatus orderStatus = Order.OrderStatus.valueOf(status);\n            List<Order> orders = orderService.getOrdersByStatus(orderStatus);\n            return ResponseEntity.ok(orders);\n        } catch (Exception e) {\n            log.error(\"Error getting orders by status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.entity.Order",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Order>>",
+          "com.example.springdemo.entity.Order.OrderStatus"
+        ],
+        "field_access": [
+          "com.example.springdemo.entity.Order.OrderStatus"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/orders/status/{status}",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.getOrderByNumber(@PathVariable String orderNumber)",
+        "body": "@GetMapping(\"/number/{orderNumber}\")\n    public ResponseEntity<Order> getOrderByNumber(@PathVariable String orderNumber) {\n        log.info(\"Getting order by number: {}\", orderNumber);\n        \n        Optional<Order> order = orderService.getOrderByNumber(orderNumber);\n        return order.map(ResponseEntity::ok)\n                   .orElse(ResponseEntity.notFound().build());\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.entity.Order",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/orders/number/{orderNumber}",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.controller",
+    "class_name": "CreateOrderRequest",
+    "full_class_name": "com.example.springdemo.controller.OrderController.CreateOrderRequest",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\controller\\OrderController.java",
+    "content": "public static class CreateOrderRequest {\n        private Long userId;\n        private List<Long> productIds;\n        private List<Integer> quantities;\n        \n        \n        public Long getUserId() { return userId; }\n        public void setUserId(Long userId) { this.userId = userId; }\n        \n        public List<Long> getProductIds() { return productIds; }\n        public void setProductIds(List<Long> productIds) { this.productIds = productIds; }\n        \n        public List<Integer> getQuantities() { return quantities; }\n        public void setQuantities(List<Integer> quantities) { this.quantities = quantities; }\n    }",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getUserId()",
+        "body": "public Long getUserId() { return userId; }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.setUserId(Long userId)",
+        "body": "public void setUserId(Long userId) { this.userId = userId; }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "Long userId"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getProductIds()",
+        "body": "public List<Long> getProductIds() { return productIds; }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.setProductIds(List<Long> productIds)",
+        "body": "public void setProductIds(List<Long> productIds) { this.productIds = productIds; }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "List<Long> productIds"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getQuantities()",
+        "body": "public List<Integer> getQuantities() { return quantities; }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.setQuantities(List<Integer> quantities)",
+        "body": "public void setQuantities(List<Integer> quantities) { this.quantities = quantities; }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "List<Integer> quantities"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      }
+    ],
+    "parent_class": [
+      "com.example.springdemo.controller.OrderController"
+    ],
+    "is_nested": true,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.service",
+    "class_name": "NotificationService",
+    "full_class_name": "com.example.springdemo.service.NotificationService",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\service\\NotificationService.java",
+    "content": "@Service\n@RequiredArgsConstructor\n@Slf4j\npublic class NotificationService {\n    \n    private final NotificationRepository notificationRepository;\n    private final KafkaTemplate<String, Object> kafkaTemplate;\n    \n    @Transactional\n    public Notification createNotification(User user, String title, String message, \n                                         Notification.NotificationType type, String metadata) {\n        log.info(\"Creating notification for user: {}\", user.getId());\n        \n        Notification notification = Notification.builder()\n                .user(user)\n                .title(title)\n                .message(message)\n                .type(type)\n                .status(Notification.NotificationStatus.UNREAD)\n                .metadata(metadata)\n                .createdAt(LocalDateTime.now())\n                .build();\n        \n        Notification savedNotification = notificationRepository.save(notification);\n        \n        \n        publishNotificationEvent(savedNotification, \"NOTIFICATION_CREATED\");\n        \n        log.info(\"Notification created: {}\", savedNotification.getId());\n        return savedNotification;\n    }\n    \n    public void sendOrderNotification(User user, Order order, String message) {\n        String title = String.format(\"Order Update - %s\", order.getOrderNumber());\n        String metadata = String.format(\"{\\\"orderId\\\":%d,\\\"orderNumber\\\":\\\"%s\\\",\\\"status\\\":\\\"%s\\\"}\", \n                order.getId(), order.getOrderNumber(), order.getStatus());\n        \n        createNotification(user, title, message, Notification.NotificationType.ORDER_UPDATE, metadata);\n    }\n    \n    public void sendPaymentNotification(User user, Order order, String message) {\n        String title = String.format(\"Payment Update - %s\", order.getOrderNumber());\n        String metadata = String.format(\"{\\\"orderId\\\":%d,\\\"orderNumber\\\":\\\"%s\\\",\\\"paymentStatus\\\":\\\"%s\\\"}\", \n                order.getId(), order.getOrderNumber(), order.getPaymentStatus());\n        \n        createNotification(user, title, message, Notification.NotificationType.PAYMENT_CONFIRMATION, metadata);\n    }\n    \n    public void sendSystemAlert(User user, String title, String message) {\n        createNotification(user, title, message, Notification.NotificationType.SYSTEM_ALERT, null);\n    }\n    \n    @Transactional\n    public Notification markAsRead(Long notificationId) {\n        log.info(\"Marking notification as read: {}\", notificationId);\n        \n        Notification notification = notificationRepository.findById(notificationId)\n                .orElseThrow(() -> new RuntimeException(\"Notification not found\"));\n        \n        notification.setStatus(Notification.NotificationStatus.READ);\n        Notification savedNotification = notificationRepository.save(notification);\n        \n        \n        publishNotificationEvent(savedNotification, \"NOTIFICATION_READ\");\n        \n        return savedNotification;\n    }\n    \n    public List<Notification> getNotificationsByUser(Long userId) {\n        return notificationRepository.findByUserId(userId);\n    }\n    \n    public List<Notification> getUnreadNotificationsByUser(Long userId) {\n        return notificationRepository.findByUserIdAndStatus(userId, Notification.NotificationStatus.UNREAD);\n    }\n    \n    public Long getUnreadNotificationCount(Long userId) {\n        return notificationRepository.countUnreadNotificationsByUserId(userId);\n    }\n    \n    private void publishNotificationEvent(Notification notification, String eventType) {\n        try {\n            kafkaTemplate.send(\"notification-events\", eventType, notification);\n            log.info(\"Published notification event: {} for notification: {}\", eventType, notification.getId());\n        } catch (Exception e) {\n            log.error(\"Failed to publish notification event: {}\", e.getMessage());\n        }\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.springdemo.service.NotificationService.createNotification(User user, String title, String message, \n                                         Notification.NotificationType type, String metadata)",
+        "body": "@Transactional\n    public Notification createNotification(User user, String title, String message, \n                                         Notification.NotificationType type, String metadata) {\n        log.info(\"Creating notification for user: {}\", user.getId());\n        \n        Notification notification = Notification.builder()\n                .user(user)\n                .title(title)\n                .message(message)\n                .type(type)\n                .status(Notification.NotificationStatus.UNREAD)\n                .metadata(metadata)\n                .createdAt(LocalDateTime.now())\n                .build();\n        \n        Notification savedNotification = notificationRepository.save(notification);\n        \n        \n        publishNotificationEvent(savedNotification, \"NOTIFICATION_CREATED\");\n        \n        log.info(\"Notification created: {}\", savedNotification.getId());\n        return savedNotification;\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.entity.User.getId()",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.entity.Notification.builder()",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.entity.Notification.getId()",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Notification.NotificationType",
+          "com.example.springdemo.entity.Notification"
+        ],
+        "field_access": [
+          "com.example.springdemo.entity.Notification.NotificationStatus",
+          "UNREAD"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.NotificationService.sendOrderNotification(User user, Order order, String message)",
+        "body": "public void sendOrderNotification(User user, Order order, String message) {\n        String title = String.format(\"Order Update - %s\", order.getOrderNumber());\n        String metadata = String.format(\"{\\\"orderId\\\":%d,\\\"orderNumber\\\":\\\"%s\\\",\\\"status\\\":\\\"%s\\\"}\", \n                order.getId(), order.getOrderNumber(), order.getStatus());\n        \n        createNotification(user, title, message, Notification.NotificationType.ORDER_UPDATE, metadata);\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.entity.Order.getOrderNumber()",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.entity.Order.getId()",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.entity.Order.getStatus()",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
+        ],
+        "field_access": [
+          "com.example.springdemo.entity.Notification.NotificationType",
+          "ORDER_UPDATE"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.NotificationService.sendPaymentNotification(User user, Order order, String message)",
+        "body": "public void sendPaymentNotification(User user, Order order, String message) {\n        String title = String.format(\"Payment Update - %s\", order.getOrderNumber());\n        String metadata = String.format(\"{\\\"orderId\\\":%d,\\\"orderNumber\\\":\\\"%s\\\",\\\"paymentStatus\\\":\\\"%s\\\"}\", \n                order.getId(), order.getOrderNumber(), order.getPaymentStatus());\n        \n        createNotification(user, title, message, Notification.NotificationType.PAYMENT_CONFIRMATION, metadata);\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.entity.Order.getOrderNumber()",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.entity.Order.getId()",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.entity.Order.getPaymentStatus()",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
+        ],
+        "field_access": [
+          "com.example.springdemo.entity.Notification.NotificationType",
+          "PAYMENT_CONFIRMATION"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.NotificationService.sendSystemAlert(User user, String title, String message)",
+        "body": "public void sendSystemAlert(User user, String title, String message) {\n        createNotification(user, title, message, Notification.NotificationType.SYSTEM_ALERT, null);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.entity.User"
+        ],
+        "field_access": [
+          "com.example.springdemo.entity.Notification.NotificationType",
+          "SYSTEM_ALERT"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.NotificationService.markAsRead(Long notificationId)",
+        "body": "@Transactional\n    public Notification markAsRead(Long notificationId) {\n        log.info(\"Marking notification as read: {}\", notificationId);\n        \n        Notification notification = notificationRepository.findById(notificationId)\n                .orElseThrow(() -> new RuntimeException(\"Notification not found\"));\n        \n        notification.setStatus(Notification.NotificationStatus.READ);\n        Notification savedNotification = notificationRepository.save(notification);\n        \n        \n        publishNotificationEvent(savedNotification, \"NOTIFICATION_READ\");\n        \n        return savedNotification;\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.entity.Notification.setStatus(NotificationStatus status)",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.entity.Notification"
+        ],
+        "field_access": [
+          "READ",
+          "com.example.springdemo.entity.Notification.NotificationStatus"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.NotificationService.getNotificationsByUser(Long userId)",
+        "body": "public List<Notification> getNotificationsByUser(Long userId) {\n        return notificationRepository.findByUserId(userId);\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.repository.NotificationRepository.findByUserId(Long userId)",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.entity.Notification"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.NotificationService.getUnreadNotificationsByUser(Long userId)",
+        "body": "public List<Notification> getUnreadNotificationsByUser(Long userId) {\n        return notificationRepository.findByUserIdAndStatus(userId, Notification.NotificationStatus.UNREAD);\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.repository.NotificationRepository.findByUserIdAndStatus(@Param(value=\"userId\")",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.entity.Notification"
+        ],
+        "field_access": [
+          "com.example.springdemo.entity.Notification.NotificationStatus",
+          "UNREAD"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.NotificationService.getUnreadNotificationCount(Long userId)",
+        "body": "public Long getUnreadNotificationCount(Long userId) {\n        return notificationRepository.countUnreadNotificationsByUserId(userId);\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.repository.NotificationRepository.countUnreadNotificationsByUserId(@Param(value=\"userId\")",
+            "params": []
+          }
+        ],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.NotificationService.publishNotificationEvent(Notification notification, String eventType)",
+        "body": "private void publishNotificationEvent(Notification notification, String eventType) {\n        try {\n            kafkaTemplate.send(\"notification-events\", eventType, notification);\n            log.info(\"Published notification event: {} for notification: {}\", eventType, notification.getId());\n        } catch (Exception e) {\n            log.error(\"Failed to publish notification event: {}\", e.getMessage());\n        }\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.entity.Notification.getId()",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.entity.Notification"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
     "type": "regular"
   },
   {
@@ -2524,490 +2999,6 @@
   },
   {
     "package": "com.example.springdemo.controller",
-    "class_name": "OrderController",
-    "full_class_name": "com.example.springdemo.controller.OrderController",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\controller\\OrderController.java",
-    "content": "@RestController\n@RequestMapping(\"/api/orders\")\n@RequiredArgsConstructor\n@Slf4j\npublic class OrderController {\n    \n    private final OrderService orderService;\n    \n    @PostMapping\n    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {\n        log.info(\"Creating order for user: {} with products: {}\", request.getUserId(), request.getProductIds());\n        \n        try {\n            Order order = orderService.createOrder(\n                    request.getUserId(), \n                    request.getProductIds(), \n                    request.getQuantities()\n            );\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error creating order: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @PutMapping(\"/{orderId}/status\")\n    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long orderId, \n                                                  @RequestBody Map<String, String> request) {\n        log.info(\"Updating order status for order: {} to {}\", orderId, request.get(\"status\"));\n        \n        try {\n            Order.OrderStatus status = Order.OrderStatus.valueOf(request.get(\"status\"));\n            Order order = orderService.updateOrderStatus(orderId, status);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error updating order status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @PutMapping(\"/{orderId}/payment\")\n    public ResponseEntity<Order> processPayment(@PathVariable Long orderId, \n                                               @RequestBody Map<String, String> request) {\n        log.info(\"Processing payment for order: {} with status: {}\", orderId, request.get(\"paymentStatus\"));\n        \n        try {\n            Order.PaymentStatus paymentStatus = Order.PaymentStatus.valueOf(request.get(\"paymentStatus\"));\n            Order order = orderService.processPayment(orderId, paymentStatus);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error processing payment: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @GetMapping(\"/user/{userId}\")\n    public ResponseEntity<List<Order>> getOrdersByUser(@PathVariable Long userId) {\n        log.info(\"Getting orders for user: {}\", userId);\n        \n        List<Order> orders = orderService.getOrdersByUser(userId);\n        return ResponseEntity.ok(orders);\n    }\n    \n    @GetMapping(\"/status/{status}\")\n    public ResponseEntity<List<Order>> getOrdersByStatus(@PathVariable String status) {\n        log.info(\"Getting orders with status: {}\", status);\n        \n        try {\n            Order.OrderStatus orderStatus = Order.OrderStatus.valueOf(status);\n            List<Order> orders = orderService.getOrdersByStatus(orderStatus);\n            return ResponseEntity.ok(orders);\n        } catch (Exception e) {\n            log.error(\"Error getting orders by status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @GetMapping(\"/number/{orderNumber}\")\n    public ResponseEntity<Order> getOrderByNumber(@PathVariable String orderNumber) {\n        log.info(\"Getting order by number: {}\", orderNumber);\n        \n        Optional<Order> order = orderService.getOrderByNumber(orderNumber);\n        return order.map(ResponseEntity::ok)\n                   .orElse(ResponseEntity.notFound().build());\n    }\n    \n    \n    public static class CreateOrderRequest {\n        private Long userId;\n        private List<Long> productIds;\n        private List<Integer> quantities;\n        \n        \n        public Long getUserId() { return userId; }\n        public void setUserId(Long userId) { this.userId = userId; }\n        \n        public List<Long> getProductIds() { return productIds; }\n        public void setProductIds(List<Long> productIds) { this.productIds = productIds; }\n        \n        public List<Integer> getQuantities() { return quantities; }\n        public void setQuantities(List<Integer> quantities) { this.quantities = quantities; }\n    }\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [
-      {
-        "name": "com.example.springdemo.controller.OrderController.createOrder(@RequestBody CreateOrderRequest request)",
-        "body": "@PostMapping\n    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {\n        log.info(\"Creating order for user: {} with products: {}\", request.getUserId(), request.getProductIds());\n        \n        try {\n            Order order = orderService.createOrder(\n                    request.getUserId(), \n                    request.getProductIds(), \n                    request.getQuantities()\n            );\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error creating order: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getUserId()",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getProductIds()",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.service.OrderService.createOrder(Long userId, List<Long> productIds, List<Integer> quantities)",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getQuantities()",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "com.example.springdemo.controller.OrderController.CreateOrderRequest",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>",
-          "com.example.springdemo.entity.Order"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [
-          {
-            "type": "POST",
-            "path": "/api/orders",
-            "produces": "",
-            "consumes": ""
-          }
-        ],
-        "type": "rest_endpoint"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.updateOrderStatus(@PathVariable Long orderId, \n                                                  @RequestBody Map<String, String> request)",
-        "body": "@PutMapping(\"/{orderId}/status\")\n    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long orderId, \n                                                  @RequestBody Map<String, String> request) {\n        log.info(\"Updating order status for order: {} to {}\", orderId, request.get(\"status\"));\n        \n        try {\n            Order.OrderStatus status = Order.OrderStatus.valueOf(request.get(\"status\"));\n            Order order = orderService.updateOrderStatus(orderId, status);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error updating order status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.Order.OrderStatus",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>"
-        ],
-        "field_access": [
-          "com.example.springdemo.entity.Order.OrderStatus"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [
-          {
-            "type": "PUT",
-            "path": "/api/orders/{orderId}/status",
-            "produces": "",
-            "consumes": ""
-          }
-        ],
-        "type": "rest_endpoint"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.processPayment(@PathVariable Long orderId, \n                                               @RequestBody Map<String, String> request)",
-        "body": "@PutMapping(\"/{orderId}/payment\")\n    public ResponseEntity<Order> processPayment(@PathVariable Long orderId, \n                                               @RequestBody Map<String, String> request) {\n        log.info(\"Processing payment for order: {} with status: {}\", orderId, request.get(\"paymentStatus\"));\n        \n        try {\n            Order.PaymentStatus paymentStatus = Order.PaymentStatus.valueOf(request.get(\"paymentStatus\"));\n            Order order = orderService.processPayment(orderId, paymentStatus);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error processing payment: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.Order.PaymentStatus",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>"
-        ],
-        "field_access": [
-          "com.example.springdemo.entity.Order.PaymentStatus"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [
-          {
-            "type": "PUT",
-            "path": "/api/orders/{orderId}/payment",
-            "produces": "",
-            "consumes": ""
-          }
-        ],
-        "type": "rest_endpoint"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.getOrdersByUser(@PathVariable Long userId)",
-        "body": "@GetMapping(\"/user/{userId}\")\n    public ResponseEntity<List<Order>> getOrdersByUser(@PathVariable Long userId) {\n        log.info(\"Getting orders for user: {}\", userId);\n        \n        List<Order> orders = orderService.getOrdersByUser(userId);\n        return ResponseEntity.ok(orders);\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.service.OrderService.getOrdersByUser(Long userId)",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Order>>",
-          "com.example.springdemo.entity.Order"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [
-          {
-            "type": "GET",
-            "path": "/api/orders/user/{userId}",
-            "produces": "",
-            "consumes": ""
-          }
-        ],
-        "type": "rest_endpoint"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.getOrdersByStatus(@PathVariable String status)",
-        "body": "@GetMapping(\"/status/{status}\")\n    public ResponseEntity<List<Order>> getOrdersByStatus(@PathVariable String status) {\n        log.info(\"Getting orders with status: {}\", status);\n        \n        try {\n            Order.OrderStatus orderStatus = Order.OrderStatus.valueOf(status);\n            List<Order> orders = orderService.getOrdersByStatus(orderStatus);\n            return ResponseEntity.ok(orders);\n        } catch (Exception e) {\n            log.error(\"Error getting orders by status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.Order.OrderStatus",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Order>>"
-        ],
-        "field_access": [
-          "com.example.springdemo.entity.Order.OrderStatus"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [
-          {
-            "type": "GET",
-            "path": "/api/orders/status/{status}",
-            "produces": "",
-            "consumes": ""
-          }
-        ],
-        "type": "rest_endpoint"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.getOrderByNumber(@PathVariable String orderNumber)",
-        "body": "@GetMapping(\"/number/{orderNumber}\")\n    public ResponseEntity<Order> getOrderByNumber(@PathVariable String orderNumber) {\n        log.info(\"Getting order by number: {}\", orderNumber);\n        \n        Optional<Order> order = orderService.getOrderByNumber(orderNumber);\n        return order.map(ResponseEntity::ok)\n                   .orElse(ResponseEntity.notFound().build());\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.service.OrderService.getOrderByNumber(String orderNumber)",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>",
-          "com.example.springdemo.entity.Order"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [
-          {
-            "type": "GET",
-            "path": "/api/orders/number/{orderNumber}",
-            "produces": "",
-            "consumes": ""
-          }
-        ],
-        "type": "rest_endpoint"
-      }
-    ],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.controller",
-    "class_name": "CreateOrderRequest",
-    "full_class_name": "com.example.springdemo.controller.OrderController.CreateOrderRequest",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\controller\\OrderController.java",
-    "content": "public static class CreateOrderRequest {\n        private Long userId;\n        private List<Long> productIds;\n        private List<Integer> quantities;\n        \n        \n        public Long getUserId() { return userId; }\n        public void setUserId(Long userId) { this.userId = userId; }\n        \n        public List<Long> getProductIds() { return productIds; }\n        public void setProductIds(List<Long> productIds) { this.productIds = productIds; }\n        \n        public List<Integer> getQuantities() { return quantities; }\n        public void setQuantities(List<Integer> quantities) { this.quantities = quantities; }\n    }",
-    "implements": [],
-    "extends": null,
-    "methods": [
-      {
-        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getUserId()",
-        "body": "public Long getUserId() { return userId; }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.setUserId(Long userId)",
-        "body": "public void setUserId(Long userId) { this.userId = userId; }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [
-          "Long userId"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getProductIds()",
-        "body": "public List<Long> getProductIds() { return productIds; }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.setProductIds(List<Long> productIds)",
-        "body": "public void setProductIds(List<Long> productIds) { this.productIds = productIds; }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [
-          "List<Long> productIds"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getQuantities()",
-        "body": "public List<Integer> getQuantities() { return quantities; }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.setQuantities(List<Integer> quantities)",
-        "body": "public void setQuantities(List<Integer> quantities) { this.quantities = quantities; }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [
-          "List<Integer> quantities"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      }
-    ],
-    "parent_class": [
-      "com.example.springdemo.controller.OrderController"
-    ],
-    "is_nested": true,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.service",
-    "class_name": "NotificationService",
-    "full_class_name": "com.example.springdemo.service.NotificationService",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\service\\NotificationService.java",
-    "content": "@Service\n@RequiredArgsConstructor\n@Slf4j\npublic class NotificationService {\n    \n    private final NotificationRepository notificationRepository;\n    private final KafkaTemplate<String, Object> kafkaTemplate;\n    \n    @Transactional\n    public Notification createNotification(User user, String title, String message, \n                                         Notification.NotificationType type, String metadata) {\n        log.info(\"Creating notification for user: {}\", user.getId());\n        \n        Notification notification = Notification.builder()\n                .user(user)\n                .title(title)\n                .message(message)\n                .type(type)\n                .status(Notification.NotificationStatus.UNREAD)\n                .metadata(metadata)\n                .createdAt(LocalDateTime.now())\n                .build();\n        \n        Notification savedNotification = notificationRepository.save(notification);\n        \n        \n        publishNotificationEvent(savedNotification, \"NOTIFICATION_CREATED\");\n        \n        log.info(\"Notification created: {}\", savedNotification.getId());\n        return savedNotification;\n    }\n    \n    public void sendOrderNotification(User user, Order order, String message) {\n        String title = String.format(\"Order Update - %s\", order.getOrderNumber());\n        String metadata = String.format(\"{\\\"orderId\\\":%d,\\\"orderNumber\\\":\\\"%s\\\",\\\"status\\\":\\\"%s\\\"}\", \n                order.getId(), order.getOrderNumber(), order.getStatus());\n        \n        createNotification(user, title, message, Notification.NotificationType.ORDER_UPDATE, metadata);\n    }\n    \n    public void sendPaymentNotification(User user, Order order, String message) {\n        String title = String.format(\"Payment Update - %s\", order.getOrderNumber());\n        String metadata = String.format(\"{\\\"orderId\\\":%d,\\\"orderNumber\\\":\\\"%s\\\",\\\"paymentStatus\\\":\\\"%s\\\"}\", \n                order.getId(), order.getOrderNumber(), order.getPaymentStatus());\n        \n        createNotification(user, title, message, Notification.NotificationType.PAYMENT_CONFIRMATION, metadata);\n    }\n    \n    public void sendSystemAlert(User user, String title, String message) {\n        createNotification(user, title, message, Notification.NotificationType.SYSTEM_ALERT, null);\n    }\n    \n    @Transactional\n    public Notification markAsRead(Long notificationId) {\n        log.info(\"Marking notification as read: {}\", notificationId);\n        \n        Notification notification = notificationRepository.findById(notificationId)\n                .orElseThrow(() -> new RuntimeException(\"Notification not found\"));\n        \n        notification.setStatus(Notification.NotificationStatus.READ);\n        Notification savedNotification = notificationRepository.save(notification);\n        \n        \n        publishNotificationEvent(savedNotification, \"NOTIFICATION_READ\");\n        \n        return savedNotification;\n    }\n    \n    public List<Notification> getNotificationsByUser(Long userId) {\n        return notificationRepository.findByUserId(userId);\n    }\n    \n    public List<Notification> getUnreadNotificationsByUser(Long userId) {\n        return notificationRepository.findByUserIdAndStatus(userId, Notification.NotificationStatus.UNREAD);\n    }\n    \n    public Long getUnreadNotificationCount(Long userId) {\n        return notificationRepository.countUnreadNotificationsByUserId(userId);\n    }\n    \n    private void publishNotificationEvent(Notification notification, String eventType) {\n        try {\n            kafkaTemplate.send(\"notification-events\", eventType, notification);\n            log.info(\"Published notification event: {} for notification: {}\", eventType, notification.getId());\n        } catch (Exception e) {\n            log.error(\"Failed to publish notification event: {}\", e.getMessage());\n        }\n    }\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [
-      {
-        "name": "com.example.springdemo.service.NotificationService.createNotification(User user, String title, String message, \n                                         Notification.NotificationType type, String metadata)",
-        "body": "@Transactional\n    public Notification createNotification(User user, String title, String message, \n                                         Notification.NotificationType type, String metadata) {\n        log.info(\"Creating notification for user: {}\", user.getId());\n        \n        Notification notification = Notification.builder()\n                .user(user)\n                .title(title)\n                .message(message)\n                .type(type)\n                .status(Notification.NotificationStatus.UNREAD)\n                .metadata(metadata)\n                .createdAt(LocalDateTime.now())\n                .build();\n        \n        Notification savedNotification = notificationRepository.save(notification);\n        \n        \n        publishNotificationEvent(savedNotification, \"NOTIFICATION_CREATED\");\n        \n        log.info(\"Notification created: {}\", savedNotification.getId());\n        return savedNotification;\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.entity.User.getId()",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.entity.Notification.builder()",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.entity.Notification.getId()",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "com.example.springdemo.entity.Notification",
-          "com.example.springdemo.entity.Notification.NotificationType",
-          "com.example.springdemo.entity.User"
-        ],
-        "field_access": [
-          "UNREAD",
-          "com.example.springdemo.entity.Notification.NotificationStatus"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.NotificationService.sendOrderNotification(User user, Order order, String message)",
-        "body": "public void sendOrderNotification(User user, Order order, String message) {\n        String title = String.format(\"Order Update - %s\", order.getOrderNumber());\n        String metadata = String.format(\"{\\\"orderId\\\":%d,\\\"orderNumber\\\":\\\"%s\\\",\\\"status\\\":\\\"%s\\\"}\", \n                order.getId(), order.getOrderNumber(), order.getStatus());\n        \n        createNotification(user, title, message, Notification.NotificationType.ORDER_UPDATE, metadata);\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.entity.Order.getOrderNumber()",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.entity.Order.getId()",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.entity.Order.getStatus()",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
-        ],
-        "field_access": [
-          "ORDER_UPDATE",
-          "com.example.springdemo.entity.Notification.NotificationType"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.NotificationService.sendPaymentNotification(User user, Order order, String message)",
-        "body": "public void sendPaymentNotification(User user, Order order, String message) {\n        String title = String.format(\"Payment Update - %s\", order.getOrderNumber());\n        String metadata = String.format(\"{\\\"orderId\\\":%d,\\\"orderNumber\\\":\\\"%s\\\",\\\"paymentStatus\\\":\\\"%s\\\"}\", \n                order.getId(), order.getOrderNumber(), order.getPaymentStatus());\n        \n        createNotification(user, title, message, Notification.NotificationType.PAYMENT_CONFIRMATION, metadata);\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.entity.Order.getOrderNumber()",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.entity.Order.getId()",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.entity.Order.getPaymentStatus()",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
-        ],
-        "field_access": [
-          "com.example.springdemo.entity.Notification.NotificationType",
-          "PAYMENT_CONFIRMATION"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.NotificationService.sendSystemAlert(User user, String title, String message)",
-        "body": "public void sendSystemAlert(User user, String title, String message) {\n        createNotification(user, title, message, Notification.NotificationType.SYSTEM_ALERT, null);\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.entity.User"
-        ],
-        "field_access": [
-          "SYSTEM_ALERT",
-          "com.example.springdemo.entity.Notification.NotificationType"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.NotificationService.markAsRead(Long notificationId)",
-        "body": "@Transactional\n    public Notification markAsRead(Long notificationId) {\n        log.info(\"Marking notification as read: {}\", notificationId);\n        \n        Notification notification = notificationRepository.findById(notificationId)\n                .orElseThrow(() -> new RuntimeException(\"Notification not found\"));\n        \n        notification.setStatus(Notification.NotificationStatus.READ);\n        Notification savedNotification = notificationRepository.save(notification);\n        \n        \n        publishNotificationEvent(savedNotification, \"NOTIFICATION_READ\");\n        \n        return savedNotification;\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.entity.Notification.setStatus(NotificationStatus status)",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "com.example.springdemo.entity.Notification"
-        ],
-        "field_access": [
-          "READ",
-          "com.example.springdemo.entity.Notification.NotificationStatus"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.NotificationService.getNotificationsByUser(Long userId)",
-        "body": "public List<Notification> getNotificationsByUser(Long userId) {\n        return notificationRepository.findByUserId(userId);\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.repository.NotificationRepository.findByUserId(Long userId)",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "com.example.springdemo.entity.Notification"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.NotificationService.getUnreadNotificationsByUser(Long userId)",
-        "body": "public List<Notification> getUnreadNotificationsByUser(Long userId) {\n        return notificationRepository.findByUserIdAndStatus(userId, Notification.NotificationStatus.UNREAD);\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.repository.NotificationRepository.findByUserIdAndStatus(@Param(value=\"userId\")",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "com.example.springdemo.entity.Notification"
-        ],
-        "field_access": [
-          "UNREAD",
-          "com.example.springdemo.entity.Notification.NotificationStatus"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.NotificationService.getUnreadNotificationCount(Long userId)",
-        "body": "public Long getUnreadNotificationCount(Long userId) {\n        return notificationRepository.countUnreadNotificationsByUserId(userId);\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.repository.NotificationRepository.countUnreadNotificationsByUserId(@Param(value=\"userId\")",
-            "params": []
-          }
-        ],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.NotificationService.publishNotificationEvent(Notification notification, String eventType)",
-        "body": "private void publishNotificationEvent(Notification notification, String eventType) {\n        try {\n            kafkaTemplate.send(\"notification-events\", eventType, notification);\n            log.info(\"Published notification event: {} for notification: {}\", eventType, notification.getId());\n        } catch (Exception e) {\n            log.error(\"Failed to publish notification event: {}\", e.getMessage());\n        }\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.entity.Notification.getId()",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "com.example.springdemo.entity.Notification"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      }
-    ],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.controller",
     "class_name": "ProductController",
     "full_class_name": "com.example.springdemo.controller.ProductController",
     "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\controller\\ProductController.java",
@@ -3050,8 +3041,8 @@
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Product>"
         ],
         "field_access": [
-          "com.example.springdemo.entity.Product.ProductStatus",
           "com.example.springdemo.entity.Product.ProductCategory",
+          "com.example.springdemo.entity.Product.ProductStatus",
           "AVAILABLE"
         ],
         "inheritance_info": [],
@@ -3071,8 +3062,8 @@
         "body": "@GetMapping\n    public ResponseEntity<List<Product>> getAllProducts() {\n        log.info(\"Getting all products\");\n        \n        List<Product> products = productRepository.findAll();\n        return ResponseEntity.ok(products);\n    }",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Product",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>",
+          "com.example.springdemo.entity.Product"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3119,8 +3110,8 @@
         ],
         "used_types": [
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>",
-          "com.example.springdemo.entity.Product.ProductCategory",
-          "com.example.springdemo.entity.Product"
+          "com.example.springdemo.entity.Product",
+          "com.example.springdemo.entity.Product.ProductCategory"
         ],
         "field_access": [
           "com.example.springdemo.entity.Product.ProductCategory"
@@ -3148,8 +3139,8 @@
         ],
         "used_types": [
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>",
-          "com.example.springdemo.entity.Product.ProductStatus",
-          "com.example.springdemo.entity.Product"
+          "com.example.springdemo.entity.Product",
+          "com.example.springdemo.entity.Product.ProductStatus"
         ],
         "field_access": [
           "com.example.springdemo.entity.Product.ProductStatus"
@@ -3176,8 +3167,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Product",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>",
+          "com.example.springdemo.entity.Product"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3202,8 +3193,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Product",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>",
+          "com.example.springdemo.entity.Product"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3228,8 +3219,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Product",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>",
+          "com.example.springdemo.entity.Product"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3254,8 +3245,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Product",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>",
+          "com.example.springdemo.entity.Product"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3452,9 +3443,9 @@
           }
         ],
         "used_types": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>",
+          "com.example.springdemo.entity.User",
           "com.example.springdemo.controller.UserController.CreateUserRequest",
-          "com.example.springdemo.entity.User"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserRole"
@@ -3482,8 +3473,8 @@
         ],
         "used_types": [
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>",
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.User.UserStatus"
+          "com.example.springdemo.entity.User.UserStatus",
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserStatus"
@@ -3505,9 +3496,9 @@
         "body": "@PutMapping(\"/{userId}/role\")\n    public ResponseEntity<User> updateUserRole(@PathVariable Long userId, \n                                              @RequestBody Map<String, String> request) {\n        log.info(\"Updating user role for user: {} to {}\", userId, request.get(\"role\"));\n        \n        try {\n            User.UserRole role = User.UserRole.valueOf(request.get(\"role\"));\n            User user = userService.updateUserRole(userId, role);\n            return ResponseEntity.ok(user);\n        } catch (Exception e) {\n            log.error(\"Error updating user role: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
         "method_calls": [],
         "used_types": [
+          "com.example.springdemo.entity.User.UserRole",
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>",
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.User.UserRole"
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserRole"
@@ -3529,8 +3520,8 @@
         "body": "@GetMapping(\"/username/{username}\")\n    public ResponseEntity<User> getUserByUsername(@PathVariable String username) {\n        log.info(\"Getting user by username: {}\", username);\n        \n        Optional<User> user = userService.getUserByUsername(username);\n        return user.map(ResponseEntity::ok)\n                   .orElse(ResponseEntity.notFound().build());\n    }",
         "method_calls": [],
         "used_types": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3550,8 +3541,8 @@
         "body": "@GetMapping(\"/email/{email}\")\n    public ResponseEntity<User> getUserByEmail(@PathVariable String email) {\n        log.info(\"Getting user by email: {}\", email);\n        \n        Optional<User> user = userService.getUserByEmail(email);\n        return user.map(ResponseEntity::ok)\n                   .orElse(ResponseEntity.notFound().build());\n    }",
         "method_calls": [],
         "used_types": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3569,16 +3560,11 @@
       {
         "name": "com.example.springdemo.controller.UserController.getUsersByRole(@PathVariable String role)",
         "body": "@GetMapping(\"/role/{role}\")\n    public ResponseEntity<List<User>> getUsersByRole(@PathVariable String role) {\n        log.info(\"Getting users by role: {}\", role);\n        \n        try {\n            User.UserRole userRole = User.UserRole.valueOf(role);\n            List<User> users = userService.getUsersByRole(userRole);\n            return ResponseEntity.ok(users);\n        } catch (Exception e) {\n            log.error(\"Error getting users by role: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.service.UserService.getUsersByRole(UserRole role)",
-            "params": []
-          }
-        ],
+        "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.User",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<User>>",
           "com.example.springdemo.entity.User.UserRole",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<User>>"
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserRole"
@@ -3598,16 +3584,11 @@
       {
         "name": "com.example.springdemo.controller.UserController.getUsersByStatus(@PathVariable String status)",
         "body": "@GetMapping(\"/status/{status}\")\n    public ResponseEntity<List<User>> getUsersByStatus(@PathVariable String status) {\n        log.info(\"Getting users by status: {}\", status);\n        \n        try {\n            User.UserStatus userStatus = User.UserStatus.valueOf(status);\n            List<User> users = userService.getUsersByStatus(userStatus);\n            return ResponseEntity.ok(users);\n        } catch (Exception e) {\n            log.error(\"Error getting users by status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.service.UserService.getUsersByStatus(UserStatus status)",
-            "params": []
-          }
-        ],
+        "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.User",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<User>>",
           "com.example.springdemo.entity.User.UserStatus",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<User>>"
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserStatus"
@@ -3627,12 +3608,7 @@
       {
         "name": "com.example.springdemo.controller.UserController.getUserCountByRole(@PathVariable String role)",
         "body": "@GetMapping(\"/count/role/{role}\")\n    public ResponseEntity<Long> getUserCountByRole(@PathVariable String role) {\n        log.info(\"Getting user count by role: {}\", role);\n        \n        try {\n            User.UserRole userRole = User.UserRole.valueOf(role);\n            Long count = userService.getUserCountByRole(userRole);\n            return ResponseEntity.ok(count);\n        } catch (Exception e) {\n            log.error(\"Error getting user count by role: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.service.UserService.getUserCountByRole(UserRole role)",
-            "params": []
-          }
-        ],
+        "method_calls": [],
         "used_types": [
           "com.example.springdemo.entity.User.UserRole",
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Long>"
@@ -3845,15 +3821,7 @@
             "params": []
           },
           {
-            "name": "com.example.springdemo.service.factory.ServiceFactory.getPricingStrategy(User user, Order order)",
-            "params": []
-          },
-          {
             "name": "com.example.springdemo.service.strategy.PricingStrategy.calculatePrice(Order order, User user)",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.service.NotificationService.sendOrderNotification(User user, Order order, String message)",
             "params": []
           },
           {
@@ -3863,18 +3831,18 @@
         ],
         "used_types": [
           "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.service.strategy.PricingStrategy",
           "com.example.springdemo.entity.Product",
+          "com.example.springdemo.service.strategy.PricingStrategy",
+          "com.example.springdemo.entity.User",
           "com.example.springdemo.entity.OrderItem"
         ],
         "field_access": [
-          "com.example.springdemo.entity.OrderEvent.EventType",
           "com.example.springdemo.entity.Order.PaymentStatus",
-          "com.example.springdemo.entity.Order.OrderStatus",
           "BigDecimal ZERO",
+          "ORDER_CREATED",
+          "com.example.springdemo.entity.OrderEvent.EventType",
           "PENDING",
-          "ORDER_CREATED"
+          "com.example.springdemo.entity.Order.OrderStatus"
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -3894,10 +3862,6 @@
             "params": []
           },
           {
-            "name": "com.example.springdemo.service.NotificationService.sendOrderNotification(User user, Order order, String message)",
-            "params": []
-          },
-          {
             "name": "com.example.springdemo.entity.Order.getUser()",
             "params": []
           }
@@ -3907,8 +3871,8 @@
           "com.example.springdemo.entity.Order"
         ],
         "field_access": [
-          "com.example.springdemo.entity.OrderEvent.EventType",
-          "STATUS_CHANGED"
+          "STATUS_CHANGED",
+          "com.example.springdemo.entity.OrderEvent.EventType"
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -3937,12 +3901,12 @@
           "com.example.springdemo.entity.Order"
         ],
         "field_access": [
-          "com.example.springdemo.entity.OrderEvent.EventType",
-          "com.example.springdemo.entity.Order.PaymentStatus",
-          "com.example.springdemo.entity.Order.OrderStatus",
-          "PAYMENT_PROCESSED",
           "PAID",
-          "CONFIRMED"
+          "com.example.springdemo.entity.Order.PaymentStatus",
+          "CONFIRMED",
+          "PAYMENT_PROCESSED",
+          "com.example.springdemo.entity.OrderEvent.EventType",
+          "com.example.springdemo.entity.Order.OrderStatus"
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -4019,8 +3983,8 @@
         ],
         "used_types": [
           "com.example.springdemo.entity.OrderEvent",
-          "com.example.springdemo.entity.OrderEvent.EventType",
-          "com.example.springdemo.entity.Order"
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.OrderEvent.EventType"
         ],
         "field_access": [],
         "inheritance_info": [],
