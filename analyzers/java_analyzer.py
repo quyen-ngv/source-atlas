@@ -2,7 +2,7 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 
 from tree_sitter import Language, Parser, Node, Query, QueryCursor
 from tree_sitter_language_pack import get_language
@@ -10,7 +10,7 @@ from tree_sitter_language_pack import get_language
 from analyzers.base_analyzer import BaseCodeAnalyzer
 from extractors.java.java_extractor import JavaEndpointExtractor
 from lsp.implements.java_lsp import JavaLSPService
-from models.domain_models import Method, MethodCall, MethodParam, MethodType
+from models.domain_models import Method, MethodCall, MethodParam, ChunkType
 from utils.comment_remover import JavaCommentRemover
 from utils.tree_sitter_helper import extract_content
 
@@ -123,9 +123,53 @@ class JavaBuiltinPackages:
 
     # Primitive types và wrapper classes
     JAVA_PRIMITIVES = {
-        'boolean', 'byte', 'char', 'short', 'int', 'long', 'float', 'double',
-        'Boolean', 'Byte', 'Character', 'Short', 'Integer', 'Long', 'Float', 'Double',
-        'String', 'Object', 'Class', 'Void'
+        # --- Primitive types ---
+        "byte", "short", "int", "long",
+        "float", "double", "char", "boolean", "void",
+
+        # --- Wrapper classes (java.lang) ---
+        "Boolean", "Byte", "Short", "Integer", "Long",
+        "Float", "Double", "Character", "Void",
+
+        # --- Core java.lang classes ---
+        "Object", "Class", "Enum", "Record", "String",
+        "StringBuilder", "StringBuffer",
+        "Math", "System", "Thread", "Runnable",
+        "Exception", "RuntimeException", "Error", "Throwable",
+        "Comparable", "Iterable",
+
+        # --- java.util common classes & interfaces ---
+        "Collection", "List", "Set", "Map", "Queue", "Deque",
+        "ArrayList", "LinkedList", "HashSet", "TreeSet",
+        "HashMap", "TreeMap", "Hashtable", "Vector",
+        "Collections", "Arrays", "Objects",
+        "Optional", "Stream",
+
+        # --- java.util.concurrent ---
+        "CompletableFuture",
+
+        # --- java.time (Java 8+) ---
+        "LocalDate", "LocalTime", "LocalDateTime", "ZonedDateTime",
+        "Instant", "Duration", "Period",
+        "ZoneId", "ZoneOffset", "DateTimeFormatter",
+
+        # --- java.math ---
+        "BigDecimal", "BigInteger",
+
+        # --- java.nio.file ---
+        "Path", "Paths", "Files",
+
+        # --- java.nio.charset ---
+        "Charset", "StandardCharsets",
+
+        # --- java.io (very common) ---
+        "File", "InputStream", "OutputStream", "Reader", "Writer",
+
+        # --- java.net (very common) ---
+        "URL", "URI",
+
+        # --- Miscellaneous ---
+        "UUID"
     }
 
 class JavaParsingConstants:
@@ -136,6 +180,36 @@ class JavaParsingConstants:
     }
 
     ENCODING_FALLBACKS = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+
+    CONFIG_NODE_ANNOTATIONS  = {
+        # --- Class-level configuration ---
+        "@Configuration",
+        "@SpringBootApplication",
+        "@EnableAutoConfiguration",
+        "@EnableConfigurationProperties",
+        "@ComponentScan",
+        "@Import",
+        "@ImportResource",
+
+        # --- Method-level bean definitions ---
+        "@Bean",
+
+        # --- Web filters / advice / listeners ---
+        "@WebFilter",
+        "@WebListener",
+        "@ControllerAdvice",
+        "@RestControllerAdvice",
+
+        "@Aspect",
+
+        # --- Conditional configuration ---
+        "@Profile",
+        "@ConditionalOnClass",
+        "@ConditionalOnMissingBean",
+        "@ConditionalOnProperty",
+        "@ConditionalOnExpression",
+        "@ConditionalOnBean",
+    }
 
 @dataclass
 class MethodDependencies:
@@ -365,7 +439,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
     # Method Processing
     def _extract_class_methods(self, class_node: Node, content: str,
                                implements: List[str], extends: Optional[str],
-                               full_class_name: str,  file_path: str) -> List[Method]:
+                               full_class_name: str,  file_path: str, import_mapping: Dict[str, str]) -> List[Method]:
         methods = []
         class_body = self._get_class_body(class_node)
         if not class_body:
@@ -376,13 +450,13 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 if child.type == 'method_declaration' or child.type == 'constructor_declaration':
                     method = self._process_method_node(
                         child, content, implements, extends,
-                        full_class_name, class_node, file_path
+                        full_class_name, class_node, file_path, import_mapping
                     )
                     if method:
                         if child.type == 'constructor_declaration':
-                            method.type = MethodType.CONSTRUCTOR
+                            method.type = ChunkType.CONSTRUCTOR
                         else:
-                            method.type = MethodType.REGULAR
+                            method.type = ChunkType.REGULAR
                         methods.append(method)
         except Exception as e:
             logger.debug(f"Error extracting class methods: {e}")
@@ -390,56 +464,56 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
 
     def _process_method_node(self, method_node: Node, content: str,
                              implements: List[str], extends: Optional[str], full_class_name: str,
-                             class_node: Node, file_path: str) -> Optional[Method]:
+                             class_node: Node, file_path: str, import_mapping: Dict[str, str]) -> Optional[Method]:
         try:
             method_name = self._extract_method_name(method_node, content)
             if not method_name:
                 return None
 
-            body, dependencies = self._extract_method_body_and_dependencies(method_node, content, file_path)
+            body = ""
+            method_calls = self.filter(self._extract_method_calls(method_node, file_path, import_mapping))
+            used_types = self.filter(self._extract_used_types(method_node, file_path, content, import_mapping))
+            field_access = self.filter(self._extract_field_access(method_node, file_path))
+
+            for child in method_node.children:
+                if child.type == 'block' or child.type == 'constructor_body':
+                    body = extract_content(method_node, content)
+                    break
+
             endpoint = self.endpoint_extractor.extract_from_method(method_node, content, class_node)
 
             # Build inheritance info
             inheritance_info = self._build_inheritance_info(method_name, implements, extends)
             extends_info = self._build_extends_info(method_name, extends)
+            is_configuration = self._is_config_node(method_node, content)
+
+            method_type = ChunkType.REGULAR
+            if endpoint:
+                method_type = ChunkType.ENDPOINT
+            elif is_configuration:
+                method_type = ChunkType.CONFIGURATION
 
             return Method(
                 name=f"{full_class_name}.{method_name}",
                 body=body,
-                method_calls=tuple(dependencies.method_calls),
-                used_types=tuple(dependencies.used_types),
-                field_access=tuple(dependencies.field_access),
+                method_calls=tuple(method_calls),
+                used_types=tuple(used_types),
+                field_access=tuple(field_access),
                 inheritance_info=tuple(inheritance_info),
                 extends_info=tuple(extends_info),
-                endpoint=endpoint,
-                type=None
+                endpoint=tuple(endpoint),
+                type = method_type,
             )
         except Exception as e:
             logger.debug(f"Error processing method node: {e}")
             return None
 
-    def _extract_method_body_and_dependencies(self, method_node: Node, content: str, file_path: str) -> Tuple[str, MethodDependencies]:
-        body = ""
-        dependencies = self._analyze_method_dependencies(method_node, file_path)
-
-        for child in method_node.children:
-            if child.type == 'block' or child.type == 'constructor_body':
-                body = extract_content(method_node, content)
-                break
-
-        return body, dependencies
-
-    def _analyze_method_dependencies(self, body_node: Node, file_path: str) -> MethodDependencies:
-        method_calls = self.filter(self._extract_method_calls(body_node, file_path))
-        used_types = self.filter(self._extract_used_types(body_node, file_path))
-        field_access = self.filter(self._extract_field_access(body_node, file_path))
-        return MethodDependencies(method_calls, used_types, field_access)
-
-    def _extract_method_calls(self, body_node: Node, file_path: str) -> List[MethodCall]:
+    def _extract_method_calls(self, body_node: Node, file_path: str, import_mapping: Dict[str, str]) -> List[MethodCall]:
         method_calls: List[MethodCall] = []
         try:
             method_call_query = Query(self.language, """
                 (method_invocation 
+                    object: (identifier) @object
                     name: (identifier) @method_call
                     arguments: (argument_list) @args
                 )
@@ -451,7 +525,10 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 item = match[1]
                 method_node = item.get("method_call")[0]
                 args_node = item.get("args")[0]
+                obj = item.get("object")[0]
 
+                if obj in JavaBuiltinPackages.JAVA_PRIMITIVES:
+                    continue
                 if method_node:
                     method_call = self._resolve_method_call_with_lsp(method_node, args_node, file_path)
                     if method_call:
@@ -480,7 +557,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         return list(field_access)
 
 
-    def _extract_used_types(self, body_node: Node, file_path: str) -> List[str]:
+    def _extract_used_types(self, body_node: Node, file_path: str, content: str, import_mapping: Dict[str, str]) -> List[str]:
         used_types = set()
         try:
             variable_query = Query(self.language, """
@@ -499,7 +576,10 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                     "generic_type", "array_element_type"
                 }:
                     for node in nodes:
-                        variable_ref = self._resolve_used_type_with_lsp(node, file_path)
+                        text = extract_content(node, content)
+                        if text in JavaBuiltinPackages.JAVA_PRIMITIVES:
+                            continue
+                        variable_ref = import_mapping.get( text,self._resolve_used_type_with_lsp(node, file_path))
                         if variable_ref:
                             used_types.add(variable_ref)
         except Exception as e:
@@ -765,3 +845,52 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 seen.add(name)
 
         return filtered
+
+    def _is_config_node(self, node: Node, content: str):
+        is_config = False
+        try:
+            for child in node.children:
+                if child.type != 'modifiers':
+                    continue
+                for grandchild in child.children:
+                    if grandchild.type != 'annotation' and grandchild.type != 'marker_annotation':
+                        continue
+                    text = content[grandchild.start_byte:grandchild.end_byte]
+
+                    if text in JavaParsingConstants.CONFIG_NODE_ANNOTATIONS:
+                        is_config = True
+                        break
+
+            return is_config
+        except Exception as ex:
+            logger.warn(f"_is_config_class error {ex}")
+            return None
+
+    def build_import_mapping(self, root_node: Node, content: str) -> Dict[str, str]:
+
+        import_mapping = {}
+
+        try:
+            # Query để extract import statements
+            import_query = Query(self.language, """
+                (import_declaration 
+                    (scoped_identifier) @import_path
+                )
+            """)
+
+            query_cursor = QueryCursor(import_query)
+            captures = query_cursor.captures(root_node)
+
+            import_nodes = captures.get("import_path", [])
+            for import_node in import_nodes:
+                import_path = extract_content(import_node, content)
+                if import_path and '.' in import_path:
+                    class_name = import_path.split('.')[-1]
+                    if class_name == "*":
+                        continue
+                    import_mapping[class_name] = import_path
+
+        except Exception as e:
+            logger.debug(f"Error building import mapping: {e}")
+
+        return import_mapping

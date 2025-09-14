@@ -5,7 +5,7 @@ from typing import List, Dict, Tuple
 from loguru import logger
 from config import config
 
-from models.domain_models import CodeChunk, MethodType
+from models.domain_models import CodeChunk, ChunkType
 
 # Global Neo4j connection instance
 _neo4j_connection = None
@@ -64,7 +64,7 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
             content = escape_for_cypher(chunk.content)
 
             # Determine node type
-            if chunk.is_config_file:
+            if chunk.type == ChunkType.CONFIGURATION:
                 node_type = "ConfigurationNode"
             else:
                 node_type = "ClassNode"
@@ -87,10 +87,9 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
                 method_content = method_body + " " + method_field_access
 
                 # Determine method node type based on endpoint info
-                endpoints = method.endpoint
-                if chunk.is_config_file:
+                if chunk.type == ChunkType.CONFIGURATION:
                     method_node_type = "ConfigurationNode"
-                elif endpoints:
+                elif chunk.type == ChunkType.ENDPOINT:
                     method_node_type = "EndpointNode"
                 else:
                     method_node_type = "MethodNode"

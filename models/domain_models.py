@@ -36,14 +36,15 @@ class MethodCall:
             "params": self.params
         }
 
-class MethodType(Enum):
+class ChunkType(Enum):
     REGULAR = "regular"
     GETTER = "getter"
     SETTER = "setter"
     CONSTRUCTOR = "constructor"
     STATIC = "static"
-    REST_ENDPOINT = "rest_endpoint"
+    ENDPOINT = "rest_endpoint"
     OVERRIDE = "override"
+    CONFIGURATION = "configuration"
 
 @dataclass
 class Method:
@@ -54,8 +55,8 @@ class Method:
     field_access: Tuple[str, ...]
     inheritance_info: Tuple[str, ...]
     extends_info: Tuple[str, ...]
-    endpoint: Optional[RestEndpoint]
-    type: MethodType
+    endpoint: Tuple[RestEndpoint,...]
+    type: ChunkType
 
     def to_dict(self):
         return {
@@ -82,7 +83,7 @@ class CodeChunk:
     methods: List[Method]
     parent_class: Optional[str]
     is_nested: bool = False
-    is_config_file: bool = False
+    type: ChunkType = ChunkType.REGULAR
 
     def to_dict(self) -> Dict:
         """Convert CodeChunk to a JSON-serializable dictionary."""
@@ -108,6 +109,7 @@ class CodeChunk:
             } for method in self.methods],
             "is_nested": self.is_nested,
             "parent_class": self.parent_class,
+            "type": self.type
         }
 
     @classmethod
@@ -118,9 +120,9 @@ class CodeChunk:
             full_class_name=None,
             file_path=str(file_path),
             content=file_path.read_text(),
-            is_config_file=True,
             implements=(),
             extends=None,
             methods=[],
-            parent_class=None
+            parent_class=None,
+            type=ChunkType.CONFIGURATION
         )

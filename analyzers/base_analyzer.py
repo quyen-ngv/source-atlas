@@ -5,12 +5,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 
 from tree_sitter import Language, Parser, Node
 
 from database.neo4j_impl import get_neo4j_connection
-from models.domain_models import CodeChunk
+from models.domain_models import CodeChunk, ChunkType
 from models.domain_models import Method
 from utils.common import convert
 
@@ -23,6 +23,8 @@ class ClassParsingContext:
     class_name: str
     full_class_name: str
     is_nested: bool
+    is_config: bool
+    import_mapping: Dict[str, str] = None
     parent_class: Optional[str] = None
 
 
@@ -110,7 +112,7 @@ class BaseCodeAnalyzer(ABC):
             extends = self._extract_extends_with_lsp(class_node, file_path)
             methods = self._extract_class_methods(
                 class_node, content, implements, extends,
-                context.full_class_name, file_path
+                context.full_class_name, file_path, context.import_mapping
             )
 
             return CodeChunk(
@@ -124,6 +126,7 @@ class BaseCodeAnalyzer(ABC):
                 methods=methods,
                 is_nested=context.is_nested,
                 parent_class=context.parent_class,
+                type=ChunkType.CONFIGURATION if context.is_config else ChunkType.REGULAR,
             )
         except Exception as e:
             logger.error(f"Error parsing class node: {e}")
@@ -139,13 +142,16 @@ class BaseCodeAnalyzer(ABC):
         is_nested = self._is_nested_class(class_node, root_node)
         full_class_name = self._build_full_class_name(class_name, package, class_node, content, root_node)
         parent_class = self._get_parent_class(class_node, content, package) if is_nested else None,
-
+        is_config = self._is_config_node(class_node, content)
+        import_mapping = self.build_import_mapping(class_node, content)
         return ClassParsingContext(
             package=package,
             class_name=class_name,
             full_class_name=full_class_name,
             is_nested=is_nested,
-            parent_class=parent_class
+            parent_class=parent_class,
+            is_config = is_config,
+            import_mapping=import_mapping
         )
 
     def _read_file_content(self, file_path: Path) -> str:
@@ -186,7 +192,7 @@ class BaseCodeAnalyzer(ABC):
     @abstractmethod
     def _extract_class_methods(self, class_node: Node, content: str,
                                implements: List[str], extends: Optional[str],
-                               full_class_name: str, file_path: str) -> List[Method]:
+                               full_class_name: str, file_path: str, import_mapping: Dict[str, str]) -> List[Method]:
         pass
 
     @abstractmethod
@@ -208,6 +214,14 @@ class BaseCodeAnalyzer(ABC):
 
     @abstractmethod
     def _get_parent_class(self, class_node: Node, content: str, package: str) -> Optional[str]:
+        pass
+
+    @abstractmethod
+    def _is_config_node(self, class_node: Node, content: str):
+        pass
+
+    @abstractmethod
+    def build_import_mapping(self, root_node: Node, content: str) -> Dict[str, str]:
         pass
 
     def _build_knowledge_graph(self, chunks: List[CodeChunk]):
