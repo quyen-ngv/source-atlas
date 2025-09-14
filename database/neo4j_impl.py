@@ -87,9 +87,9 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
                 method_content = method_body + " " + method_field_access
 
                 # Determine method node type based on endpoint info
-                if chunk.type == ChunkType.CONFIGURATION:
+                if method.type == ChunkType.CONFIGURATION:
                     method_node_type = "ConfigurationNode"
-                elif chunk.type == ChunkType.ENDPOINT:
+                elif method.type == ChunkType.ENDPOINT:
                     method_node_type = "EndpointNode"
                 else:
                     method_node_type = "MethodNode"

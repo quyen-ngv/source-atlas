@@ -420,7 +420,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             logger.debug(f"LSP resolution failed: {e}")
             return node.text.decode('utf8')
 
-    def _process_lsp_results(self, lsp_results) -> Optional[str]:
+    def _process_lsp_results(self, lsp_results, type_name: str = None) -> Optional[str]:
         if not lsp_results:
             return None
 
@@ -432,6 +432,13 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 absolute_path = result.get('absolutePath')
                 if absolute_path and isinstance(absolute_path, str):
                     qualified_name = self._extract_qualified_name_from_lsp_result(result)
+                    if type_name and type_name != "var" and "." in qualified_name:
+                        class_type = qualified_name.split(".")[-1]
+                        if class_type != type_name:
+                            if "." in type_name:
+                                qualified_name = qualified_name.rsplit(".", 1)[0] + "." + type_name
+                            else:
+                                qualified_name = qualified_name.rstrip(".") + "." + type_name
                     if qualified_name:
                         return qualified_name
         return None
@@ -563,24 +570,37 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 (spread_parameter (type_identifier) @varargs_type)
                 (type_arguments (_) @generic_type)
                 (array_type element: (_) @array_element_type)
+                (scoped_type_identifier) @first_scoped
+                (#not-ancestor? @first_scoped scoped_type_identifier)
             """)
             query_cursor = QueryCursor(variable_query)
             captures = query_cursor.captures(body_node)
             for capture_name, nodes in captures.items():
                 if capture_name in {
                     "var_type", "return_type", "param_type", "varargs_type",
-                    "generic_type", "array_element_type"
+                    "generic_type", "array_element_type", "first_scoped"
                 }:
                     for node in nodes:
                         text = extract_content(node, content)
-                        if text in JavaBuiltinPackages.JAVA_PRIMITIVES:
-                            continue
-                        variable_ref = import_mapping.get( text,self._resolve_used_type_with_lsp(node, file_path))
+                        variable_ref = import_mapping.get(text, self._resolve_used_type_with_lsp(node, file_path, text))
                         if variable_ref:
+                            logger.info(f"text {text} variable_ref {variable_ref}")
                             used_types.add(variable_ref)
         except Exception as e:
             logger.debug(f"Error extracting variable usage: {e}")
         return list(used_types)
+
+    def _get_last_type_identifier(self, node: Node):
+        type_identifiers = []
+
+        def dfs(n):
+            if n.type == "type_identifier":
+                type_identifiers.append(n)
+            for child in n.children:
+                dfs(child)
+
+        dfs(node)
+        return type_identifiers[-1] if type_identifiers else node
 
     def _resolve_method_call_with_lsp(self, node: Node, args: Node, file_path: str) -> Optional[MethodCall]:
         if not self.lsp_service:
@@ -643,7 +663,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             logger.debug(f"LSP method call resolution failed: {e}")
             return None
 
-    def _resolve_used_type_with_lsp(self, node: Node, file_path: str) -> Optional[str]:
+    def _resolve_used_type_with_lsp(self, node: Node, file_path: str, type_name: str) -> Optional[str]:
         if not self.lsp_service:
             return None
 
@@ -652,7 +672,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             col = node.start_point[1]
 
             lsp_results = self.lsp_service.request_definition(file_path, line, col)
-            return self._process_lsp_results(lsp_results)
+            return self._process_lsp_results(lsp_results, type_name)
 
         except Exception as e:
             logger.debug(f"LSP variable resolution failed: {e}")
