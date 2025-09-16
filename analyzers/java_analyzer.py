@@ -227,15 +227,17 @@ class JavaCodeAnalyzerConstant:
 
 class JavaCodeAnalyzer(BaseCodeAnalyzer):
 
-    def __init__(self, root_path: str = None):
+    def __init__(self, root_path: str = None, project_id: str = None, branch: str = None):
         # Tree-sitter setup
         language: Language = get_language("java")
         parser = Parser(language)
-        super().__init__(language, parser)
+        super().__init__(language, parser, project_id, branch)
 
         # Services
         self.comment_remover = JavaCommentRemover()
         self.lsp_service = JavaLSPService.create(str(root_path))
+        self.project_id = project_id
+        self.branch = branch
         self._server_ctx = None
         self.comment_remover = JavaCommentRemover()
         self.endpoint_extractor = JavaEndpointExtractor()
@@ -506,6 +508,8 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 extends_info=tuple(extends_info),
                 endpoint=tuple(endpoint),
                 type = method_type,
+                project_id=self.project_id,
+                branch=self.branch
             )
         except Exception as e:
             logger.debug(f"Error processing method node: {e}")
@@ -584,7 +588,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                         text = extract_content(node, content)
                         variable_ref = import_mapping.get(text, self._resolve_used_type_with_lsp(node, file_path, text))
                         if variable_ref:
-                            logger.info(f"text {text} variable_ref {variable_ref}")
                             used_types.add(variable_ref)
         except Exception as e:
             logger.debug(f"Error extracting variable usage: {e}")
@@ -683,8 +686,8 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             return None
 
         try:
-            line = node.start_point[0]
-            col = node.start_point[1]
+            line = node.end_point[0]
+            col = node.end_point[1]
 
             lsp_results = self.lsp_service.request_hover(file_path, line, col)
             return self._extract_field_from_hover(lsp_results)

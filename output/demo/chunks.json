@@ -1,35 +1,5 @@
 [
   {
-    "package": "com.example.springdemo.entity",
-    "class_name": "OrderEvent",
-    "full_class_name": "com.example.springdemo.entity.OrderEvent",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\OrderEvent.java",
-    "content": "@Entity\n@Table(name = \"order_events\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class OrderEvent {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"order_id\", nullable = false)\n    private Order order;\n    \n    @Enumerated(EnumType.STRING)\n    private EventType eventType;\n    \n    @Column(columnDefinition = \"TEXT\")\n    private String eventData;\n    \n    private String source;\n    \n    @CreationTimestamp\n    private LocalDateTime timestamp;\n    \n    public enum EventType {\n        ORDER_CREATED, ORDER_CONFIRMED, PAYMENT_PROCESSED, \n        ORDER_SHIPPED, ORDER_DELIVERED, ORDER_CANCELLED, \n        ORDER_REFUNDED, STATUS_CHANGED\n    }\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.entity",
-    "class_name": "EventType",
-    "full_class_name": "com.example.springdemo.entity.OrderEvent.EventType",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\OrderEvent.java",
-    "content": "public enum EventType {\n        ORDER_CREATED, ORDER_CONFIRMED, PAYMENT_PROCESSED, \n        ORDER_SHIPPED, ORDER_DELIVERED, ORDER_CANCELLED, \n        ORDER_REFUNDED, STATUS_CHANGED\n    }",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      "com.example.springdemo.entity.OrderEvent"
-    ],
-    "is_nested": true,
-    "type": "regular"
-  },
-  {
     "package": "com.example.springdemo.config",
     "class_name": "JpaConfig",
     "full_class_name": "com.example.springdemo.config.JpaConfig",
@@ -43,21 +13,6 @@
     ],
     "is_nested": false,
     "type": "configuration"
-  },
-  {
-    "package": "com.example.springdemo.entity",
-    "class_name": "OrderItem",
-    "full_class_name": "com.example.springdemo.entity.OrderItem",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\OrderItem.java",
-    "content": "@Entity\n@Table(name = \"order_items\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class OrderItem {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"order_id\", nullable = false)\n    private Order order;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"product_id\", nullable = false)\n    private Product product;\n    \n    @Column(nullable = false)\n    private Integer quantity;\n    \n    @Column(precision = 10, scale = 2)\n    private BigDecimal unitPrice;\n    \n    @Column(precision = 10, scale = 2)\n    private BigDecimal totalPrice;\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
   },
   {
     "package": "com.example.springdemo.entity",
@@ -100,6 +55,96 @@
     "methods": [],
     "parent_class": [
       "com.example.springdemo.entity.Notification"
+    ],
+    "is_nested": true,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.entity",
+    "class_name": "OrderItem",
+    "full_class_name": "com.example.springdemo.entity.OrderItem",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\OrderItem.java",
+    "content": "@Entity\n@Table(name = \"order_items\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class OrderItem {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"order_id\", nullable = false)\n    private Order order;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"product_id\", nullable = false)\n    private Product product;\n    \n    @Column(nullable = false)\n    private Integer quantity;\n    \n    @Column(precision = 10, scale = 2)\n    private BigDecimal unitPrice;\n    \n    @Column(precision = 10, scale = 2)\n    private BigDecimal totalPrice;\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.entity",
+    "class_name": "OrderEvent",
+    "full_class_name": "com.example.springdemo.entity.OrderEvent",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\OrderEvent.java",
+    "content": "@Entity\n@Table(name = \"order_events\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class OrderEvent {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @ManyToOne(fetch = FetchType.LAZY)\n    @JoinColumn(name = \"order_id\", nullable = false)\n    private Order order;\n    \n    @Enumerated(EnumType.STRING)\n    private EventType eventType;\n    \n    @Column(columnDefinition = \"TEXT\")\n    private String eventData;\n    \n    private String source;\n    \n    @CreationTimestamp\n    private LocalDateTime timestamp;\n    \n    public enum EventType {\n        ORDER_CREATED, ORDER_CONFIRMED, PAYMENT_PROCESSED, \n        ORDER_SHIPPED, ORDER_DELIVERED, ORDER_CANCELLED, \n        ORDER_REFUNDED, STATUS_CHANGED\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.entity",
+    "class_name": "EventType",
+    "full_class_name": "com.example.springdemo.entity.OrderEvent.EventType",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\OrderEvent.java",
+    "content": "public enum EventType {\n        ORDER_CREATED, ORDER_CONFIRMED, PAYMENT_PROCESSED, \n        ORDER_SHIPPED, ORDER_DELIVERED, ORDER_CANCELLED, \n        ORDER_REFUNDED, STATUS_CHANGED\n    }",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      "com.example.springdemo.entity.OrderEvent"
+    ],
+    "is_nested": true,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.entity",
+    "class_name": "User",
+    "full_class_name": "com.example.springdemo.entity.User",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\User.java",
+    "content": "@Entity\n@Table(name = \"users\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class User {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @Column(unique = true, nullable = false)\n    private String username;\n    \n    @Column(unique = true, nullable = false)\n    private String email;\n    \n    private String firstName;\n    private String lastName;\n    \n    @Enumerated(EnumType.STRING)\n    private UserRole role;\n    \n    @Enumerated(EnumType.STRING)\n    private UserStatus status;\n    \n    @OneToMany(mappedBy = \"user\", cascade = CascadeType.ALL, fetch = FetchType.LAZY)\n    private List<Order> orders = new ArrayList<>();\n    \n    @OneToMany(mappedBy = \"user\", cascade = CascadeType.ALL, fetch = FetchType.LAZY)\n    private List<Notification> notifications = new ArrayList<>();\n    \n    @CreationTimestamp\n    private LocalDateTime createdAt;\n    \n    @UpdateTimestamp\n    private LocalDateTime updatedAt;\n    \n    public enum UserRole {\n        ADMIN, MANAGER, CUSTOMER, GUEST\n    }\n    \n    public enum UserStatus {\n        ACTIVE, INACTIVE, SUSPENDED, PENDING\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.entity",
+    "class_name": "UserRole",
+    "full_class_name": "com.example.springdemo.entity.User.UserRole",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\User.java",
+    "content": "public enum UserRole {\n        ADMIN, MANAGER, CUSTOMER, GUEST\n    }",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      "com.example.springdemo.entity.User"
+    ],
+    "is_nested": true,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.entity",
+    "class_name": "UserStatus",
+    "full_class_name": "com.example.springdemo.entity.User.UserStatus",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\User.java",
+    "content": "public enum UserStatus {\n        ACTIVE, INACTIVE, SUSPENDED, PENDING\n    }",
+    "implements": [],
+    "extends": null,
+    "methods": [],
+    "parent_class": [
+      "com.example.springdemo.entity.User"
     ],
     "is_nested": true,
     "type": "regular"
@@ -195,51 +240,6 @@
     "type": "regular"
   },
   {
-    "package": "com.example.springdemo.entity",
-    "class_name": "User",
-    "full_class_name": "com.example.springdemo.entity.User",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\User.java",
-    "content": "@Entity\n@Table(name = \"users\")\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\npublic class User {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @Column(unique = true, nullable = false)\n    private String username;\n    \n    @Column(unique = true, nullable = false)\n    private String email;\n    \n    private String firstName;\n    private String lastName;\n    \n    @Enumerated(EnumType.STRING)\n    private UserRole role;\n    \n    @Enumerated(EnumType.STRING)\n    private UserStatus status;\n    \n    @OneToMany(mappedBy = \"user\", cascade = CascadeType.ALL, fetch = FetchType.LAZY)\n    private List<Order> orders = new ArrayList<>();\n    \n    @OneToMany(mappedBy = \"user\", cascade = CascadeType.ALL, fetch = FetchType.LAZY)\n    private List<Notification> notifications = new ArrayList<>();\n    \n    @CreationTimestamp\n    private LocalDateTime createdAt;\n    \n    @UpdateTimestamp\n    private LocalDateTime updatedAt;\n    \n    public enum UserRole {\n        ADMIN, MANAGER, CUSTOMER, GUEST\n    }\n    \n    public enum UserStatus {\n        ACTIVE, INACTIVE, SUSPENDED, PENDING\n    }\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.entity",
-    "class_name": "UserRole",
-    "full_class_name": "com.example.springdemo.entity.User.UserRole",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\User.java",
-    "content": "public enum UserRole {\n        ADMIN, MANAGER, CUSTOMER, GUEST\n    }",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      "com.example.springdemo.entity.User"
-    ],
-    "is_nested": true,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.entity",
-    "class_name": "UserStatus",
-    "full_class_name": "com.example.springdemo.entity.User.UserStatus",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\entity\\User.java",
-    "content": "public enum UserStatus {\n        ACTIVE, INACTIVE, SUSPENDED, PENDING\n    }",
-    "implements": [],
-    "extends": null,
-    "methods": [],
-    "parent_class": [
-      "com.example.springdemo.entity.User"
-    ],
-    "is_nested": true,
-    "type": "regular"
-  },
-  {
     "package": "com.example.springdemo",
     "class_name": "SpringDemoApplication",
     "full_class_name": "com.example.springdemo.SpringDemoApplication",
@@ -268,64 +268,6 @@
   },
   {
     "package": "com.example.springdemo.observer",
-    "class_name": "UserEvent",
-    "full_class_name": "com.example.springdemo.observer.UserEvent",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\observer\\UserEvent.java",
-    "content": "public class UserEvent extends ApplicationEvent {\n    \n    private final String eventType;\n    private final Object userData;\n    \n    public UserEvent(Object source, String eventType, Object userData) {\n        super(source);\n        this.eventType = eventType;\n        this.userData = userData;\n    }\n    \n    public String getEventType() {\n        return eventType;\n    }\n    \n    public Object getUserData() {\n        return userData;\n    }\n}",
-    "implements": [],
-    "extends": "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class",
-    "methods": [
-      {
-        "name": "com.example.springdemo.observer.UserEvent.UserEvent(Object source, String eventType, Object userData)",
-        "body": "public UserEvent(Object source, String eventType, Object userData) {\n        super(source);\n        this.eventType = eventType;\n        this.userData = userData;\n    }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [
-          "String eventType",
-          "Object userData"
-        ],
-        "inheritance_info": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.UserEvent(Object source, String eventType, Object userData)"
-        ],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.observer.UserEvent.getEventType()",
-        "body": "public String getEventType() {\n        return eventType;\n    }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.getEventType()"
-        ],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.observer.UserEvent.getUserData()",
-        "body": "public Object getUserData() {\n        return userData;\n    }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.getUserData()"
-        ],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      }
-    ],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.observer",
     "class_name": "OrderEvent",
     "full_class_name": "com.example.springdemo.observer.OrderEvent",
     "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\observer\\OrderEvent.java",
@@ -339,8 +281,8 @@
         "method_calls": [],
         "used_types": [],
         "field_access": [
-          "String eventType",
-          "Object orderData"
+          "Object orderData",
+          "String eventType"
         ],
         "inheritance_info": [
           "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.OrderEvent(Object source, String eventType, Object orderData)"
@@ -370,6 +312,64 @@
         "field_access": [],
         "inheritance_info": [
           "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.getOrderData()"
+        ],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.observer",
+    "class_name": "UserEvent",
+    "full_class_name": "com.example.springdemo.observer.UserEvent",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\observer\\UserEvent.java",
+    "content": "public class UserEvent extends ApplicationEvent {\n    \n    private final String eventType;\n    private final Object userData;\n    \n    public UserEvent(Object source, String eventType, Object userData) {\n        super(source);\n        this.eventType = eventType;\n        this.userData = userData;\n    }\n    \n    public String getEventType() {\n        return eventType;\n    }\n    \n    public Object getUserData() {\n        return userData;\n    }\n}",
+    "implements": [],
+    "extends": "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class",
+    "methods": [
+      {
+        "name": "com.example.springdemo.observer.UserEvent.UserEvent(Object source, String eventType, Object userData)",
+        "body": "public UserEvent(Object source, String eventType, Object userData) {\n        super(source);\n        this.eventType = eventType;\n        this.userData = userData;\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "Object userData",
+          "String eventType"
+        ],
+        "inheritance_info": [
+          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.UserEvent(Object source, String eventType, Object userData)"
+        ],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.observer.UserEvent.getEventType()",
+        "body": "public String getEventType() {\n        return eventType;\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [
+          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.getEventType()"
+        ],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.observer.UserEvent.getUserData()",
+        "body": "public Object getUserData() {\n        return userData;\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [
+          "F:\\_side_projects\\source_atlas\\.contents.spring-context-6.1.1.jar\\org.springframework.context\\ApplicationEvent.class.getUserData()"
         ],
         "extends_info": [],
         "endpoint": [],
@@ -597,6 +597,72 @@
   },
   {
     "package": "com.example.springdemo.observer",
+    "class_name": "EventPublisher",
+    "full_class_name": "com.example.springdemo.observer.EventPublisher",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\observer\\EventPublisher.java",
+    "content": "@Component\n@RequiredArgsConstructor\n@Slf4j\npublic class EventPublisher {\n    \n    private final ApplicationEventPublisher applicationEventPublisher;\n    \n    public void publishEvent(Object event) {\n        log.info(\"Publishing event: {}\", event.getClass().getSimpleName());\n        applicationEventPublisher.publishEvent(event);\n    }\n    \n    public void publishOrderEvent(String eventType, Object orderData) {\n        OrderEvent orderEvent = new OrderEvent(this, eventType, orderData);\n        publishEvent(orderEvent);\n    }\n    \n    public void publishUserEvent(String eventType, Object userData) {\n        UserEvent userEvent = new UserEvent(this, eventType, userData);\n        publishEvent(userEvent);\n    }\n    \n    public void publishNotificationEvent(String eventType, Object notificationData) {\n        NotificationEvent notificationEvent = new NotificationEvent(this, eventType, notificationData);\n        publishEvent(notificationEvent);\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.springdemo.observer.EventPublisher.publishEvent(Object event)",
+        "body": "public void publishEvent(Object event) {\n        log.info(\"Publishing event: {}\", event.getClass().getSimpleName());\n        applicationEventPublisher.publishEvent(event);\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.observer.EventPublisher.publishOrderEvent(String eventType, Object orderData)",
+        "body": "public void publishOrderEvent(String eventType, Object orderData) {\n        OrderEvent orderEvent = new OrderEvent(this, eventType, orderData);\n        publishEvent(orderEvent);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.observer.OrderEvent"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.observer.EventPublisher.publishUserEvent(String eventType, Object userData)",
+        "body": "public void publishUserEvent(String eventType, Object userData) {\n        UserEvent userEvent = new UserEvent(this, eventType, userData);\n        publishEvent(userEvent);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.observer.UserEvent"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.observer.EventPublisher.publishNotificationEvent(String eventType, Object notificationData)",
+        "body": "public void publishNotificationEvent(String eventType, Object notificationData) {\n        NotificationEvent notificationEvent = new NotificationEvent(this, eventType, notificationData);\n        publishEvent(notificationEvent);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.observer.NotificationEvent"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.observer",
     "class_name": "UserEventListener",
     "full_class_name": "com.example.springdemo.observer.UserEventListener",
     "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\observer\\UserEventListener.java",
@@ -680,72 +746,6 @@
     "type": "regular"
   },
   {
-    "package": "com.example.springdemo.observer",
-    "class_name": "EventPublisher",
-    "full_class_name": "com.example.springdemo.observer.EventPublisher",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\observer\\EventPublisher.java",
-    "content": "@Component\n@RequiredArgsConstructor\n@Slf4j\npublic class EventPublisher {\n    \n    private final ApplicationEventPublisher applicationEventPublisher;\n    \n    public void publishEvent(Object event) {\n        log.info(\"Publishing event: {}\", event.getClass().getSimpleName());\n        applicationEventPublisher.publishEvent(event);\n    }\n    \n    public void publishOrderEvent(String eventType, Object orderData) {\n        OrderEvent orderEvent = new OrderEvent(this, eventType, orderData);\n        publishEvent(orderEvent);\n    }\n    \n    public void publishUserEvent(String eventType, Object userData) {\n        UserEvent userEvent = new UserEvent(this, eventType, userData);\n        publishEvent(userEvent);\n    }\n    \n    public void publishNotificationEvent(String eventType, Object notificationData) {\n        NotificationEvent notificationEvent = new NotificationEvent(this, eventType, notificationData);\n        publishEvent(notificationEvent);\n    }\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [
-      {
-        "name": "com.example.springdemo.observer.EventPublisher.publishEvent(Object event)",
-        "body": "public void publishEvent(Object event) {\n        log.info(\"Publishing event: {}\", event.getClass().getSimpleName());\n        applicationEventPublisher.publishEvent(event);\n    }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.observer.EventPublisher.publishOrderEvent(String eventType, Object orderData)",
-        "body": "public void publishOrderEvent(String eventType, Object orderData) {\n        OrderEvent orderEvent = new OrderEvent(this, eventType, orderData);\n        publishEvent(orderEvent);\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.observer.OrderEvent"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.observer.EventPublisher.publishUserEvent(String eventType, Object userData)",
-        "body": "public void publishUserEvent(String eventType, Object userData) {\n        UserEvent userEvent = new UserEvent(this, eventType, userData);\n        publishEvent(userEvent);\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.observer.UserEvent"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.observer.EventPublisher.publishNotificationEvent(String eventType, Object notificationData)",
-        "body": "public void publishNotificationEvent(String eventType, Object notificationData) {\n        NotificationEvent notificationEvent = new NotificationEvent(this, eventType, notificationData);\n        publishEvent(notificationEvent);\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.observer.NotificationEvent"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      }
-    ],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
     "package": "com.example.springdemo.event",
     "class_name": "NotificationEventConsumer",
     "full_class_name": "com.example.springdemo.event.NotificationEventConsumer",
@@ -767,8 +767,8 @@
           "com.example.springdemo.entity.Notification"
         ],
         "field_access": [
-          "String RECEIVED_TOPIC = \"kafka_receivedTopic\"",
-          "String RECEIVED_KEY = \"kafka_receivedMessageKey\""
+          "String RECEIVED_KEY = \"kafka_receivedMessageKey\"",
+          "String RECEIVED_TOPIC = \"kafka_receivedTopic\""
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -847,8 +847,8 @@
           "com.example.springdemo.entity.User"
         ],
         "field_access": [
-          "String RECEIVED_TOPIC = \"kafka_receivedTopic\"",
-          "String RECEIVED_KEY = \"kafka_receivedMessageKey\""
+          "String RECEIVED_KEY = \"kafka_receivedMessageKey\"",
+          "String RECEIVED_TOPIC = \"kafka_receivedTopic\""
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -1030,6 +1030,61 @@
     "type": "regular"
   },
   {
+    "package": "com.example.springdemo.service.strategy",
+    "class_name": "PricingStrategy",
+    "full_class_name": "com.example.springdemo.service.strategy.PricingStrategy",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\service\\strategy\\PricingStrategy.java",
+    "content": "public interface PricingStrategy {\n    \n    BigDecimal calculatePrice(Order order, User user);\n    \n    String getStrategyName();\n    \n    boolean isApplicable(User user, Order order);\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.springdemo.service.strategy.PricingStrategy.calculatePrice(Order order, User user)",
+        "body": "",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.strategy.PricingStrategy.getStrategyName()",
+        "body": "",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.strategy.PricingStrategy.isApplicable(User user, Order order)",
+        "body": "",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
     "package": "com.example.springdemo.repository",
     "class_name": "ProductRepository",
     "full_class_name": "com.example.springdemo.repository.ProductRepository",
@@ -1043,8 +1098,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Product",
-          "com.example.springdemo.entity.Product.ProductCategory"
+          "com.example.springdemo.entity.Product.ProductCategory",
+          "com.example.springdemo.entity.Product"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -1057,8 +1112,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Product",
-          "com.example.springdemo.entity.Product.ProductStatus"
+          "com.example.springdemo.entity.Product.ProductStatus",
+          "com.example.springdemo.entity.Product"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -1151,61 +1206,6 @@
   },
   {
     "package": "com.example.springdemo.service.strategy",
-    "class_name": "PricingStrategy",
-    "full_class_name": "com.example.springdemo.service.strategy.PricingStrategy",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\service\\strategy\\PricingStrategy.java",
-    "content": "public interface PricingStrategy {\n    \n    BigDecimal calculatePrice(Order order, User user);\n    \n    String getStrategyName();\n    \n    boolean isApplicable(User user, Order order);\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [
-      {
-        "name": "com.example.springdemo.service.strategy.PricingStrategy.calculatePrice(Order order, User user)",
-        "body": "",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.Order"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.strategy.PricingStrategy.getStrategyName()",
-        "body": "",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.strategy.PricingStrategy.isApplicable(User user, Order order)",
-        "body": "",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.Order"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      }
-    ],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.service.strategy",
     "class_name": "BulkPricingStrategy",
     "full_class_name": "com.example.springdemo.service.strategy.BulkPricingStrategy",
     "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\service\\strategy\\BulkPricingStrategy.java",
@@ -1225,8 +1225,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.Order"
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [],
         "inheritance_info": [
@@ -1259,8 +1259,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.Order"
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [],
         "inheritance_info": [
@@ -1346,8 +1346,8 @@
         "method_calls": [],
         "used_types": [
           "com.example.springdemo.entity.User.UserRole",
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.User.UserStatus"
+          "com.example.springdemo.entity.User.UserStatus",
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -1397,11 +1397,86 @@
         "name": "com.example.springdemo.repository.UserRepository.existsByEmail(String email)",
         "body": "",
         "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.repository.UserRepository.boolean"
-        ],
+        "used_types": [],
         "field_access": [],
         "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.service.strategy",
+    "class_name": "StandardPricingStrategy",
+    "full_class_name": "com.example.springdemo.service.strategy.StandardPricingStrategy",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\service\\strategy\\StandardPricingStrategy.java",
+    "content": "@Component\npublic class StandardPricingStrategy implements PricingStrategy {\n    \n    @Override\n    public BigDecimal calculatePrice(Order order, User user) {\n        return order.getTotalAmount();\n    }\n    \n    @Override\n    public String getStrategyName() {\n        return \"STANDARD\";\n    }\n    \n    @Override\n    public boolean isApplicable(User user, Order order) {\n        return user.getRole() == User.UserRole.CUSTOMER || user.getRole() == User.UserRole.GUEST;\n    }\n}",
+    "implements": [
+      "com.example.springdemo.service.strategy.PricingStrategy"
+    ],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.springdemo.service.strategy.StandardPricingStrategy.calculatePrice(Order order, User user)",
+        "body": "@Override\n    public BigDecimal calculatePrice(Order order, User user) {\n        return order.getTotalAmount();\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.entity.Order.getTotalAmount()",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [
+          "com.example.springdemo.service.strategy.PricingStrategy.calculatePrice(Order order, User user)"
+        ],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.strategy.StandardPricingStrategy.getStrategyName()",
+        "body": "@Override\n    public String getStrategyName() {\n        return \"STANDARD\";\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [
+          "com.example.springdemo.service.strategy.PricingStrategy.getStrategyName()"
+        ],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.strategy.StandardPricingStrategy.isApplicable(User user, Order order)",
+        "body": "@Override\n    public boolean isApplicable(User user, Order order) {\n        return user.getRole() == User.UserRole.CUSTOMER || user.getRole() == User.UserRole.GUEST;\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.entity.User.getRole()",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.User"
+        ],
+        "field_access": [
+          "com.example.springdemo.entity.User.UserRole",
+          "CUSTOMER",
+          "GUEST"
+        ],
+        "inheritance_info": [
+          "com.example.springdemo.service.strategy.PricingStrategy.isApplicable(User user, Order order)"
+        ],
         "extends_info": [],
         "endpoint": [],
         "type": "regular"
@@ -1435,8 +1510,8 @@
           "com.example.springdemo.entity.Order"
         ],
         "field_access": [
-          "String RECEIVED_TOPIC = \"kafka_receivedTopic\"",
-          "String RECEIVED_KEY = \"kafka_receivedMessageKey\""
+          "String RECEIVED_KEY = \"kafka_receivedMessageKey\"",
+          "String RECEIVED_TOPIC = \"kafka_receivedTopic\""
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -1485,6 +1560,10 @@
             "params": []
           },
           {
+            "name": "com.example.springdemo.service.NotificationService.sendOrderNotification(User user, Order order, String message)",
+            "params": []
+          },
+          {
             "name": "com.example.springdemo.entity.Order.getUser()",
             "params": []
           },
@@ -1511,10 +1590,6 @@
             "params": []
           },
           {
-            "name": "com.example.springdemo.service.NotificationService.sendPaymentNotification(User user, Order order, String message)",
-            "params": []
-          },
-          {
             "name": "com.example.springdemo.entity.Order.getUser()",
             "params": []
           },
@@ -1526,171 +1601,6 @@
         "used_types": [
           "com.example.springdemo.entity.Order"
         ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      }
-    ],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.service.strategy",
-    "class_name": "StandardPricingStrategy",
-    "full_class_name": "com.example.springdemo.service.strategy.StandardPricingStrategy",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\service\\strategy\\StandardPricingStrategy.java",
-    "content": "@Component\npublic class StandardPricingStrategy implements PricingStrategy {\n    \n    @Override\n    public BigDecimal calculatePrice(Order order, User user) {\n        return order.getTotalAmount();\n    }\n    \n    @Override\n    public String getStrategyName() {\n        return \"STANDARD\";\n    }\n    \n    @Override\n    public boolean isApplicable(User user, Order order) {\n        return user.getRole() == User.UserRole.CUSTOMER || user.getRole() == User.UserRole.GUEST;\n    }\n}",
-    "implements": [
-      "com.example.springdemo.service.strategy.PricingStrategy"
-    ],
-    "extends": null,
-    "methods": [
-      {
-        "name": "com.example.springdemo.service.strategy.StandardPricingStrategy.calculatePrice(Order order, User user)",
-        "body": "@Override\n    public BigDecimal calculatePrice(Order order, User user) {\n        return order.getTotalAmount();\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.entity.Order.getTotalAmount()",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.Order"
-        ],
-        "field_access": [],
-        "inheritance_info": [
-          "com.example.springdemo.service.strategy.PricingStrategy.calculatePrice(Order order, User user)"
-        ],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.strategy.StandardPricingStrategy.getStrategyName()",
-        "body": "@Override\n    public String getStrategyName() {\n        return \"STANDARD\";\n    }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [
-          "com.example.springdemo.service.strategy.PricingStrategy.getStrategyName()"
-        ],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.strategy.StandardPricingStrategy.isApplicable(User user, Order order)",
-        "body": "@Override\n    public boolean isApplicable(User user, Order order) {\n        return user.getRole() == User.UserRole.CUSTOMER || user.getRole() == User.UserRole.GUEST;\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.entity.User.getRole()",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.Order"
-        ],
-        "field_access": [
-          "com.example.springdemo.entity.User.UserRole",
-          "GUEST",
-          "CUSTOMER"
-        ],
-        "inheritance_info": [
-          "com.example.springdemo.service.strategy.PricingStrategy.isApplicable(User user, Order order)"
-        ],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      }
-    ],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.service.factory",
-    "class_name": "ServiceFactory",
-    "full_class_name": "com.example.springdemo.service.factory.ServiceFactory",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\service\\factory\\ServiceFactory.java",
-    "content": "@Component\npublic class ServiceFactory {\n    \n    private final List<PricingStrategy> pricingStrategies;\n    \n    @Autowired\n    public ServiceFactory(List<PricingStrategy> pricingStrategies) {\n        this.pricingStrategies = pricingStrategies;\n    }\n    \n    public PricingStrategy getPricingStrategy(User user, com.example.springdemo.entity.Order order) {\n        return pricingStrategies.stream()\n                .filter(strategy -> strategy.isApplicable(user, order))\n                .findFirst()\n                .orElse(pricingStrategies.get(0)); \n    }\n    \n    public User.UserRole getUserRole(String roleString) {\n        try {\n            return User.UserRole.valueOf(roleString.toUpperCase());\n        } catch (IllegalArgumentException e) {\n            return User.UserRole.GUEST;\n        }\n    }\n    \n    public String generateOrderNumber() {\n        return \"ORD-\" + System.currentTimeMillis() + \"-\" + (int)(Math.random() * 1000);\n    }\n    \n    public String generateNotificationId() {\n        return \"NOTIF-\" + System.currentTimeMillis();\n    }\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [
-      {
-        "name": "com.example.springdemo.service.factory.ServiceFactory.ServiceFactory(List<PricingStrategy> pricingStrategies)",
-        "body": "@Autowired\n    public ServiceFactory(List<PricingStrategy> pricingStrategies) {\n        this.pricingStrategies = pricingStrategies;\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.service.strategy.PricingStrategy"
-        ],
-        "field_access": [
-          "List<PricingStrategy> pricingStrategies"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.factory.ServiceFactory.getPricingStrategy(User user, com.example.springdemo.entity.Order order)",
-        "body": "public PricingStrategy getPricingStrategy(User user, com.example.springdemo.entity.Order order) {\n        return pricingStrategies.stream()\n                .filter(strategy -> strategy.isApplicable(user, order))\n                .findFirst()\n                .orElse(pricingStrategies.get(0)); \n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.service.strategy.PricingStrategy.isApplicable(User user, Order order)",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.service.strategy.PricingStrategy"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.factory.ServiceFactory.getUserRole(String roleString)",
-        "body": "public User.UserRole getUserRole(String roleString) {\n        try {\n            return User.UserRole.valueOf(roleString.toUpperCase());\n        } catch (IllegalArgumentException e) {\n            return User.UserRole.GUEST;\n        }\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.entity.User.UserRole"
-        ],
-        "field_access": [
-          "com.example.springdemo.entity.User.UserRole",
-          "GUEST"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.factory.ServiceFactory.generateOrderNumber()",
-        "body": "public String generateOrderNumber() {\n        return \"ORD-\" + System.currentTimeMillis() + \"-\" + (int)(Math.random() * 1000);\n    }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.service.factory.ServiceFactory.generateNotificationId()",
-        "body": "public String generateNotificationId() {\n        return \"NOTIF-\" + System.currentTimeMillis();\n    }",
-        "method_calls": [],
-        "used_types": [],
         "field_access": [],
         "inheritance_info": [],
         "extends_info": [],
@@ -1758,8 +1668,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.Order.PaymentStatus"
+          "com.example.springdemo.entity.Order.PaymentStatus",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -1852,6 +1762,94 @@
     "type": "regular"
   },
   {
+    "package": "com.example.springdemo.service.factory",
+    "class_name": "ServiceFactory",
+    "full_class_name": "com.example.springdemo.service.factory.ServiceFactory",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\service\\factory\\ServiceFactory.java",
+    "content": "@Component\npublic class ServiceFactory {\n    \n    private final List<PricingStrategy> pricingStrategies;\n    \n    @Autowired\n    public ServiceFactory(List<PricingStrategy> pricingStrategies) {\n        this.pricingStrategies = pricingStrategies;\n    }\n    \n    public PricingStrategy getPricingStrategy(User user, com.example.springdemo.entity.Order order) {\n        return pricingStrategies.stream()\n                .filter(strategy -> strategy.isApplicable(user, order))\n                .findFirst()\n                .orElse(pricingStrategies.get(0)); \n    }\n    \n    public User.UserRole getUserRole(String roleString) {\n        try {\n            return User.UserRole.valueOf(roleString.toUpperCase());\n        } catch (IllegalArgumentException e) {\n            return User.UserRole.GUEST;\n        }\n    }\n    \n    public String generateOrderNumber() {\n        return \"ORD-\" + System.currentTimeMillis() + \"-\" + (int)(Math.random() * 1000);\n    }\n    \n    public String generateNotificationId() {\n        return \"NOTIF-\" + System.currentTimeMillis();\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.springdemo.service.factory.ServiceFactory.ServiceFactory(List<PricingStrategy> pricingStrategies)",
+        "body": "@Autowired\n    public ServiceFactory(List<PricingStrategy> pricingStrategies) {\n        this.pricingStrategies = pricingStrategies;\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.service.strategy.PricingStrategy"
+        ],
+        "field_access": [
+          "List<PricingStrategy> pricingStrategies"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.factory.ServiceFactory.getPricingStrategy(User user, com.example.springdemo.entity.Order order)",
+        "body": "public PricingStrategy getPricingStrategy(User user, com.example.springdemo.entity.Order order) {\n        return pricingStrategies.stream()\n                .filter(strategy -> strategy.isApplicable(user, order))\n                .findFirst()\n                .orElse(pricingStrategies.get(0)); \n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.service.strategy.PricingStrategy.isApplicable(User user, Order order)",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.service.strategy.PricingStrategy",
+          "com.example.springdemo.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.factory.ServiceFactory.getUserRole(String roleString)",
+        "body": "public User.UserRole getUserRole(String roleString) {\n        try {\n            return User.UserRole.valueOf(roleString.toUpperCase());\n        } catch (IllegalArgumentException e) {\n            return User.UserRole.GUEST;\n        }\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.entity.User.UserRole"
+        ],
+        "field_access": [
+          "com.example.springdemo.entity.User.UserRole",
+          "GUEST"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.factory.ServiceFactory.generateOrderNumber()",
+        "body": "public String generateOrderNumber() {\n        return \"ORD-\" + System.currentTimeMillis() + \"-\" + (int)(Math.random() * 1000);\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.service.factory.ServiceFactory.generateNotificationId()",
+        "body": "public String generateNotificationId() {\n        return \"NOTIF-\" + System.currentTimeMillis();\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
     "package": "com.example.springdemo.config",
     "class_name": "KafkaConfig",
     "full_class_name": "com.example.springdemo.config.KafkaConfig",
@@ -1870,10 +1868,10 @@
         "field_access": [
           "String ENABLE_IDEMPOTENCE_CONFIG = \"enable.idempotence\"",
           "String KEY_SERIALIZER_CLASS_CONFIG = \"key.serializer\"",
-          "String VALUE_SERIALIZER_CLASS_CONFIG = \"value.serializer\"",
-          "String RETRIES_CONFIG = \"retries\"",
           "String ACKS_CONFIG = \"acks\"",
-          "String BOOTSTRAP_SERVERS_CONFIG = \"bootstrap.servers\""
+          "String RETRIES_CONFIG = \"retries\"",
+          "String BOOTSTRAP_SERVERS_CONFIG = \"bootstrap.servers\"",
+          "String VALUE_SERIALIZER_CLASS_CONFIG = \"value.serializer\""
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -1901,13 +1899,13 @@
           "F:\\_side_projects\\source_atlas\\.contents.spring-kafka-3.1.0.jar\\org.springframework.kafka.core\\ConsumerFactory.class.ConsumerFactory<String, Object>"
         ],
         "field_access": [
-          "String ENABLE_AUTO_COMMIT_CONFIG = \"enable.auto.commit\"",
-          "String TRUSTED_PACKAGES = \"spring.json.trusted.packages\"",
           "String VALUE_DESERIALIZER_CLASS_CONFIG = \"value.deserializer\"",
-          "String KEY_DESERIALIZER_CLASS_CONFIG = \"key.deserializer\"",
-          "String BOOTSTRAP_SERVERS_CONFIG = \"bootstrap.servers\"",
+          "String ENABLE_AUTO_COMMIT_CONFIG = \"enable.auto.commit\"",
           "String AUTO_OFFSET_RESET_CONFIG = \"auto.offset.reset\"",
-          "String GROUP_ID_CONFIG = \"group.id\""
+          "String GROUP_ID_CONFIG = \"group.id\"",
+          "String BOOTSTRAP_SERVERS_CONFIG = \"bootstrap.servers\"",
+          "String TRUSTED_PACKAGES = \"spring.json.trusted.packages\"",
+          "String KEY_DESERIALIZER_CLASS_CONFIG = \"key.deserializer\""
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -1955,8 +1953,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.Order"
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [],
         "inheritance_info": [
@@ -1989,13 +1987,13 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.Order"
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [
-          "ADMIN",
+          "MANAGER",
           "com.example.springdemo.entity.User.UserRole",
-          "MANAGER"
+          "ADMIN"
         ],
         "inheritance_info": [
           "com.example.springdemo.service.strategy.PricingStrategy.isApplicable(User user, Order order)"
@@ -2059,8 +2057,8 @@
         ],
         "used_types": [
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Notification>",
-          "com.example.springdemo.entity.User",
           "com.example.springdemo.controller.NotificationController.CreateNotificationRequest",
+          "com.example.springdemo.entity.User",
           "com.example.springdemo.entity.Notification"
         ],
         "field_access": [
@@ -2104,8 +2102,8 @@
         "body": "@GetMapping(\"/user/{userId}\")\n    public ResponseEntity<List<Notification>> getNotificationsByUser(@PathVariable Long userId) {\n        log.info(\"Getting notifications for user: {}\", userId);\n        \n        List<Notification> notifications = notificationService.getNotificationsByUser(userId);\n        return ResponseEntity.ok(notifications);\n    }",
         "method_calls": [],
         "used_types": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Notification>>",
-          "com.example.springdemo.entity.Notification"
+          "com.example.springdemo.entity.Notification",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Notification>>"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -2125,8 +2123,8 @@
         "body": "@GetMapping(\"/user/{userId}/unread\")\n    public ResponseEntity<List<Notification>> getUnreadNotificationsByUser(@PathVariable Long userId) {\n        log.info(\"Getting unread notifications for user: {}\", userId);\n        \n        List<Notification> notifications = notificationService.getUnreadNotificationsByUser(userId);\n        return ResponseEntity.ok(notifications);\n    }",
         "method_calls": [],
         "used_types": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Notification>>",
-          "com.example.springdemo.entity.Notification"
+          "com.example.springdemo.entity.Notification",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Notification>>"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -2305,268 +2303,6 @@
     "type": "regular"
   },
   {
-    "package": "com.example.springdemo.controller",
-    "class_name": "OrderController",
-    "full_class_name": "com.example.springdemo.controller.OrderController",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\controller\\OrderController.java",
-    "content": "@RestController\n@RequestMapping(\"/api/orders\")\n@RequiredArgsConstructor\n@Slf4j\npublic class OrderController {\n    \n    private final OrderService orderService;\n    \n    @PostMapping\n    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {\n        log.info(\"Creating order for user: {} with products: {}\", request.getUserId(), request.getProductIds());\n        \n        try {\n            Order order = orderService.createOrder(\n                    request.getUserId(), \n                    request.getProductIds(), \n                    request.getQuantities()\n            );\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error creating order: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @PutMapping(\"/{orderId}/status\")\n    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long orderId, \n                                                  @RequestBody Map<String, String> request) {\n        log.info(\"Updating order status for order: {} to {}\", orderId, request.get(\"status\"));\n        \n        try {\n            Order.OrderStatus status = Order.OrderStatus.valueOf(request.get(\"status\"));\n            Order order = orderService.updateOrderStatus(orderId, status);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error updating order status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @PutMapping(\"/{orderId}/payment\")\n    public ResponseEntity<Order> processPayment(@PathVariable Long orderId, \n                                               @RequestBody Map<String, String> request) {\n        log.info(\"Processing payment for order: {} with status: {}\", orderId, request.get(\"paymentStatus\"));\n        \n        try {\n            Order.PaymentStatus paymentStatus = Order.PaymentStatus.valueOf(request.get(\"paymentStatus\"));\n            Order order = orderService.processPayment(orderId, paymentStatus);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error processing payment: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @GetMapping(\"/user/{userId}\")\n    public ResponseEntity<List<Order>> getOrdersByUser(@PathVariable Long userId) {\n        log.info(\"Getting orders for user: {}\", userId);\n        \n        List<Order> orders = orderService.getOrdersByUser(userId);\n        return ResponseEntity.ok(orders);\n    }\n    \n    @GetMapping(\"/status/{status}\")\n    public ResponseEntity<List<Order>> getOrdersByStatus(@PathVariable String status) {\n        log.info(\"Getting orders with status: {}\", status);\n        \n        try {\n            Order.OrderStatus orderStatus = Order.OrderStatus.valueOf(status);\n            List<Order> orders = orderService.getOrdersByStatus(orderStatus);\n            return ResponseEntity.ok(orders);\n        } catch (Exception e) {\n            log.error(\"Error getting orders by status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @GetMapping(\"/number/{orderNumber}\")\n    public ResponseEntity<Order> getOrderByNumber(@PathVariable String orderNumber) {\n        log.info(\"Getting order by number: {}\", orderNumber);\n        \n        Optional<Order> order = orderService.getOrderByNumber(orderNumber);\n        return order.map(ResponseEntity::ok)\n                   .orElse(ResponseEntity.notFound().build());\n    }\n    \n    \n    public static class CreateOrderRequest {\n        private Long userId;\n        private List<Long> productIds;\n        private List<Integer> quantities;\n        \n        \n        public Long getUserId() { return userId; }\n        public void setUserId(Long userId) { this.userId = userId; }\n        \n        public List<Long> getProductIds() { return productIds; }\n        public void setProductIds(List<Long> productIds) { this.productIds = productIds; }\n        \n        public List<Integer> getQuantities() { return quantities; }\n        public void setQuantities(List<Integer> quantities) { this.quantities = quantities; }\n    }\n}",
-    "implements": [],
-    "extends": null,
-    "methods": [
-      {
-        "name": "com.example.springdemo.controller.OrderController.createOrder(@RequestBody CreateOrderRequest request)",
-        "body": "@PostMapping\n    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {\n        log.info(\"Creating order for user: {} with products: {}\", request.getUserId(), request.getProductIds());\n        \n        try {\n            Order order = orderService.createOrder(\n                    request.getUserId(), \n                    request.getProductIds(), \n                    request.getQuantities()\n            );\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error creating order: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getUserId()",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getProductIds()",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.service.OrderService.createOrder(Long userId, List<Long> productIds, List<Integer> quantities)",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getQuantities()",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "com.example.springdemo.controller.OrderController.CreateOrderRequest",
-          "com.example.springdemo.entity.Order",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [
-          {
-            "type": "POST",
-            "path": "/api/orders",
-            "produces": "",
-            "consumes": ""
-          }
-        ],
-        "type": "rest_endpoint"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.updateOrderStatus(@PathVariable Long orderId, \n                                                  @RequestBody Map<String, String> request)",
-        "body": "@PutMapping(\"/{orderId}/status\")\n    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long orderId, \n                                                  @RequestBody Map<String, String> request) {\n        log.info(\"Updating order status for order: {} to {}\", orderId, request.get(\"status\"));\n        \n        try {\n            Order.OrderStatus status = Order.OrderStatus.valueOf(request.get(\"status\"));\n            Order order = orderService.updateOrderStatus(orderId, status);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error updating order status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.Order.OrderStatus",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>"
-        ],
-        "field_access": [
-          "com.example.springdemo.entity.Order.OrderStatus"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [
-          {
-            "type": "PUT",
-            "path": "/api/orders/{orderId}/status",
-            "produces": "",
-            "consumes": ""
-          }
-        ],
-        "type": "rest_endpoint"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.processPayment(@PathVariable Long orderId, \n                                               @RequestBody Map<String, String> request)",
-        "body": "@PutMapping(\"/{orderId}/payment\")\n    public ResponseEntity<Order> processPayment(@PathVariable Long orderId, \n                                               @RequestBody Map<String, String> request) {\n        log.info(\"Processing payment for order: {} with status: {}\", orderId, request.get(\"paymentStatus\"));\n        \n        try {\n            Order.PaymentStatus paymentStatus = Order.PaymentStatus.valueOf(request.get(\"paymentStatus\"));\n            Order order = orderService.processPayment(orderId, paymentStatus);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error processing payment: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.service.OrderService.processPayment(Long orderId, PaymentStatus paymentStatus)",
-            "params": []
-          }
-        ],
-        "used_types": [
-          "com.example.springdemo.entity.Order.PaymentStatus",
-          "com.example.springdemo.entity.Order",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>"
-        ],
-        "field_access": [
-          "com.example.springdemo.entity.Order.PaymentStatus"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [
-          {
-            "type": "PUT",
-            "path": "/api/orders/{orderId}/payment",
-            "produces": "",
-            "consumes": ""
-          }
-        ],
-        "type": "rest_endpoint"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.getOrdersByUser(@PathVariable Long userId)",
-        "body": "@GetMapping(\"/user/{userId}\")\n    public ResponseEntity<List<Order>> getOrdersByUser(@PathVariable Long userId) {\n        log.info(\"Getting orders for user: {}\", userId);\n        \n        List<Order> orders = orderService.getOrdersByUser(userId);\n        return ResponseEntity.ok(orders);\n    }",
-        "method_calls": [],
-        "used_types": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Order>>",
-          "com.example.springdemo.entity.Order"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [
-          {
-            "type": "GET",
-            "path": "/api/orders/user/{userId}",
-            "produces": "",
-            "consumes": ""
-          }
-        ],
-        "type": "rest_endpoint"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.getOrdersByStatus(@PathVariable String status)",
-        "body": "@GetMapping(\"/status/{status}\")\n    public ResponseEntity<List<Order>> getOrdersByStatus(@PathVariable String status) {\n        log.info(\"Getting orders with status: {}\", status);\n        \n        try {\n            Order.OrderStatus orderStatus = Order.OrderStatus.valueOf(status);\n            List<Order> orders = orderService.getOrdersByStatus(orderStatus);\n            return ResponseEntity.ok(orders);\n        } catch (Exception e) {\n            log.error(\"Error getting orders by status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.entity.Order",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Order>>",
-          "com.example.springdemo.entity.Order.OrderStatus"
-        ],
-        "field_access": [
-          "com.example.springdemo.entity.Order.OrderStatus"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [
-          {
-            "type": "GET",
-            "path": "/api/orders/status/{status}",
-            "produces": "",
-            "consumes": ""
-          }
-        ],
-        "type": "rest_endpoint"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.getOrderByNumber(@PathVariable String orderNumber)",
-        "body": "@GetMapping(\"/number/{orderNumber}\")\n    public ResponseEntity<Order> getOrderByNumber(@PathVariable String orderNumber) {\n        log.info(\"Getting order by number: {}\", orderNumber);\n        \n        Optional<Order> order = orderService.getOrderByNumber(orderNumber);\n        return order.map(ResponseEntity::ok)\n                   .orElse(ResponseEntity.notFound().build());\n    }",
-        "method_calls": [],
-        "used_types": [
-          "com.example.springdemo.entity.Order",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>"
-        ],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [
-          {
-            "type": "GET",
-            "path": "/api/orders/number/{orderNumber}",
-            "produces": "",
-            "consumes": ""
-          }
-        ],
-        "type": "rest_endpoint"
-      }
-    ],
-    "parent_class": [
-      null
-    ],
-    "is_nested": false,
-    "type": "regular"
-  },
-  {
-    "package": "com.example.springdemo.controller",
-    "class_name": "CreateOrderRequest",
-    "full_class_name": "com.example.springdemo.controller.OrderController.CreateOrderRequest",
-    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\controller\\OrderController.java",
-    "content": "public static class CreateOrderRequest {\n        private Long userId;\n        private List<Long> productIds;\n        private List<Integer> quantities;\n        \n        \n        public Long getUserId() { return userId; }\n        public void setUserId(Long userId) { this.userId = userId; }\n        \n        public List<Long> getProductIds() { return productIds; }\n        public void setProductIds(List<Long> productIds) { this.productIds = productIds; }\n        \n        public List<Integer> getQuantities() { return quantities; }\n        public void setQuantities(List<Integer> quantities) { this.quantities = quantities; }\n    }",
-    "implements": [],
-    "extends": null,
-    "methods": [
-      {
-        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getUserId()",
-        "body": "public Long getUserId() { return userId; }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.setUserId(Long userId)",
-        "body": "public void setUserId(Long userId) { this.userId = userId; }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [
-          "Long userId"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getProductIds()",
-        "body": "public List<Long> getProductIds() { return productIds; }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.setProductIds(List<Long> productIds)",
-        "body": "public void setProductIds(List<Long> productIds) { this.productIds = productIds; }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [
-          "List<Long> productIds"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getQuantities()",
-        "body": "public List<Integer> getQuantities() { return quantities; }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      },
-      {
-        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.setQuantities(List<Integer> quantities)",
-        "body": "public void setQuantities(List<Integer> quantities) { this.quantities = quantities; }",
-        "method_calls": [],
-        "used_types": [],
-        "field_access": [
-          "List<Integer> quantities"
-        ],
-        "inheritance_info": [],
-        "extends_info": [],
-        "endpoint": [],
-        "type": "regular"
-      }
-    ],
-    "parent_class": [
-      "com.example.springdemo.controller.OrderController"
-    ],
-    "is_nested": true,
-    "type": "regular"
-  },
-  {
     "package": "com.example.springdemo.service",
     "class_name": "NotificationService",
     "full_class_name": "com.example.springdemo.service.NotificationService",
@@ -2593,8 +2329,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User",
           "com.example.springdemo.entity.Notification.NotificationType",
+          "com.example.springdemo.entity.User",
           "com.example.springdemo.entity.Notification"
         ],
         "field_access": [
@@ -2624,8 +2360,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.Order"
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [
           "com.example.springdemo.entity.Notification.NotificationType",
@@ -2654,12 +2390,12 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.Order"
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [
-          "com.example.springdemo.entity.Notification.NotificationType",
-          "PAYMENT_CONFIRMATION"
+          "PAYMENT_CONFIRMATION",
+          "com.example.springdemo.entity.Notification.NotificationType"
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -2695,8 +2431,8 @@
           "com.example.springdemo.entity.Notification"
         ],
         "field_access": [
-          "READ",
-          "com.example.springdemo.entity.Notification.NotificationStatus"
+          "com.example.springdemo.entity.Notification.NotificationStatus",
+          "READ"
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -2809,6 +2545,10 @@
             "params": []
           },
           {
+            "name": "com.example.springdemo.service.NotificationService.sendSystemAlert(User user, String title, String message)",
+            "params": []
+          },
+          {
             "name": "com.example.springdemo.entity.User.getFirstName()",
             "params": []
           },
@@ -2818,12 +2558,12 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User.UserRole",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserRole"
         ],
         "field_access": [
-          "com.example.springdemo.entity.User.UserStatus",
-          "ACTIVE"
+          "ACTIVE",
+          "com.example.springdemo.entity.User.UserStatus"
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -2840,10 +2580,6 @@
           },
           {
             "name": "com.example.springdemo.entity.User.setStatus(UserStatus status)",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.service.NotificationService.sendSystemAlert(User user, String title, String message)",
             "params": []
           }
         ],
@@ -2999,6 +2735,273 @@
   },
   {
     "package": "com.example.springdemo.controller",
+    "class_name": "OrderController",
+    "full_class_name": "com.example.springdemo.controller.OrderController",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\controller\\OrderController.java",
+    "content": "@RestController\n@RequestMapping(\"/api/orders\")\n@RequiredArgsConstructor\n@Slf4j\npublic class OrderController {\n    \n    private final OrderService orderService;\n    \n    @PostMapping\n    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {\n        log.info(\"Creating order for user: {} with products: {}\", request.getUserId(), request.getProductIds());\n        \n        try {\n            Order order = orderService.createOrder(\n                    request.getUserId(), \n                    request.getProductIds(), \n                    request.getQuantities()\n            );\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error creating order: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @PutMapping(\"/{orderId}/status\")\n    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long orderId, \n                                                  @RequestBody Map<String, String> request) {\n        log.info(\"Updating order status for order: {} to {}\", orderId, request.get(\"status\"));\n        \n        try {\n            Order.OrderStatus status = Order.OrderStatus.valueOf(request.get(\"status\"));\n            Order order = orderService.updateOrderStatus(orderId, status);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error updating order status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @PutMapping(\"/{orderId}/payment\")\n    public ResponseEntity<Order> processPayment(@PathVariable Long orderId, \n                                               @RequestBody Map<String, String> request) {\n        log.info(\"Processing payment for order: {} with status: {}\", orderId, request.get(\"paymentStatus\"));\n        \n        try {\n            Order.PaymentStatus paymentStatus = Order.PaymentStatus.valueOf(request.get(\"paymentStatus\"));\n            Order order = orderService.processPayment(orderId, paymentStatus);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error processing payment: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @GetMapping(\"/user/{userId}\")\n    public ResponseEntity<List<Order>> getOrdersByUser(@PathVariable Long userId) {\n        log.info(\"Getting orders for user: {}\", userId);\n        \n        List<Order> orders = orderService.getOrdersByUser(userId);\n        return ResponseEntity.ok(orders);\n    }\n    \n    @GetMapping(\"/status/{status}\")\n    public ResponseEntity<List<Order>> getOrdersByStatus(@PathVariable String status) {\n        log.info(\"Getting orders with status: {}\", status);\n        \n        try {\n            Order.OrderStatus orderStatus = Order.OrderStatus.valueOf(status);\n            List<Order> orders = orderService.getOrdersByStatus(orderStatus);\n            return ResponseEntity.ok(orders);\n        } catch (Exception e) {\n            log.error(\"Error getting orders by status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    @GetMapping(\"/number/{orderNumber}\")\n    public ResponseEntity<Order> getOrderByNumber(@PathVariable String orderNumber) {\n        log.info(\"Getting order by number: {}\", orderNumber);\n        \n        Optional<Order> order = orderService.getOrderByNumber(orderNumber);\n        return order.map(ResponseEntity::ok)\n                   .orElse(ResponseEntity.notFound().build());\n    }\n    \n    \n    public static class CreateOrderRequest {\n        private Long userId;\n        private List<Long> productIds;\n        private List<Integer> quantities;\n        \n        \n        public Long getUserId() { return userId; }\n        public void setUserId(Long userId) { this.userId = userId; }\n        \n        public List<Long> getProductIds() { return productIds; }\n        public void setProductIds(List<Long> productIds) { this.productIds = productIds; }\n        \n        public List<Integer> getQuantities() { return quantities; }\n        public void setQuantities(List<Integer> quantities) { this.quantities = quantities; }\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.springdemo.controller.OrderController.createOrder(@RequestBody CreateOrderRequest request)",
+        "body": "@PostMapping\n    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {\n        log.info(\"Creating order for user: {} with products: {}\", request.getUserId(), request.getProductIds());\n        \n        try {\n            Order order = orderService.createOrder(\n                    request.getUserId(), \n                    request.getProductIds(), \n                    request.getQuantities()\n            );\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error creating order: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getUserId()",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getProductIds()",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.service.OrderService.createOrder(Long userId, List<Long> productIds, List<Integer> quantities)",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getQuantities()",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>",
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.controller.OrderController.CreateOrderRequest"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "POST",
+            "path": "/api/orders",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.updateOrderStatus(@PathVariable Long orderId, \n                                                  @RequestBody Map<String, String> request)",
+        "body": "@PutMapping(\"/{orderId}/status\")\n    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long orderId, \n                                                  @RequestBody Map<String, String> request) {\n        log.info(\"Updating order status for order: {} to {}\", orderId, request.get(\"status\"));\n        \n        try {\n            Order.OrderStatus status = Order.OrderStatus.valueOf(request.get(\"status\"));\n            Order order = orderService.updateOrderStatus(orderId, status);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error updating order status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.service.OrderService.updateOrderStatus(Long orderId, OrderStatus newStatus)",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.entity.Order.OrderStatus",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>",
+          "com.example.springdemo.entity.Order"
+        ],
+        "field_access": [
+          "com.example.springdemo.entity.Order.OrderStatus"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "PUT",
+            "path": "/api/orders/{orderId}/status",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.processPayment(@PathVariable Long orderId, \n                                               @RequestBody Map<String, String> request)",
+        "body": "@PutMapping(\"/{orderId}/payment\")\n    public ResponseEntity<Order> processPayment(@PathVariable Long orderId, \n                                               @RequestBody Map<String, String> request) {\n        log.info(\"Processing payment for order: {} with status: {}\", orderId, request.get(\"paymentStatus\"));\n        \n        try {\n            Order.PaymentStatus paymentStatus = Order.PaymentStatus.valueOf(request.get(\"paymentStatus\"));\n            Order order = orderService.processPayment(orderId, paymentStatus);\n            return ResponseEntity.ok(order);\n        } catch (Exception e) {\n            log.error(\"Error processing payment: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.service.OrderService.processPayment(Long orderId, PaymentStatus paymentStatus)",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.springdemo.entity.Order.PaymentStatus",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>",
+          "com.example.springdemo.entity.Order"
+        ],
+        "field_access": [
+          "com.example.springdemo.entity.Order.PaymentStatus"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "PUT",
+            "path": "/api/orders/{orderId}/payment",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.getOrdersByUser(@PathVariable Long userId)",
+        "body": "@GetMapping(\"/user/{userId}\")\n    public ResponseEntity<List<Order>> getOrdersByUser(@PathVariable Long userId) {\n        log.info(\"Getting orders for user: {}\", userId);\n        \n        List<Order> orders = orderService.getOrdersByUser(userId);\n        return ResponseEntity.ok(orders);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.entity.Order",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Order>>"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/orders/user/{userId}",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.getOrdersByStatus(@PathVariable String status)",
+        "body": "@GetMapping(\"/status/{status}\")\n    public ResponseEntity<List<Order>> getOrdersByStatus(@PathVariable String status) {\n        log.info(\"Getting orders with status: {}\", status);\n        \n        try {\n            Order.OrderStatus orderStatus = Order.OrderStatus.valueOf(status);\n            List<Order> orders = orderService.getOrdersByStatus(orderStatus);\n            return ResponseEntity.ok(orders);\n        } catch (Exception e) {\n            log.error(\"Error getting orders by status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.springdemo.entity.Order.OrderStatus",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Order>>",
+          "com.example.springdemo.entity.Order"
+        ],
+        "field_access": [
+          "com.example.springdemo.entity.Order.OrderStatus"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/orders/status/{status}",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.getOrderByNumber(@PathVariable String orderNumber)",
+        "body": "@GetMapping(\"/number/{orderNumber}\")\n    public ResponseEntity<Order> getOrderByNumber(@PathVariable String orderNumber) {\n        log.info(\"Getting order by number: {}\", orderNumber);\n        \n        Optional<Order> order = orderService.getOrderByNumber(orderNumber);\n        return order.map(ResponseEntity::ok)\n                   .orElse(ResponseEntity.notFound().build());\n    }",
+        "method_calls": [],
+        "used_types": [
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Order>",
+          "com.example.springdemo.entity.Order"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/orders/number/{orderNumber}",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.controller",
+    "class_name": "CreateOrderRequest",
+    "full_class_name": "com.example.springdemo.controller.OrderController.CreateOrderRequest",
+    "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\controller\\OrderController.java",
+    "content": "public static class CreateOrderRequest {\n        private Long userId;\n        private List<Long> productIds;\n        private List<Integer> quantities;\n        \n        \n        public Long getUserId() { return userId; }\n        public void setUserId(Long userId) { this.userId = userId; }\n        \n        public List<Long> getProductIds() { return productIds; }\n        public void setProductIds(List<Long> productIds) { this.productIds = productIds; }\n        \n        public List<Integer> getQuantities() { return quantities; }\n        public void setQuantities(List<Integer> quantities) { this.quantities = quantities; }\n    }",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getUserId()",
+        "body": "public Long getUserId() { return userId; }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.setUserId(Long userId)",
+        "body": "public void setUserId(Long userId) { this.userId = userId; }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "Long userId"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getProductIds()",
+        "body": "public List<Long> getProductIds() { return productIds; }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.setProductIds(List<Long> productIds)",
+        "body": "public void setProductIds(List<Long> productIds) { this.productIds = productIds; }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "List<Long> productIds"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getQuantities()",
+        "body": "public List<Integer> getQuantities() { return quantities; }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      },
+      {
+        "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.setQuantities(List<Integer> quantities)",
+        "body": "public void setQuantities(List<Integer> quantities) { this.quantities = quantities; }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "List<Integer> quantities"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular"
+      }
+    ],
+    "parent_class": [
+      "com.example.springdemo.controller.OrderController"
+    ],
+    "is_nested": true,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.springdemo.controller",
     "class_name": "ProductController",
     "full_class_name": "com.example.springdemo.controller.ProductController",
     "file_path": "F:\\01_projects\\spring-demo\\src\\main\\java\\com\\example\\springdemo\\controller\\ProductController.java",
@@ -3036,13 +3039,13 @@
           }
         ],
         "used_types": [
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Product>",
           "com.example.springdemo.controller.ProductController.CreateProductRequest",
-          "com.example.springdemo.entity.Product",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Product>"
+          "com.example.springdemo.entity.Product"
         ],
         "field_access": [
-          "com.example.springdemo.entity.Product.ProductCategory",
           "com.example.springdemo.entity.Product.ProductStatus",
+          "com.example.springdemo.entity.Product.ProductCategory",
           "AVAILABLE"
         ],
         "inheritance_info": [],
@@ -3083,8 +3086,8 @@
         "body": "@GetMapping(\"/{id}\")\n    public ResponseEntity<Product> getProductById(@PathVariable Long id) {\n        log.info(\"Getting product by id: {}\", id);\n        \n        Optional<Product> product = productRepository.findById(id);\n        return product.map(ResponseEntity::ok)\n                     .orElse(ResponseEntity.notFound().build());\n    }",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Product",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Product>"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Product>",
+          "com.example.springdemo.entity.Product"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3109,9 +3112,9 @@
           }
         ],
         "used_types": [
+          "com.example.springdemo.entity.Product.ProductCategory",
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>",
-          "com.example.springdemo.entity.Product",
-          "com.example.springdemo.entity.Product.ProductCategory"
+          "com.example.springdemo.entity.Product"
         ],
         "field_access": [
           "com.example.springdemo.entity.Product.ProductCategory"
@@ -3138,9 +3141,9 @@
           }
         ],
         "used_types": [
+          "com.example.springdemo.entity.Product.ProductStatus",
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<Product>>",
-          "com.example.springdemo.entity.Product",
-          "com.example.springdemo.entity.Product.ProductStatus"
+          "com.example.springdemo.entity.Product"
         ],
         "field_access": [
           "com.example.springdemo.entity.Product.ProductStatus"
@@ -3443,9 +3446,9 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User",
           "com.example.springdemo.controller.UserController.CreateUserRequest",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>",
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserRole"
@@ -3472,8 +3475,8 @@
           }
         ],
         "used_types": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>",
           "com.example.springdemo.entity.User.UserStatus",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>",
           "com.example.springdemo.entity.User"
         ],
         "field_access": [
@@ -3494,11 +3497,16 @@
       {
         "name": "com.example.springdemo.controller.UserController.updateUserRole(@PathVariable Long userId, \n                                              @RequestBody Map<String, String> request)",
         "body": "@PutMapping(\"/{userId}/role\")\n    public ResponseEntity<User> updateUserRole(@PathVariable Long userId, \n                                              @RequestBody Map<String, String> request) {\n        log.info(\"Updating user role for user: {} to {}\", userId, request.get(\"role\"));\n        \n        try {\n            User.UserRole role = User.UserRole.valueOf(request.get(\"role\"));\n            User user = userService.updateUserRole(userId, role);\n            return ResponseEntity.ok(user);\n        } catch (Exception e) {\n            log.error(\"Error updating user role: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [],
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.service.UserService.updateUserRole(Long userId, UserRole role)",
+            "params": []
+          }
+        ],
         "used_types": [
-          "com.example.springdemo.entity.User.UserRole",
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserRole"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserRole"
@@ -3520,8 +3528,8 @@
         "body": "@GetMapping(\"/username/{username}\")\n    public ResponseEntity<User> getUserByUsername(@PathVariable String username) {\n        log.info(\"Getting user by username: {}\", username);\n        \n        Optional<User> user = userService.getUserByUsername(username);\n        return user.map(ResponseEntity::ok)\n                   .orElse(ResponseEntity.notFound().build());\n    }",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.User",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>",
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3541,8 +3549,8 @@
         "body": "@GetMapping(\"/email/{email}\")\n    public ResponseEntity<User> getUserByEmail(@PathVariable String email) {\n        log.info(\"Getting user by email: {}\", email);\n        \n        Optional<User> user = userService.getUserByEmail(email);\n        return user.map(ResponseEntity::ok)\n                   .orElse(ResponseEntity.notFound().build());\n    }",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.User",
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>"
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<User>",
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3562,9 +3570,9 @@
         "body": "@GetMapping(\"/role/{role}\")\n    public ResponseEntity<List<User>> getUsersByRole(@PathVariable String role) {\n        log.info(\"Getting users by role: {}\", role);\n        \n        try {\n            User.UserRole userRole = User.UserRole.valueOf(role);\n            List<User> users = userService.getUsersByRole(userRole);\n            return ResponseEntity.ok(users);\n        } catch (Exception e) {\n            log.error(\"Error getting users by role: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
         "method_calls": [],
         "used_types": [
+          "com.example.springdemo.entity.User",
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<User>>",
-          "com.example.springdemo.entity.User.UserRole",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User.UserRole"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserRole"
@@ -3586,9 +3594,9 @@
         "body": "@GetMapping(\"/status/{status}\")\n    public ResponseEntity<List<User>> getUsersByStatus(@PathVariable String status) {\n        log.info(\"Getting users by status: {}\", status);\n        \n        try {\n            User.UserStatus userStatus = User.UserStatus.valueOf(status);\n            List<User> users = userService.getUsersByStatus(userStatus);\n            return ResponseEntity.ok(users);\n        } catch (Exception e) {\n            log.error(\"Error getting users by status: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
         "method_calls": [],
         "used_types": [
-          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<User>>",
           "com.example.springdemo.entity.User.UserStatus",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<User>>"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserStatus"
@@ -3608,7 +3616,12 @@
       {
         "name": "com.example.springdemo.controller.UserController.getUserCountByRole(@PathVariable String role)",
         "body": "@GetMapping(\"/count/role/{role}\")\n    public ResponseEntity<Long> getUserCountByRole(@PathVariable String role) {\n        log.info(\"Getting user count by role: {}\", role);\n        \n        try {\n            User.UserRole userRole = User.UserRole.valueOf(role);\n            Long count = userService.getUserCountByRole(userRole);\n            return ResponseEntity.ok(count);\n        } catch (Exception e) {\n            log.error(\"Error getting user count by role: {}\", e.getMessage());\n            return ResponseEntity.badRequest().build();\n        }\n    }",
-        "method_calls": [],
+        "method_calls": [
+          {
+            "name": "com.example.springdemo.service.UserService.getUserCountByRole(UserRole role)",
+            "params": []
+          }
+        ],
         "used_types": [
           "com.example.springdemo.entity.User.UserRole",
           "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Long>"
@@ -3830,19 +3843,19 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.Product",
           "com.example.springdemo.service.strategy.PricingStrategy",
+          "com.example.springdemo.entity.OrderItem",
           "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.OrderItem"
+          "com.example.springdemo.entity.Product",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [
           "com.example.springdemo.entity.Order.PaymentStatus",
+          "com.example.springdemo.entity.Order.OrderStatus",
           "BigDecimal ZERO",
-          "ORDER_CREATED",
           "com.example.springdemo.entity.OrderEvent.EventType",
-          "PENDING",
-          "com.example.springdemo.entity.Order.OrderStatus"
+          "ORDER_CREATED",
+          "PENDING"
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -3901,12 +3914,12 @@
           "com.example.springdemo.entity.Order"
         ],
         "field_access": [
-          "PAID",
-          "com.example.springdemo.entity.Order.PaymentStatus",
           "CONFIRMED",
-          "PAYMENT_PROCESSED",
+          "com.example.springdemo.entity.Order.PaymentStatus",
+          "com.example.springdemo.entity.Order.OrderStatus",
           "com.example.springdemo.entity.OrderEvent.EventType",
-          "com.example.springdemo.entity.Order.OrderStatus"
+          "PAYMENT_PROCESSED",
+          "PAID"
         ],
         "inheritance_info": [],
         "extends_info": [],
@@ -3982,8 +3995,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.OrderEvent",
           "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.OrderEvent",
           "com.example.springdemo.entity.OrderEvent.EventType"
         ],
         "field_access": [],

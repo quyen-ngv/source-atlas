@@ -30,15 +30,17 @@ class ClassParsingContext:
 
 class BaseCodeAnalyzer(ABC):
 
-    def __init__(self, language: Language, parser: Parser):
+    def __init__(self, language: Language, parser: Parser, project_id: str, branch: str):
         self.language = language
         self.parser = parser
         self.comment_remover = None
         self.max_workers = 16
+        self.project_id = project_id
+        self.branch = branch
         self._lock = Lock()
 
-    def parse_project(self, root: Path, project_id: str) -> List[CodeChunk]:
-        logger.info(f"Starting analysis for project '{project_id}' at {root}")
+    def parse_project(self, root: Path) -> List[CodeChunk]:
+        logger.info(f"Starting analysis for project '{self.project_id}' at {root}")
 
         code_files = self._get_code_files(root)
         if not code_files:
@@ -52,7 +54,7 @@ class BaseCodeAnalyzer(ABC):
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all file processing tasks
             future_to_file = {
-                executor.submit(self.process_file, file, project_id): file
+                executor.submit(self.process_file, file): file
                 for file in code_files
             }
 
@@ -75,7 +77,7 @@ class BaseCodeAnalyzer(ABC):
         self._build_knowledge_graph(chunks)
         return chunks
 
-    def process_file(self, file_path: Path, project_id: str) -> List[CodeChunk]:
+    def process_file(self, file_path: Path) -> List[CodeChunk]:
         try:
             content = self._read_file_content(file_path)
             if not content.strip():
@@ -127,6 +129,8 @@ class BaseCodeAnalyzer(ABC):
                 is_nested=context.is_nested,
                 parent_class=context.parent_class,
                 type=ChunkType.CONFIGURATION if context.is_config else ChunkType.REGULAR,
+                project_id=self.project_id,
+                branch=self.branch
             )
         except Exception as e:
             logger.error(f"Error parsing class node: {e}")

@@ -11,10 +11,10 @@ def main():
     start_time = time.perf_counter()
 
     args = {
-        # "project_path": "F:/01_projects/onestudy",
-        "project_path": "F:/01_projects/spring-demo",
-        "project_id": "demo",
-        "output": "./output/demo",
+        "project_path": "F:/01_projects/onestudy",
+        # "project_path": "F:/01_projects/spring-demo",
+        "project_id": "onestudy",
+        "output": "./output/onestudy",
         "language": "java",
         "remove_comments": True,
         "verbose": True
@@ -38,9 +38,9 @@ def main():
         return 1
     
     try:
-        analyzer = AnalyzerFactory.create_analyzer(args["language"], str(project_path))
+        analyzer = AnalyzerFactory.create_analyzer(args["language"], str(project_path), "project_id", "branch")
         with analyzer as a:
-            chunks = a.parse_project(project_path, args["project_id"])
+            chunks = a.parse_project(project_path)
 
         logger.info(f"Found {len(chunks)} classes/interfaces/enums")
 

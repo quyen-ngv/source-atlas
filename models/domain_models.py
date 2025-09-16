@@ -57,6 +57,8 @@ class Method:
     extends_info: Tuple[str, ...]
     endpoint: Tuple[RestEndpoint,...]
     type: ChunkType
+    project_id: str
+    branch: str
 
     def to_dict(self):
         return {
@@ -68,7 +70,9 @@ class Method:
             "inheritance_fino": self.inheritance_info,
             "extends_info": self.extends_info,
             "endpoint": self.endpoint,
-            "type": self.type
+            "type": self.type,
+            "project_id": self.project_id,
+            "branch": str
         }
 
 @dataclass
@@ -82,6 +86,8 @@ class CodeChunk:
     extends: Optional[str]
     methods: List[Method]
     parent_class: Optional[str]
+    project_id: str
+    branch: str
     is_nested: bool = False
     type: ChunkType = ChunkType.REGULAR
 
@@ -105,15 +111,19 @@ class CodeChunk:
                 "inheritance_info": list(method.inheritance_info),
                 "extends_info": list(method.extends_info),
                 "endpoint": method.endpoint,
-                "type": method.type
+                "type": method.type,
+                "project_id": self.project_id,
+                "branch": self.branch
             } for method in self.methods],
             "is_nested": self.is_nested,
             "parent_class": self.parent_class,
-            "type": self.type
+            "type": self.type,
+            "project_id": self.project_id,
+            "branch": self.branch
         }
 
     @classmethod
-    def from_config(cls, file_path: Path) -> "CodeChunk":
+    def from_config(cls, file_path: Path, project_id: str, branch: str) -> "CodeChunk":
         return cls(
             package=None,
             class_name=None,
@@ -124,5 +134,7 @@ class CodeChunk:
             extends=None,
             methods=[],
             parent_class=None,
-            type=ChunkType.CONFIGURATION
+            type=ChunkType.CONFIGURATION,
+            project_id=project_id,
+            branch=branch
         )
