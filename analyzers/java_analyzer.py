@@ -1,5 +1,7 @@
 import logging
 import re
+from asyncio import as_completed
+from concurrent.futures.thread import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict
@@ -476,7 +478,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 return None
 
             body = ""
-            method_calls = self.filter(self._extract_method_calls(method_node, file_path, import_mapping))
+            method_calls = self.filter(self._extract_method_calls(full_class_name, method_node, file_path, import_mapping, content))
             used_types = self.filter(self._extract_used_types(method_node, file_path, content, import_mapping))
             field_access = self.filter(self._extract_field_access(method_node, file_path))
 
@@ -515,35 +517,106 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             logger.debug(f"Error processing method node: {e}")
             return None
 
-    def _extract_method_calls(self, body_node: Node, file_path: str, import_mapping: Dict[str, str]) -> List[MethodCall]:
-        method_calls: List[MethodCall] = []
+    def _extract_method_calls(self, full_class_name: str, method_node: Node, file_path: str, import_mapping: Dict[str, str], content: str) -> List[MethodCall]:
+        """Extract method calls using tree-sitter query."""
+        method_calls = []
         try:
-            method_call_query = Query(self.language, """
-                (method_invocation 
-                    object: (identifier) @object
-                    name: (identifier) @method_call
-                    arguments: (argument_list) @args
-                )
+            local_vars = self.extract_local_variables(method_node, file_path, content)
+            class_cache = self.cached_nodes.get(full_class_name)
+            import_vars = class_cache.local_fields if class_cache else {}
+            # Fixed query - capture everything in one go
+            call_query = Query(self.language, """
+                (method_invocation
+                  object: (_) @object
+                  name: (identifier) @method_name
+                  arguments: (argument_list) @arguments
+                ) @call
             """)
-            query_cursor = QueryCursor(method_call_query)
-            matches = query_cursor.matches(body_node)
 
-            for match in matches:
-                item = match[1]
-                method_node = item.get("method_call")[0]
-                args_node = item.get("args")[0]
-                obj = item.get("object")[0]
+            captures = QueryCursor(call_query).captures(method_node)
 
-                if obj in JavaBuiltinPackages.JAVA_PRIMITIVES:
+            # Process each method call
+            call_nodes = captures.get("call", [])
+            object_nodes = captures.get("object", [])
+            method_nodes = captures.get("method_name", [])
+            args_nodes = captures.get("arguments", [])
+            method_map = self.methods_cache
+
+            for i, call_node in enumerate(call_nodes):
+                object_name = extract_content(object_nodes[i],content) if i < len(object_nodes) else None
+                method_name = extract_content(method_nodes[i],content) if i < len(method_nodes) else None
+                args_size = len([c for c in args_nodes[i].named_children]) if i < len(args_nodes) else 0
+
+                if object_name and object_name in JavaBuiltinPackages.JAVA_PRIMITIVES:
                     continue
-                if method_node:
-                    method_call = self._resolve_method_call_with_lsp(method_node, args_node, file_path)
-                    if method_call:
-                        method_calls.append(method_call)
+                cached_node = self.cached_nodes.get(full_class_name)
+                real_type = local_vars.get(object_name)
+                if not real_type:
+                    real_type = cached_node.local_fields.get(object_name)
+                if real_type:
+                    if real_type in JavaBuiltinPackages.JAVA_PRIMITIVES:
+                        continue
+                    full_type = import_mapping.get(real_type)
+                    if full_type:
+                        if cached_node:
+                            if not method_map:
+                                continue
+                            method_full_type_name = full_type+"."+method_name
+                            existed_method = method_map.get(method_full_type_name)
+                            if existed_method and existed_method.get('params_size') == args_size:
+                                method_calls.append({"name": method_full_type_name + "." + existed_method.get('params'), "params": []})
+                                logger.info(f"found method {method_full_type_name+existed_method.get('params')}")
+                                continue
+                try:
+                    name_node = method_nodes[i] if i < len(method_nodes) else None
+                    args_node = args_nodes[i] if i < len(args_nodes) else None
+                    resolved = self._resolve_method_call(name_node, args_node, file_path)
+                    if resolved:
+                        method_calls.append(resolved)
+                except Exception:
+                    pass
 
         except Exception as e:
             logger.debug(f"Error extracting method calls: {e}")
-        return list(method_calls)
+
+        return method_calls
+
+    def extract_local_variables(self, body_node: Node, file_path: str, content: str) -> Dict[str, str]:
+        variables = {}
+
+        try:
+            # More comprehensive query
+            var_query = Query(self.language, """
+                [
+              (local_variable_declaration
+                type: (_) @type
+                declarator: (variable_declarator
+                  name: (identifier) @var_name
+                )
+              ) @declaration
+              
+              (formal_parameter
+                type: (_) @type
+                name: (identifier) @var_name
+              ) @param
+            ]
+            """)
+
+            captures = QueryCursor(var_query).captures(body_node)
+
+            type_nodes = captures.get("type", [])
+            var_nodes = captures.get("var_name", [])
+
+            for i in range(min(len(type_nodes), len(var_nodes))):
+                # Extract type text (handles List<String>, String[], etc.)
+                type_text = extract_content(type_nodes[i], content)
+                var_name = extract_content(var_nodes[i], content)
+                variables[var_name] = type_text
+
+        except Exception as e:
+            logger.debug(f"Error extracting variables: {e}")
+
+        return variables
 
     def _extract_field_access(self, body_node: Node, file_path: str) -> List[str]:
         field_access = set()
@@ -605,7 +678,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         dfs(node)
         return type_identifiers[-1] if type_identifiers else node
 
-    def _resolve_method_call_with_lsp(self, node: Node, args: Node, file_path: str) -> Optional[MethodCall]:
+    def _resolve_method_call(self, node: Node, args: Node, file_path: str) -> Optional[MethodCall]:
         if not self.lsp_service:
             return None
 
@@ -885,20 +958,23 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             logger.warn(f"_is_config_class error {ex}")
             return None
 
-    def build_import_mapping(self, root_node: Node, content: str) -> Dict[str, str]:
+    def build_import_mapping(self, class_node: Node, content: str) -> Dict[str, str]:
 
         import_mapping = {}
 
         try:
             # Query để extract import statements
             import_query = Query(self.language, """
-                (import_declaration 
+               (import_declaration
+                  [
                     (scoped_identifier) @import_path
-                )
+                    (identifier) @import_path
+                  ]
+                ) @test
             """)
 
             query_cursor = QueryCursor(import_query)
-            captures = query_cursor.captures(root_node)
+            captures = query_cursor.captures(class_node)
 
             import_nodes = captures.get("import_path", [])
             for import_node in import_nodes:
@@ -913,3 +989,84 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             logger.debug(f"Error building import mapping: {e}")
 
         return import_mapping
+
+    def build_method_map(self, class_node: Node, content: str, parent_class: str) -> dict[str, dict[str, str]]:
+        method_map: dict[str, int] = {}
+
+        class_body = self._get_class_body(class_node)
+        if not class_body:
+            return method_map
+
+        try:
+            # Query tất cả method + constructor trong class_body
+            method_query = Query(self.language, """
+                [
+                    (method_declaration
+                        name: (identifier) @method_name
+                        parameters: (formal_parameters) @params
+                    )
+                    (constructor_declaration
+                        name: (identifier) @method_name
+                        parameters: (formal_parameters) @params
+                    )
+                ] @decl
+            """)
+
+            query_cursor = QueryCursor(method_query)
+            captures = query_cursor.captures(class_body)
+
+            method_name_nodes = captures.get("method_name", [])
+            params_nodes = captures.get("params", [])
+            decl_nodes = captures.get("decl", [])
+
+            for i, method_name_node in enumerate(method_name_nodes):
+                method_name = extract_content(method_name_node, content)
+                param_text = extract_content(params_nodes[i], content)
+
+                params_size = 0
+                if i < len(params_nodes):
+                    param_query = Query(self.language, """
+                        (formal_parameter) @param
+                        (spread_parameter) @param
+                    """)
+                    param_cursor = QueryCursor(param_query)
+                    param_captures = param_cursor.captures(decl_nodes[i])
+                    params_size = len(param_captures.get("param", []))
+
+                method_map[method_name] = {"params_size":params_size, 'params': param_text}
+
+        except Exception as e:
+            logger.debug(f"Error extracting class methods: {e}")
+
+        return method_map
+
+    def build_class_fields_mapping(self, class_node, content: str) -> dict[str, str]:
+        fields_map: dict[str, str] = {}
+        try:
+            # Query tất cả field trong class
+            query = Query(self.language, """
+                (field_declaration
+                    type: (_) @var_type
+                    (variable_declarator name: (identifier) @var_name)
+                )
+            """)
+
+            query_cursor = QueryCursor(query)
+            captures = query_cursor.captures(class_node)
+
+            var_type_nodes = captures.get("var_type", [])
+            var_name_nodes = captures.get("var_name", [])
+
+            for i, var_name_node in enumerate(var_name_nodes):
+                var_name = extract_content(var_name_node, content)
+
+                # an toàn khi số lượng type node < số lượng var name node
+                var_type = extract_content(var_type_nodes[i], content) if i < len(var_type_nodes) else None
+
+                if var_type:
+                    fields_map[var_name] = var_type
+
+        except Exception as e:
+            logger.debug(f"Error building class fields mapping: {e}")
+
+        return fields_map

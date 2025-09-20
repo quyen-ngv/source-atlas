@@ -1,0 +1,1002 @@
+[
+  {
+    "package": "com.example.simplespring",
+    "class_name": "SimpleSpringApplication",
+    "full_class_name": "com.example.simplespring.SimpleSpringApplication",
+    "file_path": "F:\\01_projects\\simple-spring\\src\\main\\java\\com\\example\\simplespring\\SimpleSpringApplication.java",
+    "content": "@SpringBootApplication\npublic class SimpleSpringApplication {\n\n    public static void main(String[] args) {\n        SpringApplication.run(SimpleSpringApplication.class, args);\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.simplespring.SimpleSpringApplication.main(String[] args)",
+        "body": "public static void main(String[] args) {\n        SpringApplication.run(SimpleSpringApplication.class, args);\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "project_id": "project_id",
+    "branch": "branch",
+    "is_nested": false,
+    "type": "configuration"
+  },
+  {
+    "package": "com.example.simplespring.controller",
+    "class_name": "HelloController",
+    "full_class_name": "com.example.simplespring.controller.HelloController",
+    "file_path": "F:\\01_projects\\simple-spring\\src\\main\\java\\com\\example\\simplespring\\controller\\HelloController.java",
+    "content": "@RestController\n@RequestMapping(\"/api\")\npublic class HelloController {\n\n    @GetMapping(\"/hello\")\n    public String hello() {\n        return \"Hello from Spring Boot!\";\n    }\n\n    @GetMapping(\"/status\")\n    public String status() {\n        return \"Application is running successfully!\";\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.simplespring.controller.HelloController.hello()",
+        "body": "@GetMapping(\"/hello\")\n    public String hello() {\n        return \"Hello from Spring Boot!\";\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/hello",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.controller.HelloController.status()",
+        "body": "@GetMapping(\"/status\")\n    public String status() {\n        return \"Application is running successfully!\";\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/status",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint",
+        "project_id": "project_id",
+        "branch": "branch"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "project_id": "project_id",
+    "branch": "branch",
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.simplespring.config",
+    "class_name": "DatabaseConfig",
+    "full_class_name": "com.example.simplespring.config.DatabaseConfig",
+    "file_path": "F:\\01_projects\\simple-spring\\src\\main\\java\\com\\example\\simplespring\\config\\DatabaseConfig.java",
+    "content": "@Configuration\npublic class DatabaseConfig {\n    \n    @Bean\n    @Profile(\"!test\")\n    public CommandLineRunner initDatabase(UserRepository userRepository) {\n        return args -> {\n            \n            if (userRepository.count() == 0) {\n                User user1 = new User(\"john.doe@example.com\", \"John Doe\");\n                User user2 = new User(\"jane.smith@example.com\", \"Jane Smith\");\n                User user3 = new User(\"bob.johnson@example.com\", \"Bob Johnson\");\n                \n                userRepository.save(user1);\n                userRepository.save(user2);\n                userRepository.save(user3);\n                \n                System.out.println(\"Sample users created successfully!\");\n            }\n        };\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.simplespring.config.DatabaseConfig.initDatabase(UserRepository userRepository)",
+        "body": "@Bean\n    @Profile(\"!test\")\n    public CommandLineRunner initDatabase(UserRepository userRepository) {\n        return args -> {\n            \n            if (userRepository.count() == 0) {\n                User user1 = new User(\"john.doe@example.com\", \"John Doe\");\n                User user2 = new User(\"jane.smith@example.com\", \"Jane Smith\");\n                User user3 = new User(\"bob.johnson@example.com\", \"Bob Johnson\");\n                \n                userRepository.save(user1);\n                userRepository.save(user2);\n                userRepository.save(user3);\n                \n                System.out.println(\"Sample users created successfully!\");\n            }\n        };\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.simplespring.entity.User",
+          "com.example.simplespring.repository.UserRepository"
+        ],
+        "field_access": [
+          "PrintStream out"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "configuration",
+        "project_id": "project_id",
+        "branch": "branch"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "project_id": "project_id",
+    "branch": "branch",
+    "is_nested": false,
+    "type": "configuration"
+  },
+  {
+    "package": "com.example.simplespring.repository",
+    "class_name": "UserRepository",
+    "full_class_name": "com.example.simplespring.repository.UserRepository",
+    "file_path": "F:\\01_projects\\simple-spring\\src\\main\\java\\com\\example\\simplespring\\repository\\UserRepository.java",
+    "content": "@Repository\npublic interface UserRepository extends JpaRepository<User, Long> {\n    \n    \n    Optional<User> findByEmail(String email);\n    \n    \n    List<User> findByNameContainingIgnoreCase(String name);\n    \n    \n    @Query(\"SELECT u FROM User u WHERE u.createdAt >= :date\")\n    List<User> findUsersCreatedAfter(@Param(\"date\") java.time.LocalDateTime date);\n    \n    \n    boolean existsByEmail(String email);\n    \n    \n    long countByName(String name);\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.simplespring.repository.UserRepository.findByEmail(String email)",
+        "body": "",
+        "method_calls": [],
+        "used_types": [
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.repository.UserRepository.findByNameContainingIgnoreCase(String name)",
+        "body": "",
+        "method_calls": [],
+        "used_types": [
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.repository.UserRepository.findUsersCreatedAfter(@Param(\"date\") java.time.LocalDateTime date)",
+        "body": "",
+        "method_calls": [],
+        "used_types": [
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.repository.UserRepository.existsByEmail(String email)",
+        "body": "",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.repository.UserRepository.countByName(String name)",
+        "body": "",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "project_id": "project_id",
+    "branch": "branch",
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.simplespring.filter",
+    "class_name": "RequestLoggingFilter",
+    "full_class_name": "com.example.simplespring.filter.RequestLoggingFilter",
+    "file_path": "F:\\01_projects\\simple-spring\\src\\main\\java\\com\\example\\simplespring\\filter\\RequestLoggingFilter.java",
+    "content": "@Component\n@Order(1)\npublic class RequestLoggingFilter implements Filter {\n    \n    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(\"yyyy-MM-dd HH:mm:ss\");\n    \n    @Override\n    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)\n            throws IOException, ServletException {\n        \n        HttpServletRequest httpRequest = (HttpServletRequest) request;\n        HttpServletResponse httpResponse = (HttpServletResponse) response;\n        \n        long startTime = System.currentTimeMillis();\n        \n        \n        String timestamp = LocalDateTime.now().format(FORMATTER);\n        System.out.printf(\"[%s] %s %s %s%n\", \n            timestamp,\n            httpRequest.getMethod(),\n            httpRequest.getRequestURI(),\n            httpRequest.getRemoteAddr()\n        );\n        \n        try {\n            \n            chain.doFilter(request, response);\n        } finally {\n            \n            long endTime = System.currentTimeMillis();\n            long duration = endTime - startTime;\n            \n            System.out.printf(\"[%s] Response: %d %s (took %d ms)%n\",\n                timestamp,\n                httpResponse.getStatus(),\n                httpRequest.getRequestURI(),\n                duration\n            );\n        }\n    }\n}",
+    "implements": [
+      "F:\\_side_projects\\source_atlas\\.contents.tomcat-embed-core-10.1.16.jar\\jakarta.servlet\\Filter.class"
+    ],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.simplespring.filter.RequestLoggingFilter.doFilter(ServletRequest request, ServletResponse response, FilterChain chain)",
+        "body": "@Override\n    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)\n            throws IOException, ServletException {\n        \n        HttpServletRequest httpRequest = (HttpServletRequest) request;\n        HttpServletResponse httpResponse = (HttpServletResponse) response;\n        \n        long startTime = System.currentTimeMillis();\n        \n        \n        String timestamp = LocalDateTime.now().format(FORMATTER);\n        System.out.printf(\"[%s] %s %s %s%n\", \n            timestamp,\n            httpRequest.getMethod(),\n            httpRequest.getRequestURI(),\n            httpRequest.getRemoteAddr()\n        );\n        \n        try {\n            \n            chain.doFilter(request, response);\n        } finally {\n            \n            long endTime = System.currentTimeMillis();\n            long duration = endTime - startTime;\n            \n            System.out.printf(\"[%s] Response: %d %s (took %d ms)%n\",\n                timestamp,\n                httpResponse.getStatus(),\n                httpRequest.getRequestURI(),\n                duration\n            );\n        }\n    }",
+        "method_calls": [],
+        "used_types": [
+          "F:\\_side_projects\\source_atlas\\.contents.tomcat-embed-core-10.1.16.jar\\jakarta.servlet\\ServletResponse.class.ServletResponse",
+          "F:\\_side_projects\\source_atlas\\.contents.tomcat-embed-core-10.1.16.jar\\jakarta.servlet\\ServletRequest.class.ServletRequest",
+          "F:\\_side_projects\\source_atlas\\.contents.tomcat-embed-core-10.1.16.jar\\jakarta.servlet\\FilterChain.class.FilterChain"
+        ],
+        "field_access": [
+          "PrintStream out"
+        ],
+        "inheritance_info": [
+          "F:\\_side_projects\\source_atlas\\.contents.tomcat-embed-core-10.1.16.jar\\jakarta.servlet\\Filter.class.doFilter(ServletRequest request, ServletResponse response, FilterChain chain)"
+        ],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "project_id": "project_id",
+    "branch": "branch",
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.simplespring.filter",
+    "class_name": "AuthFilter",
+    "full_class_name": "com.example.simplespring.filter.AuthFilter",
+    "file_path": "F:\\01_projects\\simple-spring\\src\\main\\java\\com\\example\\simplespring\\filter\\AuthFilter.java",
+    "content": "@Component\n@Order(2)\npublic class AuthFilter implements Filter {\n    \n    @Override\n    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)\n            throws IOException, ServletException {\n        \n        HttpServletRequest httpRequest = (HttpServletRequest) request;\n        HttpServletResponse httpResponse = (HttpServletResponse) response;\n        \n        String requestURI = httpRequest.getRequestURI();\n        String method = httpRequest.getMethod();\n        \n        \n        if (isPublicEndpoint(requestURI, method)) {\n            chain.doFilter(request, response);\n            return;\n        }\n        \n        \n        String apiKey = httpRequest.getHeader(\"X-API-Key\");\n        \n        if (apiKey == null || !isValidApiKey(apiKey)) {\n            httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);\n            httpResponse.getWriter().write(\"{\\\"error\\\": \\\"Unauthorized: Invalid or missing API key\\\"}\");\n            httpResponse.setContentType(\"application/json\");\n            return;\n        }\n        \n        \n        chain.doFilter(request, response);\n    }\n    \n    private boolean isPublicEndpoint(String requestURI, String method) {\n        \n        return requestURI.equals(\"/api/users\") && method.equals(\"GET\") ||\n               requestURI.equals(\"/api/users/count\") ||\n               requestURI.startsWith(\"/api/users/search\") ||\n               requestURI.startsWith(\"/api/users/email/\");\n    }\n    \n    private boolean isValidApiKey(String apiKey) {\n        \n        return \"simple-spring-api-key-123\".equals(apiKey);\n    }\n}",
+    "implements": [
+      "F:\\_side_projects\\source_atlas\\.contents.tomcat-embed-core-10.1.16.jar\\jakarta.servlet\\Filter.class"
+    ],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.simplespring.filter.AuthFilter.doFilter(ServletRequest request, ServletResponse response, FilterChain chain)",
+        "body": "@Override\n    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)\n            throws IOException, ServletException {\n        \n        HttpServletRequest httpRequest = (HttpServletRequest) request;\n        HttpServletResponse httpResponse = (HttpServletResponse) response;\n        \n        String requestURI = httpRequest.getRequestURI();\n        String method = httpRequest.getMethod();\n        \n        \n        if (isPublicEndpoint(requestURI, method)) {\n            chain.doFilter(request, response);\n            return;\n        }\n        \n        \n        String apiKey = httpRequest.getHeader(\"X-API-Key\");\n        \n        if (apiKey == null || !isValidApiKey(apiKey)) {\n            httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);\n            httpResponse.getWriter().write(\"{\\\"error\\\": \\\"Unauthorized: Invalid or missing API key\\\"}\");\n            httpResponse.setContentType(\"application/json\");\n            return;\n        }\n        \n        \n        chain.doFilter(request, response);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "F:\\_side_projects\\source_atlas\\.contents.tomcat-embed-core-10.1.16.jar\\jakarta.servlet\\ServletResponse.class.ServletResponse",
+          "F:\\_side_projects\\source_atlas\\.contents.tomcat-embed-core-10.1.16.jar\\jakarta.servlet\\ServletRequest.class.ServletRequest",
+          "F:\\_side_projects\\source_atlas\\.contents.tomcat-embed-core-10.1.16.jar\\jakarta.servlet\\FilterChain.class.FilterChain"
+        ],
+        "field_access": [
+          "int SC_UNAUTHORIZED = 401"
+        ],
+        "inheritance_info": [
+          "F:\\_side_projects\\source_atlas\\.contents.tomcat-embed-core-10.1.16.jar\\jakarta.servlet\\Filter.class.doFilter(ServletRequest request, ServletResponse response, FilterChain chain)"
+        ],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.filter.AuthFilter.isPublicEndpoint(String requestURI, String method)",
+        "body": "private boolean isPublicEndpoint(String requestURI, String method) {\n        \n        return requestURI.equals(\"/api/users\") && method.equals(\"GET\") ||\n               requestURI.equals(\"/api/users/count\") ||\n               requestURI.startsWith(\"/api/users/search\") ||\n               requestURI.startsWith(\"/api/users/email/\");\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [
+          "F:\\_side_projects\\source_atlas\\.contents.tomcat-embed-core-10.1.16.jar\\jakarta.servlet\\Filter.class.isPublicEndpoint(String requestURI, String method)"
+        ],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.filter.AuthFilter.isValidApiKey(String apiKey)",
+        "body": "private boolean isValidApiKey(String apiKey) {\n        \n        return \"simple-spring-api-key-123\".equals(apiKey);\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [
+          "F:\\_side_projects\\source_atlas\\.contents.tomcat-embed-core-10.1.16.jar\\jakarta.servlet\\Filter.class.isValidApiKey(String apiKey)"
+        ],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "project_id": "project_id",
+    "branch": "branch",
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.simplespring.entity",
+    "class_name": "User",
+    "full_class_name": "com.example.simplespring.entity.User",
+    "file_path": "F:\\01_projects\\simple-spring\\src\\main\\java\\com\\example\\simplespring\\entity\\User.java",
+    "content": "@Entity\n@Table(name = \"users\")\npublic class User {\n    \n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n    \n    @Column(nullable = false, unique = true)\n    private String email;\n    \n    @Column(nullable = false)\n    private String name;\n    \n    @Column(name = \"created_at\")\n    private LocalDateTime createdAt;\n    \n    @Column(name = \"updated_at\")\n    private LocalDateTime updatedAt;\n    \n    \n    public User() {}\n    \n    \n    public User(String email, String name) {\n        this.email = email;\n        this.name = name;\n        this.createdAt = LocalDateTime.now();\n        this.updatedAt = LocalDateTime.now();\n    }\n    \n    \n    public Long getId() {\n        return id;\n    }\n    \n    public void setId(Long id) {\n        this.id = id;\n    }\n    \n    public String getEmail() {\n        return email;\n    }\n    \n    public void setEmail(String email) {\n        this.email = email;\n    }\n    \n    public String getName() {\n        return name;\n    }\n    \n    public void setName(String name) {\n        this.name = name;\n    }\n    \n    public LocalDateTime getCreatedAt() {\n        return createdAt;\n    }\n    \n    public void setCreatedAt(LocalDateTime createdAt) {\n        this.createdAt = createdAt;\n    }\n    \n    public LocalDateTime getUpdatedAt() {\n        return updatedAt;\n    }\n    \n    public void setUpdatedAt(LocalDateTime updatedAt) {\n        this.updatedAt = updatedAt;\n    }\n    \n    @PreUpdate\n    public void preUpdate() {\n        this.updatedAt = LocalDateTime.now();\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.simplespring.entity.User.User()",
+        "body": "public User() {}",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.entity.User.User(String email, String name)",
+        "body": "public User(String email, String name) {\n        this.email = email;\n        this.name = name;\n        this.createdAt = LocalDateTime.now();\n        this.updatedAt = LocalDateTime.now();\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "LocalDateTime createdAt",
+          "String email",
+          "String name",
+          "LocalDateTime updatedAt"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.entity.User.getId()",
+        "body": "public Long getId() {\n        return id;\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.entity.User.setId(Long id)",
+        "body": "public void setId(Long id) {\n        this.id = id;\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "Long id"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.entity.User.getEmail()",
+        "body": "public String getEmail() {\n        return email;\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.entity.User.setEmail(String email)",
+        "body": "public void setEmail(String email) {\n        this.email = email;\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "String email"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.entity.User.getName()",
+        "body": "public String getName() {\n        return name;\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.entity.User.setName(String name)",
+        "body": "public void setName(String name) {\n        this.name = name;\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "String name"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.entity.User.getCreatedAt()",
+        "body": "public LocalDateTime getCreatedAt() {\n        return createdAt;\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.entity.User.setCreatedAt(LocalDateTime createdAt)",
+        "body": "public void setCreatedAt(LocalDateTime createdAt) {\n        this.createdAt = createdAt;\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "LocalDateTime createdAt"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.entity.User.getUpdatedAt()",
+        "body": "public LocalDateTime getUpdatedAt() {\n        return updatedAt;\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.entity.User.setUpdatedAt(LocalDateTime updatedAt)",
+        "body": "public void setUpdatedAt(LocalDateTime updatedAt) {\n        this.updatedAt = updatedAt;\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "LocalDateTime updatedAt"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.entity.User.preUpdate()",
+        "body": "@PreUpdate\n    public void preUpdate() {\n        this.updatedAt = LocalDateTime.now();\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [
+          "LocalDateTime updatedAt"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "project_id": "project_id",
+    "branch": "branch",
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.simplespring.service",
+    "class_name": "UserService",
+    "full_class_name": "com.example.simplespring.service.UserService",
+    "file_path": "F:\\01_projects\\simple-spring\\src\\main\\java\\com\\example\\simplespring\\service\\UserService.java",
+    "content": "@Service\n@Transactional\npublic class UserService {\n    \n    @Autowired\n    private UserRepository userRepository;\n    \n    \n    public User createUser(User user) {\n        if (userRepository.existsByEmail(user.getEmail())) {\n            throw new RuntimeException(\"User with email \" + user.getEmail() + \" already exists\");\n        }\n        user.setCreatedAt(LocalDateTime.now());\n        user.setUpdatedAt(LocalDateTime.now());\n        return userRepository.save(user);\n    }\n    \n    \n    @Transactional(readOnly = true)\n    public List<User> getAllUsers() {\n        return userRepository.findAll();\n    }\n    \n    \n    @Transactional(readOnly = true)\n    public Optional<User> getUserById(Long id) {\n        return userRepository.findById(id);\n    }\n    \n    \n    @Transactional(readOnly = true)\n    public Optional<User> getUserByEmail(String email) {\n        return userRepository.findByEmail(email);\n    }\n    \n    \n    public User updateUser(Long id, User userDetails) {\n        User user = userRepository.findById(id)\n                .orElseThrow(() -> new RuntimeException(\"User not found with id: \" + id));\n        \n        \n        if (!user.getEmail().equals(userDetails.getEmail()) && \n            userRepository.existsByEmail(userDetails.getEmail())) {\n            throw new RuntimeException(\"User with email \" + userDetails.getEmail() + \" already exists\");\n        }\n        \n        user.setName(userDetails.getName());\n        user.setEmail(userDetails.getEmail());\n        user.setUpdatedAt(LocalDateTime.now());\n        \n        return userRepository.save(user);\n    }\n    \n    \n    public void deleteUser(Long id) {\n        if (!userRepository.existsById(id)) {\n            throw new RuntimeException(\"User not found with id: \" + id);\n        }\n        userRepository.deleteById(id);\n    }\n    \n    \n    @Transactional(readOnly = true)\n    public List<User> searchUsersByName(String name) {\n        return userRepository.findByNameContainingIgnoreCase(name);\n    }\n    \n    \n    @Transactional(readOnly = true)\n    public List<User> getUsersCreatedAfter(LocalDateTime date) {\n        return userRepository.findUsersCreatedAfter(date);\n    }\n    \n    \n    @Transactional(readOnly = true)\n    public long getUserCount() {\n        return userRepository.count();\n    }\n    \n    \n    public void validateUser(User user) {\n        if (user.getName() == null || user.getName().trim().isEmpty()) {\n            throw new RuntimeException(\"User name cannot be empty\");\n        }\n        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {\n            throw new RuntimeException(\"User email cannot be empty\");\n        }\n        if (!isValidEmail(user.getEmail())) {\n            throw new RuntimeException(\"Invalid email format\");\n        }\n    }\n    \n    \n    private boolean isValidEmail(String email) {\n        return email.contains(\"@\") && email.contains(\".\");\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.simplespring.service.UserService.createUser(User user)",
+        "body": "public User createUser(User user) {\n        if (userRepository.existsByEmail(user.getEmail())) {\n            throw new RuntimeException(\"User with email \" + user.getEmail() + \" already exists\");\n        }\n        user.setCreatedAt(LocalDateTime.now());\n        user.setUpdatedAt(LocalDateTime.now());\n        return userRepository.save(user);\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.simplespring.entity.User.getEmail()",
+            "params": []
+          },
+          {
+            "name": "com.example.simplespring.entity.User.setUpdatedAt(LocalDateTime updatedAt)",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.service.UserService.getAllUsers()",
+        "body": "@Transactional(readOnly = true)\n    public List<User> getAllUsers() {\n        return userRepository.findAll();\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.service.UserService.getUserById(Long id)",
+        "body": "@Transactional(readOnly = true)\n    public Optional<User> getUserById(Long id) {\n        return userRepository.findById(id);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.service.UserService.getUserByEmail(String email)",
+        "body": "@Transactional(readOnly = true)\n    public Optional<User> getUserByEmail(String email) {\n        return userRepository.findByEmail(email);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.service.UserService.updateUser(Long id, User userDetails)",
+        "body": "public User updateUser(Long id, User userDetails) {\n        User user = userRepository.findById(id)\n                .orElseThrow(() -> new RuntimeException(\"User not found with id: \" + id));\n        \n        \n        if (!user.getEmail().equals(userDetails.getEmail()) && \n            userRepository.existsByEmail(userDetails.getEmail())) {\n            throw new RuntimeException(\"User with email \" + userDetails.getEmail() + \" already exists\");\n        }\n        \n        user.setName(userDetails.getName());\n        user.setEmail(userDetails.getEmail());\n        user.setUpdatedAt(LocalDateTime.now());\n        \n        return userRepository.save(user);\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.simplespring.entity.User.getEmail()",
+            "params": []
+          },
+          {
+            "name": "com.example.simplespring.entity.User.setEmail(String email)",
+            "params": []
+          },
+          {
+            "name": "com.example.simplespring.repository.UserRepository.existsByEmail(String email)",
+            "params": []
+          },
+          {
+            "name": "com.example.simplespring.entity.User.setName(String name)",
+            "params": []
+          },
+          {
+            "name": "com.example.simplespring.entity.User.getName()",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.service.UserService.deleteUser(Long id)",
+        "body": "public void deleteUser(Long id) {\n        if (!userRepository.existsById(id)) {\n            throw new RuntimeException(\"User not found with id: \" + id);\n        }\n        userRepository.deleteById(id);\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.service.UserService.searchUsersByName(String name)",
+        "body": "@Transactional(readOnly = true)\n    public List<User> searchUsersByName(String name) {\n        return userRepository.findByNameContainingIgnoreCase(name);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.service.UserService.getUsersCreatedAfter(LocalDateTime date)",
+        "body": "@Transactional(readOnly = true)\n    public List<User> getUsersCreatedAfter(LocalDateTime date) {\n        return userRepository.findUsersCreatedAfter(date);\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.service.UserService.getUserCount()",
+        "body": "@Transactional(readOnly = true)\n    public long getUserCount() {\n        return userRepository.count();\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.service.UserService.validateUser(User user)",
+        "body": "public void validateUser(User user) {\n        if (user.getName() == null || user.getName().trim().isEmpty()) {\n            throw new RuntimeException(\"User name cannot be empty\");\n        }\n        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {\n            throw new RuntimeException(\"User email cannot be empty\");\n        }\n        if (!isValidEmail(user.getEmail())) {\n            throw new RuntimeException(\"Invalid email format\");\n        }\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.simplespring.entity.User.getName()",
+            "params": []
+          },
+          {
+            "name": "com.example.simplespring.entity.User.getEmail()",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.service.UserService.isValidEmail(String email)",
+        "body": "private boolean isValidEmail(String email) {\n        return email.contains(\"@\") && email.contains(\".\");\n    }",
+        "method_calls": [],
+        "used_types": [],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [],
+        "type": "regular",
+        "project_id": "project_id",
+        "branch": "branch"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "project_id": "project_id",
+    "branch": "branch",
+    "is_nested": false,
+    "type": "regular"
+  },
+  {
+    "package": "com.example.simplespring.controller",
+    "class_name": "UserController",
+    "full_class_name": "com.example.simplespring.controller.UserController",
+    "file_path": "F:\\01_projects\\simple-spring\\src\\main\\java\\com\\example\\simplespring\\controller\\UserController.java",
+    "content": "@RestController\n@RequestMapping(\"/api/users\")\n@CrossOrigin(origins = \"*\")\npublic class UserController {\n    \n    @Autowired\n    private UserService userService;\n    \n    \n    @PostMapping\n    public ResponseEntity<?> createUser(@RequestBody User user) {\n        try {\n            userService.validateUser(user);\n            User createdUser = userService.createUser(user);\n            return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);\n        } catch (RuntimeException e) {\n            return ResponseEntity.badRequest().body(\"Error: \" + e.getMessage());\n        }\n    }\n    \n    \n    @GetMapping\n    public ResponseEntity<List<User>> getAllUsers() {\n        List<User> users = userService.getAllUsers();\n        return ResponseEntity.ok(users);\n    }\n    \n    \n    @GetMapping(\"/{id}\")\n    public ResponseEntity<?> getUserById(@PathVariable Long id) {\n        Optional<User> user = userService.getUserById(id);\n        if (user.isPresent()) {\n            return ResponseEntity.ok(user.get());\n        } else {\n            return ResponseEntity.notFound().build();\n        }\n    }\n    \n    \n    @GetMapping(\"/email/{email}\")\n    public ResponseEntity<?> getUserByEmail(@PathVariable String email) {\n        Optional<User> user = userService.getUserByEmail(email);\n        if (user.isPresent()) {\n            return ResponseEntity.ok(user.get());\n        } else {\n            return ResponseEntity.notFound().build();\n        }\n    }\n    \n    \n    @PutMapping(\"/{id}\")\n    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User userDetails) {\n        try {\n            userService.validateUser(userDetails);\n            User updatedUser = userService.updateUser(id, userDetails);\n            return ResponseEntity.ok(updatedUser);\n        } catch (RuntimeException e) {\n            return ResponseEntity.badRequest().body(\"Error: \" + e.getMessage());\n        }\n    }\n    \n    \n    @DeleteMapping(\"/{id}\")\n    public ResponseEntity<?> deleteUser(@PathVariable Long id) {\n        try {\n            userService.deleteUser(id);\n            return ResponseEntity.ok(\"User deleted successfully\");\n        } catch (RuntimeException e) {\n            return ResponseEntity.badRequest().body(\"Error: \" + e.getMessage());\n        }\n    }\n    \n    \n    @GetMapping(\"/search\")\n    public ResponseEntity<List<User>> searchUsersByName(@RequestParam String name) {\n        List<User> users = userService.searchUsersByName(name);\n        return ResponseEntity.ok(users);\n    }\n    \n    \n    @GetMapping(\"/created-after\")\n    public ResponseEntity<List<User>> getUsersCreatedAfter(@RequestParam String date) {\n        try {\n            LocalDateTime dateTime = LocalDateTime.parse(date);\n            List<User> users = userService.getUsersCreatedAfter(dateTime);\n            return ResponseEntity.ok(users);\n        } catch (Exception e) {\n            return ResponseEntity.badRequest().build();\n        }\n    }\n    \n    \n    @GetMapping(\"/count\")\n    public ResponseEntity<Long> getUserCount() {\n        long count = userService.getUserCount();\n        return ResponseEntity.ok(count);\n    }\n}",
+    "implements": [],
+    "extends": null,
+    "methods": [
+      {
+        "name": "com.example.simplespring.controller.UserController.createUser(@RequestBody User user)",
+        "body": "@PostMapping\n    public ResponseEntity<?> createUser(@RequestBody User user) {\n        try {\n            userService.validateUser(user);\n            User createdUser = userService.createUser(user);\n            return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);\n        } catch (RuntimeException e) {\n            return ResponseEntity.badRequest().body(\"Error: \" + e.getMessage());\n        }\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.simplespring.service.UserService.validateUser(User user)",
+            "params": []
+          },
+          {
+            "name": "com.example.simplespring.service.UserService.createUser(User user)",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "com.example.simplespring.entity.User",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<?>"
+        ],
+        "field_access": [
+          "CREATED"
+        ],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "POST",
+            "path": "/api/users",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.controller.UserController.getAllUsers()",
+        "body": "@GetMapping\n    public ResponseEntity<List<User>> getAllUsers() {\n        List<User> users = userService.getAllUsers();\n        return ResponseEntity.ok(users);\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.simplespring.service.UserService.getAllUsers()",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<User>>",
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/users",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.controller.UserController.getUserById(@PathVariable Long id)",
+        "body": "@GetMapping(\"/{id}\")\n    public ResponseEntity<?> getUserById(@PathVariable Long id) {\n        Optional<User> user = userService.getUserById(id);\n        if (user.isPresent()) {\n            return ResponseEntity.ok(user.get());\n        } else {\n            return ResponseEntity.notFound().build();\n        }\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.simplespring.entity.User",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<?>"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/users/{id}",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.controller.UserController.getUserByEmail(@PathVariable String email)",
+        "body": "@GetMapping(\"/email/{email}\")\n    public ResponseEntity<?> getUserByEmail(@PathVariable String email) {\n        Optional<User> user = userService.getUserByEmail(email);\n        if (user.isPresent()) {\n            return ResponseEntity.ok(user.get());\n        } else {\n            return ResponseEntity.notFound().build();\n        }\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.simplespring.entity.User",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<?>"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/users/email/{email}",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.controller.UserController.updateUser(@PathVariable Long id, @RequestBody User userDetails)",
+        "body": "@PutMapping(\"/{id}\")\n    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User userDetails) {\n        try {\n            userService.validateUser(userDetails);\n            User updatedUser = userService.updateUser(id, userDetails);\n            return ResponseEntity.ok(updatedUser);\n        } catch (RuntimeException e) {\n            return ResponseEntity.badRequest().body(\"Error: \" + e.getMessage());\n        }\n    }",
+        "method_calls": [],
+        "used_types": [
+          "com.example.simplespring.entity.User",
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<?>"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "PUT",
+            "path": "/api/users/{id}",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.controller.UserController.deleteUser(@PathVariable Long id)",
+        "body": "@DeleteMapping(\"/{id}\")\n    public ResponseEntity<?> deleteUser(@PathVariable Long id) {\n        try {\n            userService.deleteUser(id);\n            return ResponseEntity.ok(\"User deleted successfully\");\n        } catch (RuntimeException e) {\n            return ResponseEntity.badRequest().body(\"Error: \" + e.getMessage());\n        }\n    }",
+        "method_calls": [],
+        "used_types": [
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<?>"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "DELETE",
+            "path": "/api/users/{id}",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.controller.UserController.searchUsersByName(@RequestParam String name)",
+        "body": "@GetMapping(\"/search\")\n    public ResponseEntity<List<User>> searchUsersByName(@RequestParam String name) {\n        List<User> users = userService.searchUsersByName(name);\n        return ResponseEntity.ok(users);\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.simplespring.service.UserService.searchUsersByName(String name)",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<User>>",
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/users/search",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.controller.UserController.getUsersCreatedAfter(@RequestParam String date)",
+        "body": "@GetMapping(\"/created-after\")\n    public ResponseEntity<List<User>> getUsersCreatedAfter(@RequestParam String date) {\n        try {\n            LocalDateTime dateTime = LocalDateTime.parse(date);\n            List<User> users = userService.getUsersCreatedAfter(dateTime);\n            return ResponseEntity.ok(users);\n        } catch (Exception e) {\n            return ResponseEntity.badRequest().build();\n        }\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.simplespring.service.UserService.getUsersCreatedAfter(LocalDateTime date)",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<List<User>>",
+          "com.example.simplespring.entity.User"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/users/created-after",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint",
+        "project_id": "project_id",
+        "branch": "branch"
+      },
+      {
+        "name": "com.example.simplespring.controller.UserController.getUserCount()",
+        "body": "@GetMapping(\"/count\")\n    public ResponseEntity<Long> getUserCount() {\n        long count = userService.getUserCount();\n        return ResponseEntity.ok(count);\n    }",
+        "method_calls": [
+          {
+            "name": "com.example.simplespring.service.UserService.getUserCount()",
+            "params": []
+          }
+        ],
+        "used_types": [
+          "F:\\_side_projects\\source_atlas\\.contents.spring-web-6.1.1.jar\\org.springframework.http\\ResponseEntity.class.ResponseEntity<Long>"
+        ],
+        "field_access": [],
+        "inheritance_info": [],
+        "extends_info": [],
+        "endpoint": [
+          {
+            "type": "GET",
+            "path": "/api/users/count",
+            "produces": "",
+            "consumes": ""
+          }
+        ],
+        "type": "rest_endpoint",
+        "project_id": "project_id",
+        "branch": "branch"
+      }
+    ],
+    "parent_class": [
+      null
+    ],
+    "project_id": "project_id",
+    "branch": "branch",
+    "is_nested": false,
+    "type": "regular"
+  }
+]

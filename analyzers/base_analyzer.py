@@ -26,6 +26,8 @@ class ClassParsingContext:
     is_config: bool
     import_mapping: Dict[str, str] = None
     parent_class: Optional[str] = None
+    method_map: Dict[str, int] = None
+    local_fields: Dict[str, str] = None
 
 
 class BaseCodeAnalyzer(ABC):
@@ -37,6 +39,8 @@ class BaseCodeAnalyzer(ABC):
         self.max_workers = 16
         self.project_id = project_id
         self.branch = branch
+        self.cached_nodes = {}
+        self.methods_cache = {}
         self._lock = Lock()
 
     def parse_project(self, root: Path) -> List[CodeChunk]:
@@ -49,6 +53,8 @@ class BaseCodeAnalyzer(ABC):
 
         logger.info(f"Found {len(code_files)} source files")
         chunks: List[CodeChunk] = []
+
+        self.build_source_cache(root)
 
         # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
@@ -89,24 +95,23 @@ class BaseCodeAnalyzer(ABC):
             class_nodes = self._extract_all_class_nodes(tree.root_node)
 
             logger.info(f"real file_path {str(file_path)}")
-            return self._process_all_classes(class_nodes, content, str(file_path), tree.root_node)
+            chunks = []
+            for class_node in class_nodes:
+                chunk = self._parse_class_node(class_node, content, str(file_path), tree.root_node)
+                if chunk:
+                    chunks.append(chunk)
+            return chunks
 
         except Exception as e:
             logger.error(f"Error processing file {file_path}: {e}")
             return []
 
-    def _process_all_classes(self, class_nodes: List[Node], content: str,
-                             file_path: str, root_node: Node) -> List[CodeChunk]:
-        chunks = []
-        for class_node in class_nodes:
-            chunk = self._parse_class_node(class_node, content, file_path, root_node)
-            if chunk:
-                chunks.append(chunk)
-        return chunks
-
     def _parse_class_node(self, class_node: Node, content: str, file_path: str, root_node: Node) -> Optional[CodeChunk]:
         try:
-            context = self._build_class_context(class_node, content, root_node)
+            class_name = self._extract_class_name(class_node, content)
+            package = self._extract_package(root_node, content)
+            full_class_name = self._build_full_class_name(class_name, package, class_node, content, root_node)
+            context = self.cached_nodes[full_class_name]
             if not context:
                 return None
 
@@ -147,7 +152,9 @@ class BaseCodeAnalyzer(ABC):
         full_class_name = self._build_full_class_name(class_name, package, class_node, content, root_node)
         parent_class = self._get_parent_class(class_node, content, package) if is_nested else None,
         is_config = self._is_config_node(class_node, content)
-        import_mapping = self.build_import_mapping(class_node, content)
+        import_mapping = self.build_import_mapping(root_node, content)
+        local_fields = self.build_class_fields_mapping(class_node, content)
+        method_map = self.build_method_map(class_node, content, parent_class)
         return ClassParsingContext(
             package=package,
             class_name=class_name,
@@ -155,7 +162,9 @@ class BaseCodeAnalyzer(ABC):
             is_nested=is_nested,
             parent_class=parent_class,
             is_config = is_config,
-            import_mapping=import_mapping
+            import_mapping=import_mapping,
+            method_map=method_map,
+            local_fields=local_fields
         )
 
     def _read_file_content(self, file_path: Path) -> str:
@@ -175,7 +184,10 @@ class BaseCodeAnalyzer(ABC):
         with open(output_path / "chunks.json", "w", encoding="utf-8") as f:
             json.dump(chunks_data, f, indent=2, ensure_ascii=False)
 
-    # ---- extension points ----
+    @abstractmethod
+    def build_method_map(self, class_node, content, parent_class) -> Dict[str, int]:
+        pass
+
     @abstractmethod
     def _get_code_files(self, root: Path) -> List[Path]:
         """Return a list of relevant source files."""
@@ -227,6 +239,59 @@ class BaseCodeAnalyzer(ABC):
     @abstractmethod
     def build_import_mapping(self, root_node: Node, content: str) -> Dict[str, str]:
         pass
+
+    @abstractmethod
+    def build_class_fields_mapping(self, class_node, content) -> dict[str, int]:
+        pass
+
+    def build_source_cache(self, root) -> Dict[str, ClassParsingContext]:
+        code_files = self._get_code_files(root)
+        cached_nodes = {}
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            # Submit all file processing tasks
+            future_to_file = {
+                executor.submit(self.process_class_cache_file, file): file
+                for file in code_files
+            }
+
+            # Collect results as they complete
+            for i, future in enumerate(as_completed(future_to_file), 1):
+                file = future_to_file[future]
+
+                with self._lock:  # Thread-safe logging
+                    logger.debug(f"[{i}/{len(code_files)}] Completed processing file: {file}")
+
+                try:
+                    cache_data = future.result()
+                    cached_nodes.update(cache_data)
+                except Exception as e:
+                    with self._lock:
+                        logger.error(f"Error processing {file}: {e}", exc_info=True)
+            self.cached_nodes = cached_nodes
+            methods_cache = {}
+            for class_name, class_data in cached_nodes.items():
+                method_map = class_data.method_map
+                for method_name, arg_size in method_map.items():
+                    methods_cache[f"{class_name}.{method_name}"] = arg_size
+            self.methods_cache = methods_cache
+            return cached_nodes
+
+    def process_class_cache_file(self, file_path) -> Dict[str, ClassParsingContext]:
+        content = self._read_file_content(file_path)
+        if not content.strip():
+            return {}
+
+        content = self.comment_remover.remove_comments(content)
+
+        tree = self.parser.parse(bytes(content, 'utf8'))
+        class_nodes = self._extract_all_class_nodes(tree.root_node)
+        logger.info(f"real file_path {str(file_path)}")
+        chunks = {}
+        for class_node in class_nodes:
+            context = self._build_class_context(class_node, content, tree.root_node)
+            if context:
+                chunks[context.full_class_name] = context
+        return chunks
 
     def _build_knowledge_graph(self, chunks: List[CodeChunk]):
         neo4j_conn = get_neo4j_connection()

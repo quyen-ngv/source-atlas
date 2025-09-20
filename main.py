@@ -3,7 +3,7 @@ import sys
 import time
 from pathlib import Path
 
-from factory.analyzer_factory import AnalyzerFactory
+from analyzers.analyzer_factory import AnalyzerFactory
 
 
 def main():
@@ -11,10 +11,10 @@ def main():
     start_time = time.perf_counter()
 
     args = {
-        "project_path": "F:/01_projects/onestudy",
+        "project_path": "F:/01_projects/simple-spring",
         # "project_path": "F:/01_projects/spring-demo",
-        "project_id": "onestudy",
-        "output": "./output/onestudy",
+        "project_id": "simple-spring",
+        "output": "./output/simple-spring",
         "language": "java",
         "remove_comments": True,
         "verbose": True

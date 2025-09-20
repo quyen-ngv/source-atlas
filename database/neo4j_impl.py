@@ -74,6 +74,8 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
                 'file_path': file_path,
                 'class_name': class_name,
                 'content': content,
+                'project_id': chunk.project_id,
+                'branch': chunk.branch
             })
 
             # Process methods within this chunk
@@ -100,6 +102,8 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
                     'class_name': method_class_name,
                     'method_name': method_name,
                     'content': method_content,
+                    'project_id': method.project_id,
+                    'branch': method.branch
                 })
 
         # Create batch insert query
