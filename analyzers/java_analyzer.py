@@ -1,7 +1,5 @@
 import logging
 import re
-from asyncio import as_completed
-from concurrent.futures.thread import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict
@@ -237,7 +235,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
 
         # Services
         self.comment_remover = JavaCommentRemover()
-        self.lsp_service = JavaLSPService.create(str(root_path))
+        self.lsp_service = JavaLSPService.create(root_path)
         self.project_id = project_id
         self.branch = branch
         self._server_ctx = None
@@ -250,7 +248,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 JavaBuiltinPackages.SPRING_PACKAGES |
                 JavaBuiltinPackages.COMMON_LIBRARY_PACKAGES
         )
-
     def __enter__(self):
         self._server_ctx = self.lsp_service.start_server()
         self._server_ctx.__enter__()
@@ -304,21 +301,28 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             pass
         return None
 
-    def _extract_method_name(self, class_node: Node, content: str) -> Optional[str]:
+    def _extract_method_name(self, class_node: Node, content: str) -> Tuple[Optional[str], Optional[Node]]:
+        if class_node.type != 'method_declaration':
+            return None, None
+
         method_name = None
         method_params = None
-        try:
-            for child in class_node.children:
-                if child.type == 'identifier':
-                    method_name = extract_content(child, content)
-                if child.type == 'formal_parameters':
-                    method_params = extract_content(child, content)
-        except Exception:
-            pass
-        if method_name:
-            return f"{method_name}{method_params}"
-        else:
-            return None
+        method_name_node = None
+
+        for child in class_node.children:
+            if child.type == 'identifier':
+                method_name = extract_content(child, content)
+                method_name_node = child
+            elif child.type == 'formal_parameters':
+                method_params = extract_content(child, content)
+            if method_name is not None and method_params is not None:
+                break
+
+        if method_name is None:
+            return None, None
+
+        method_signature = f"{method_name}{method_params or '()'}"
+        return method_signature, method_name_node
 
     def _is_nested_class(self, class_node: Node, root_node: Node) -> bool:
         parent = class_node.parent
@@ -364,51 +368,36 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 return child
         return None
 
-    def _extract_implements_with_lsp(self, class_node: Node, file_path: str) -> Tuple[str, ...]:
-        interfaces = []
-        try:
-            implements_query = Query(self.language, """
-                (class_declaration
-                    interfaces: (super_interfaces
-                        (type_list
-                            (type_identifier) @interface)))
-                (class_declaration
-                    interfaces: (super_interfaces
-                        (type_list
-                            (generic_type
-                                (type_identifier) @generic_interface))))
-            """)
+    def _extract_implements_with_lsp(self, class_node: Node, file_path: str, content: str) -> Tuple[str, ...]:
+        if not self.lsp_service:
+            return ()
 
-            query_cursor = QueryCursor(implements_query)
-            captures = query_cursor.captures(class_node)
-            for nodes in captures.values():
-                for node in nodes:
-                    resolved_interface = self._resolve_type_with_lsp(node, file_path)
-                    if resolved_interface:
-                        interfaces.append(resolved_interface)
-        except Exception as e:
-            logger.debug(f"Error extracting implements: {e}")
-        return tuple(interfaces)
-
-    def _extract_extends_with_lsp(self, class_node: Node, file_path: str) -> Optional[str]:
         try:
-            extends_query = Query(self.language, """
-                (class_declaration
-                    superclass: (superclass
-                        (type_identifier) @superclass))
-                (class_declaration
-                    superclass: (superclass
-                        (generic_type
-                            (type_identifier) @generic_superclass)))
-            """)
-            query_cursor = QueryCursor(extends_query)
-            captures = query_cursor.captures(class_node)
-            if captures:
-                superclass_node = captures.get('superclass')[0] or captures.get('generic_superclass')[0]
-                return self._resolve_type_with_lsp(superclass_node, file_path)
+            class_name_node = None
+            is_interface = False
+            if class_node.type == 'interface_declaration':
+                is_interface = True
+            for child in class_node.children:
+                if not is_interface:
+                    if child.type == 'modifiers':
+                        text_modifiers = extract_content(child, content)
+                        if ' abstract' not in text_modifiers:
+                            return ()
+                if child.type == 'identifier':
+                    class_name_node = child
+
+            if not class_name_node:
+                return ()
+
+            line = class_name_node.start_point[0]
+            col = class_name_node.start_point[1]
+            logger.info(f'request_implementation {file_path}, {line}, {col}')
+            lsp_results = self.lsp_service.request_implementation(file_path, line, col)
+            logger.info(f'request_implementation 1 done')
+            return self._resolve_lsp_implements(lsp_results)
         except Exception as e:
-            logger.debug(f"Error extracting extends: {e}")
-        return None
+            logger.debug(f"LSP resolution failed: {e}")
+            return ()
 
     def _resolve_type_with_lsp(self, node: Node, file_path: str) -> Optional[str]:
         if not self.lsp_service:
@@ -423,6 +412,127 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         except Exception as e:
             logger.debug(f"LSP resolution failed: {e}")
             return node.text.decode('utf8')
+
+    def _resolve_lsp_implements(self, lsp_results) -> Tuple[str, ...]:
+        if not lsp_results:
+            return None
+
+        # Normalize to list
+        results = lsp_results if isinstance(lsp_results, list) else [lsp_results]
+
+        response = []
+        for result in results:
+            absolute_path = result.get('absolutePath')
+            if absolute_path and isinstance(absolute_path, str):
+                qualified_name = self._extract_qualified_name_from_lsp_result(result)
+                logger.info(f"qualified_name {qualified_name}")
+                response.append(qualified_name)
+        return response
+
+    def _resolve_lsp_method_implements(self, lsp_results) -> Optional[str]:
+        if not lsp_results:
+            return None
+
+        # Normalize to list
+        results = lsp_results if isinstance(lsp_results, list) else [lsp_results]
+
+        response = []
+        for result in results:
+            if isinstance(result, dict):
+                absolute_path = result.get('absolutePath')
+                if absolute_path and isinstance(absolute_path, str):
+                    absolute_path = self._extract_qualified_name_from_lsp_result(result)
+                    qualified_name = self.enhanced_extract_qualified_name_from_lsp_result(result)
+                    logger.info(f"qualified_name {absolute_path}.{qualified_name}")
+                    response.append(f"{absolute_path}.{qualified_name}")
+        return response
+
+    def enhanced_extract_qualified_name_from_lsp_result(self, lsp_result: dict) -> str:
+        """
+        Enhanced version that extracts both qualified name and method details
+
+        Returns:
+            Tuple of (qualified_class_name, method_details_dict)
+        """
+        try:
+            # Extract qualified class name (your existing logic)
+            absolute_path = lsp_result.get('absolutePath')
+            if not absolute_path or not isinstance(absolute_path, str):
+                return "", None
+
+            qualified_class_name = self._strip_root(absolute_path.replace('\\\\', '.'))
+
+            # Extract method details
+            res = self.extract_method_with_params_from_lsp_result(lsp_result)
+
+            return res
+
+        except Exception as e:
+            logger.debug(f"Failed to extract enhanced info from LSP result: {e}")
+            return "", None
+    def extract_method_with_params_from_lsp_result(self, lsp_result: dict) -> str:
+        try:
+            # Get file path and position info
+            file_path = lsp_result.get('absolutePath') or lsp_result.get('uri', '').replace('file:///', '')
+            if not file_path:
+                logger.error("No file path found in LSP result")
+                return None
+
+            range_info = lsp_result.get('range')
+            if not range_info:
+                logger.error("No range info found in LSP result")
+                return None
+
+            start_line = range_info['start']['line']
+            start_char = range_info['start']['character']
+
+            content = Path(file_path).read_text(encoding='utf-8')
+
+            # Parse the file
+            tree = self.parser.parse(content.encode('utf-8'))
+            root_node = tree.root_node
+
+            # Find the method node at the specified position
+            method_node = self._find_method_at_position(root_node, start_line, start_char)
+            if not method_node:
+                logger.error(f"No method found at line {start_line}, character {start_char}")
+                return None
+
+            # Extract method details
+            method_name, method_name_nod = self._extract_method_name(method_node, content)
+            return method_name
+
+        except Exception as e:
+            logger.error(f"Error extracting method from LSP result: {e}")
+            return None
+
+    def _find_method_at_position(self, root_node: Node, target_line: int, target_char: int) -> Optional[Node]:
+        """Find the method declaration node that contains the target position"""
+
+        def find_method_recursive(node: Node) -> Optional[Node]:
+            # Check if this node is a method declaration
+            if node.type == 'method_declaration':
+                # Check if the target position is within this method's identifier
+                for child in node.children:
+                    if child.type == 'identifier':
+                        start_line = child.start_point[0]
+                        end_line = child.end_point[0]
+                        start_char = child.start_point[1]
+                        end_char = child.end_point[1]
+
+                        if (start_line == target_line and
+                                start_char <= target_char <= end_char):
+                            return node
+
+            # Recursively search children
+            for child in node.children:
+                result = find_method_recursive(child)
+                if result:
+                    return result
+
+            return None
+
+        return find_method_recursive(root_node)
 
     def _resolve_lsp_type_response(self, lsp_results, type_name: str = None) -> Optional[str]:
         if not lsp_results:
@@ -449,7 +559,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
 
     # Method Processing
     def _extract_class_methods(self, class_node: Node, content: str,
-                               implements: List[str], extends: Optional[str],
+                               implements: List[str],
                                full_class_name: str,  file_path: str, import_mapping: Dict[str, str]) -> List[Method]:
         methods = []
         class_body = self._get_class_body(class_node)
@@ -460,7 +570,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             for child in class_body.children:
                 if child.type == 'method_declaration' or child.type == 'constructor_declaration':
                     method = self._process_method_node(
-                        child, content, implements, extends,
+                        child, content, implements,
                         full_class_name, class_node, file_path, import_mapping
                     )
                     if method:
@@ -470,10 +580,10 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         return methods
 
     def _process_method_node(self, method_node: Node, content: str,
-                             implements: List[str], extends: Optional[str], full_class_name: str,
+                             implements: List[str], full_class_name: str,
                              class_node: Node, file_path: str, import_mapping: Dict[str, str]) -> Optional[Method]:
         try:
-            method_name = self._extract_method_name(method_node, content)
+            method_name, method_name_node = self._extract_method_name(method_node, content)
             if not method_name:
                 return None
 
@@ -484,14 +594,13 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
 
             for child in method_node.children:
                 if child.type == 'block' or child.type == 'constructor_body':
-                    body = extract_content(method_node, content)
+                    # body = extract_content(method_node, content)
                     break
 
             endpoint = self.endpoint_extractor.extract_from_method(method_node, content, class_node)
 
             # Build inheritance info
-            inheritance_info = self._build_inheritance_info(method_name, implements, extends)
-            extends_info = self._build_extends_info(method_name, extends)
+            inheritance_info = self._build_inheritance_info(method_node, method_name_node, file_path) if implements else []
             is_configuration = self._is_config_node(method_node, content)
 
             method_type = ChunkType.REGULAR
@@ -507,7 +616,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 used_types=tuple(used_types),
                 field_access=tuple(field_access),
                 inheritance_info=tuple(inheritance_info),
-                extends_info=tuple(extends_info),
                 endpoint=tuple(endpoint),
                 type = method_type,
                 project_id=self.project_id,
@@ -521,10 +629,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         """Extract method calls using tree-sitter query."""
         method_calls = []
         try:
-            local_vars = self.extract_local_variables(method_node, file_path, content)
             class_cache = self.cached_nodes.get(full_class_name)
-            import_vars = class_cache.local_fields if class_cache else {}
-            # Fixed query - capture everything in one go
             call_query = Query(self.language, """
                 (method_invocation
                   object: (_) @object
@@ -540,33 +645,14 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             object_nodes = captures.get("object", [])
             method_nodes = captures.get("method_name", [])
             args_nodes = captures.get("arguments", [])
-            method_map = self.methods_cache
 
             for i, call_node in enumerate(call_nodes):
                 object_name = extract_content(object_nodes[i],content) if i < len(object_nodes) else None
-                method_name = extract_content(method_nodes[i],content) if i < len(method_nodes) else None
                 args_size = len([c for c in args_nodes[i].named_children]) if i < len(args_nodes) else 0
 
                 if object_name and object_name in JavaBuiltinPackages.JAVA_PRIMITIVES:
                     continue
-                cached_node = self.cached_nodes.get(full_class_name)
-                real_type = local_vars.get(object_name)
-                if not real_type:
-                    real_type = cached_node.local_fields.get(object_name)
-                if real_type:
-                    if real_type in JavaBuiltinPackages.JAVA_PRIMITIVES:
-                        continue
-                    full_type = import_mapping.get(real_type)
-                    if full_type:
-                        if cached_node:
-                            if not method_map:
-                                continue
-                            method_full_type_name = full_type+"."+method_name
-                            existed_method = method_map.get(method_full_type_name)
-                            if existed_method and existed_method.get('params_size') == args_size:
-                                method_calls.append({"name": method_full_type_name + "." + existed_method.get('params'), "params": []})
-                                logger.info(f"found method {method_full_type_name+existed_method.get('params')}")
-                                continue
+
                 try:
                     name_node = method_nodes[i] if i < len(method_nodes) else None
                     args_node = args_nodes[i] if i < len(args_nodes) else None
@@ -789,18 +875,17 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         return field
 
     # Inheritance Analysis
-    def _build_inheritance_info(self, method_name: str, implements: List[str], extends: Optional[str]) -> List[str]:
-        inheritance_sources = []
+    def _build_inheritance_info(self, method_node: Node, method_name_node: Node, file_path: str) -> List[str]:
+        for child in method_node.children:
+            if child.type == 'body':
+                return []
 
-        if extends:
-            inheritance_sources.append(f"{extends}.{method_name}")
-
-        if method_name:
-            for interface in implements:
-                interface = self._remove_prefix(interface)
-                inheritance_sources.append(f"{interface}.{method_name}")
-
-        return inheritance_sources
+        line = method_name_node.start_point[0]
+        col = method_name_node.start_point[1]
+        logger.info(f'request_implementation {file_path}, {line}, {col}')
+        lsp_results = self.lsp_service.request_implementation(file_path, line, col)
+        logger.info(f'request_implementation 2 done')
+        return self._resolve_lsp_method_implements(lsp_results)
 
     def _remove_prefix(self, path: str) -> str:
         prefix = "src.main.java."
@@ -989,84 +1074,3 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             logger.debug(f"Error building import mapping: {e}")
 
         return import_mapping
-
-    def build_method_map(self, class_node: Node, content: str, parent_class: str) -> dict[str, dict[str, str]]:
-        method_map: dict[str, int] = {}
-
-        class_body = self._get_class_body(class_node)
-        if not class_body:
-            return method_map
-
-        try:
-            # Query tất cả method + constructor trong class_body
-            method_query = Query(self.language, """
-                [
-                    (method_declaration
-                        name: (identifier) @method_name
-                        parameters: (formal_parameters) @params
-                    )
-                    (constructor_declaration
-                        name: (identifier) @method_name
-                        parameters: (formal_parameters) @params
-                    )
-                ] @decl
-            """)
-
-            query_cursor = QueryCursor(method_query)
-            captures = query_cursor.captures(class_body)
-
-            method_name_nodes = captures.get("method_name", [])
-            params_nodes = captures.get("params", [])
-            decl_nodes = captures.get("decl", [])
-
-            for i, method_name_node in enumerate(method_name_nodes):
-                method_name = extract_content(method_name_node, content)
-                param_text = extract_content(params_nodes[i], content)
-
-                params_size = 0
-                if i < len(params_nodes):
-                    param_query = Query(self.language, """
-                        (formal_parameter) @param
-                        (spread_parameter) @param
-                    """)
-                    param_cursor = QueryCursor(param_query)
-                    param_captures = param_cursor.captures(decl_nodes[i])
-                    params_size = len(param_captures.get("param", []))
-
-                method_map[method_name] = {"params_size":params_size, 'params': param_text}
-
-        except Exception as e:
-            logger.debug(f"Error extracting class methods: {e}")
-
-        return method_map
-
-    def build_class_fields_mapping(self, class_node, content: str) -> dict[str, str]:
-        fields_map: dict[str, str] = {}
-        try:
-            # Query tất cả field trong class
-            query = Query(self.language, """
-                (field_declaration
-                    type: (_) @var_type
-                    (variable_declarator name: (identifier) @var_name)
-                )
-            """)
-
-            query_cursor = QueryCursor(query)
-            captures = query_cursor.captures(class_node)
-
-            var_type_nodes = captures.get("var_type", [])
-            var_name_nodes = captures.get("var_name", [])
-
-            for i, var_name_node in enumerate(var_name_nodes):
-                var_name = extract_content(var_name_node, content)
-
-                # an toàn khi số lượng type node < số lượng var name node
-                var_type = extract_content(var_type_nodes[i], content) if i < len(var_type_nodes) else None
-
-                if var_type:
-                    fields_map[var_name] = var_type
-
-        except Exception as e:
-            logger.debug(f"Error building class fields mapping: {e}")
-
-        return fields_map

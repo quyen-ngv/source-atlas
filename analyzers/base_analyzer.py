@@ -10,6 +10,7 @@ from typing import List, Optional, Tuple, Dict
 from tree_sitter import Language, Parser, Node
 
 from database.neo4j_impl import get_neo4j_connection
+from lsp.lsp_service import LSPService
 from models.domain_models import CodeChunk, ChunkType
 from models.domain_models import Method
 from utils.common import convert
@@ -26,8 +27,6 @@ class ClassParsingContext:
     is_config: bool
     import_mapping: Dict[str, str] = None
     parent_class: Optional[str] = None
-    method_map: Dict[str, int] = None
-    local_fields: Dict[str, str] = None
 
 
 class BaseCodeAnalyzer(ABC):
@@ -42,6 +41,46 @@ class BaseCodeAnalyzer(ABC):
         self.cached_nodes = {}
         self.methods_cache = {}
         self._lock = Lock()
+        self.lsp_service: LSPService = None
+    #
+    # def parse_project(self, root: Path) -> List[CodeChunk]:
+    #     logger.info(f"Starting analysis for project '{self.project_id}' at {root}")
+    #
+    #     code_files = self._get_code_files(root)
+    #     if not code_files:
+    #         logger.warning("No source files found")
+    #         return []
+    #
+    #     logger.info(f"Found {len(code_files)} source files")
+    #     chunks: List[CodeChunk] = []
+    #
+    #     self.build_source_cache(root)
+    #
+    #     with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+    #         # Submit all file processing tasks
+    #         future_to_file = {
+    #             executor.submit(self.process_file, file): file
+    #             for file in code_files
+    #         }
+    #
+    #         # Collect results as they complete
+    #         for i, future in enumerate(as_completed(future_to_file), 1):
+    #             file = future_to_file[future]
+    #
+    #             with self._lock:  # Thread-safe logging
+    #                 logger.debug(f"[{i}/{len(code_files)}] Completed processing file: {file}")
+    #
+    #             try:
+    #                 file_chunks = future.result()
+    #                 chunks.extend(file_chunks)
+    #             except Exception as e:
+    #                 with self._lock:
+    #                     logger.error(f"Error processing {file}: {e}", exc_info=True)
+    #
+    #     logger.info(f"Extracted {len(chunks)} code chunks total")
+    #
+    #     self._build_knowledge_graph(chunks)
+    #     return chunks
 
     def parse_project(self, root: Path) -> List[CodeChunk]:
         logger.info(f"Starting analysis for project '{self.project_id}' at {root}")
@@ -56,27 +95,15 @@ class BaseCodeAnalyzer(ABC):
 
         self.build_source_cache(root)
 
-        # Use ThreadPoolExecutor for parallel processing
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            # Submit all file processing tasks
-            future_to_file = {
-                executor.submit(self.process_file, file): file
-                for file in code_files
-            }
+        # Process files sequentially
+        for i, file in enumerate(code_files, 1):
+            logger.debug(f"[{i}/{len(code_files)}] Processing file: {file}")
 
-            # Collect results as they complete
-            for i, future in enumerate(as_completed(future_to_file), 1):
-                file = future_to_file[future]
-
-                with self._lock:  # Thread-safe logging
-                    logger.debug(f"[{i}/{len(code_files)}] Completed processing file: {file}")
-
-                try:
-                    file_chunks = future.result()
-                    chunks.extend(file_chunks)
-                except Exception as e:
-                    with self._lock:
-                        logger.error(f"Error processing {file}: {e}", exc_info=True)
+            try:
+                file_chunks = self.process_file(file)
+                chunks.extend(file_chunks)
+            except Exception as e:
+                logger.error(f"Error processing {file}: {e}", exc_info=True)
 
         logger.info(f"Extracted {len(chunks)} code chunks total")
 
@@ -94,7 +121,6 @@ class BaseCodeAnalyzer(ABC):
             tree = self.parser.parse(bytes(content, 'utf8'))
             class_nodes = self._extract_all_class_nodes(tree.root_node)
 
-            logger.info(f"real file_path {str(file_path)}")
             chunks = []
             for class_node in class_nodes:
                 chunk = self._parse_class_node(class_node, content, str(file_path), tree.root_node)
@@ -108,35 +134,34 @@ class BaseCodeAnalyzer(ABC):
 
     def _parse_class_node(self, class_node: Node, content: str, file_path: str, root_node: Node) -> Optional[CodeChunk]:
         try:
-            class_name = self._extract_class_name(class_node, content)
-            package = self._extract_package(root_node, content)
-            full_class_name = self._build_full_class_name(class_name, package, class_node, content, root_node)
-            context = self.cached_nodes[full_class_name]
-            if not context:
-                return None
+            with self.lsp_service.open_file(file_path):
+                class_name = self._extract_class_name(class_node, content)
+                package = self._extract_package(root_node, content)
+                full_class_name = self._build_full_class_name(class_name, package, class_node, content, root_node)
+                context = self.cached_nodes[full_class_name]
+                if not context:
+                    return None
 
-            implements = self._extract_implements_with_lsp(class_node, file_path)
-            extends = self._extract_extends_with_lsp(class_node, file_path)
-            methods = self._extract_class_methods(
-                class_node, content, implements, extends,
-                context.full_class_name, file_path, context.import_mapping
-            )
+                implements = self._extract_implements_with_lsp(class_node, file_path, content)
+                methods = self._extract_class_methods(
+                    class_node, content, implements,
+                    context.full_class_name, file_path, context.import_mapping
+                )
 
-            return CodeChunk(
-                package=context.package,
-                class_name=context.class_name,
-                full_class_name=context.full_class_name,
-                file_path=file_path,
-                content=content[class_node.start_byte:class_node.end_byte],
-                implements=implements,
-                extends=extends,
-                methods=methods,
-                is_nested=context.is_nested,
-                parent_class=context.parent_class,
-                type=ChunkType.CONFIGURATION if context.is_config else ChunkType.REGULAR,
-                project_id=self.project_id,
-                branch=self.branch
-            )
+                return CodeChunk(
+                    package=context.package,
+                    class_name=context.class_name,
+                    full_class_name=context.full_class_name,
+                    file_path=file_path,
+                    content=content[class_node.start_byte:class_node.end_byte],
+                    implements=implements,
+                    methods=methods,
+                    is_nested=context.is_nested,
+                    parent_class=context.parent_class,
+                    type=ChunkType.CONFIGURATION if context.is_config else ChunkType.REGULAR,
+                    project_id=self.project_id,
+                    branch=self.branch
+                )
         except Exception as e:
             logger.error(f"Error parsing class node: {e}")
             return None
@@ -153,8 +178,6 @@ class BaseCodeAnalyzer(ABC):
         parent_class = self._get_parent_class(class_node, content, package) if is_nested else None,
         is_config = self._is_config_node(class_node, content)
         import_mapping = self.build_import_mapping(root_node, content)
-        local_fields = self.build_class_fields_mapping(class_node, content)
-        method_map = self.build_method_map(class_node, content, parent_class)
         return ClassParsingContext(
             package=package,
             class_name=class_name,
@@ -162,9 +185,7 @@ class BaseCodeAnalyzer(ABC):
             is_nested=is_nested,
             parent_class=parent_class,
             is_config = is_config,
-            import_mapping=import_mapping,
-            method_map=method_map,
-            local_fields=local_fields
+            import_mapping=import_mapping
         )
 
     def _read_file_content(self, file_path: Path) -> str:
@@ -185,10 +206,6 @@ class BaseCodeAnalyzer(ABC):
             json.dump(chunks_data, f, indent=2, ensure_ascii=False)
 
     @abstractmethod
-    def build_method_map(self, class_node, content, parent_class) -> Dict[str, int]:
-        pass
-
-    @abstractmethod
     def _get_code_files(self, root: Path) -> List[Path]:
         """Return a list of relevant source files."""
         pass
@@ -198,16 +215,12 @@ class BaseCodeAnalyzer(ABC):
         pass
 
     @abstractmethod
-    def _extract_implements_with_lsp(self, class_node: Node, file_path: str) -> Tuple[str, ...]:
-        pass
-
-    @abstractmethod
-    def _extract_extends_with_lsp(self, class_node: Node, file_path: str) -> Optional[str]:
+    def _extract_implements_with_lsp(self, class_node: Node, file_path: str, content: str) -> Tuple[str, ...]:
         pass
 
     @abstractmethod
     def _extract_class_methods(self, class_node: Node, content: str,
-                               implements: List[str], extends: Optional[str],
+                               implements: List[str],
                                full_class_name: str, file_path: str, import_mapping: Dict[str, str]) -> List[Method]:
         pass
 
@@ -240,41 +253,48 @@ class BaseCodeAnalyzer(ABC):
     def build_import_mapping(self, root_node: Node, content: str) -> Dict[str, str]:
         pass
 
-    @abstractmethod
-    def build_class_fields_mapping(self, class_node, content) -> dict[str, int]:
-        pass
+    # def build_source_cache(self, root) -> Dict[str, ClassParsingContext]:
+    #     code_files = self._get_code_files(root)
+    #     cached_nodes = {}
+    #     with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+    #         # Submit all file processing tasks
+    #         future_to_file = {
+    #             executor.submit(self.process_class_cache_file, file): file
+    #             for file in code_files
+    #         }
+    #
+    #         # Collect results as they complete
+    #         for i, future in enumerate(as_completed(future_to_file), 1):
+    #             file = future_to_file[future]
+    #
+    #             with self._lock:  # Thread-safe logging
+    #                 logger.debug(f"[{i}/{len(code_files)}] Completed processing file: {file}")
+    #
+    #             try:
+    #                 cache_data = future.result()
+    #                 cached_nodes.update(cache_data)
+    #             except Exception as e:
+    #                 with self._lock:
+    #                     logger.error(f"Error processing {file}: {e}", exc_info=True)
+    #         self.cached_nodes = cached_nodes
+    #         return cached_nodes
 
     def build_source_cache(self, root) -> Dict[str, ClassParsingContext]:
         code_files = self._get_code_files(root)
         cached_nodes = {}
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            # Submit all file processing tasks
-            future_to_file = {
-                executor.submit(self.process_class_cache_file, file): file
-                for file in code_files
-            }
 
-            # Collect results as they complete
-            for i, future in enumerate(as_completed(future_to_file), 1):
-                file = future_to_file[future]
+        # Process files sequentially
+        for i, file in enumerate(code_files, 1):
+            logger.debug(f"[{i}/{len(code_files)}] Processing file: {file}")
 
-                with self._lock:  # Thread-safe logging
-                    logger.debug(f"[{i}/{len(code_files)}] Completed processing file: {file}")
+            try:
+                cache_data = self.process_class_cache_file(file)
+                cached_nodes.update(cache_data)
+            except Exception as e:
+                logger.error(f"Error processing {file}: {e}", exc_info=True)
 
-                try:
-                    cache_data = future.result()
-                    cached_nodes.update(cache_data)
-                except Exception as e:
-                    with self._lock:
-                        logger.error(f"Error processing {file}: {e}", exc_info=True)
-            self.cached_nodes = cached_nodes
-            methods_cache = {}
-            for class_name, class_data in cached_nodes.items():
-                method_map = class_data.method_map
-                for method_name, arg_size in method_map.items():
-                    methods_cache[f"{class_name}.{method_name}"] = arg_size
-            self.methods_cache = methods_cache
-            return cached_nodes
+        self.cached_nodes = cached_nodes
+        return cached_nodes
 
     def process_class_cache_file(self, file_path) -> Dict[str, ClassParsingContext]:
         content = self._read_file_content(file_path)
@@ -285,7 +305,6 @@ class BaseCodeAnalyzer(ABC):
 
         tree = self.parser.parse(bytes(content, 'utf8'))
         class_nodes = self._extract_all_class_nodes(tree.root_node)
-        logger.info(f"real file_path {str(file_path)}")
         chunks = {}
         for class_node in class_nodes:
             context = self._build_class_context(class_node, content, tree.root_node)
@@ -296,3 +315,4 @@ class BaseCodeAnalyzer(ABC):
     def _build_knowledge_graph(self, chunks: List[CodeChunk]):
         neo4j_conn = get_neo4j_connection()
         neo4j_conn.import_code_chunks(chunks, 50)
+        pass

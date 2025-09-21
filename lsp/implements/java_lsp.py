@@ -6,6 +6,7 @@ from lsp.lsp_service import LSPService
 from lsp.multilspy.lsp_protocol_handler.lsp_types import HoverParams, TextDocumentIdentifier
 from lsp.multilspy.multilspy_types import Position
 
+
 class JavaLSPService(LSPService):
     """
     Java-specific implementation of the LSP service.
@@ -196,30 +197,7 @@ class JavaLSPService(LSPService):
         """
         try:
             # Request implementation from LSP server
-            implementation_result = self.language_server.request_implementation(file_path, line, character)
-            
-            if not implementation_result:
-                return ""
-            
-            # Handle both single location and array of locations
-            locations = implementation_result if isinstance(implementation_result, list) else [implementation_result]
-            
-            if not locations:
-                return ""
-            
-            # Use the first location
-            location = locations[0]
-            
-            # Get symbol information at the implementation location
-            impl_file_path = location.get('uri', '').replace('file://', '')
-            impl_line = location.get('range', {}).get('start', {}).get('line', 0)
-            impl_char = location.get('range', {}).get('start', {}).get('character', 0)
-            
-            # Get document symbols to determine symbol type
-            symbols, *_ = self.request_document_symbols(impl_file_path)
-            symbol_info = self._find_symbol_at_position(symbols, impl_line, impl_char)
-            
-            return self._format_java_identifier(location, symbol_info)
+            return self.language_server.request_implementation(file_path, line, character)
             
         except Exception as e:
             return f"Error requesting implementation: {str(e)}"

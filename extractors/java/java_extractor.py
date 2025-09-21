@@ -35,7 +35,6 @@ class JavaEndpointExtractor:
 
                     text = content[grandchild.start_byte:grandchild.end_byte]
 
-                    logger.info(f"annotation {text}")
                     for extractor in self.extractors:
                         if extractor.supports(text):
                             endpoints.extend(extractor.extract(text, class_node, method_node, content))

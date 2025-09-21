@@ -127,7 +127,6 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
         # Collect all relationships for this batch
         call_rels = []
         implement_rels = []
-        extend_rels = []
         use_rels = []
         has_rels = []
 
@@ -137,16 +136,8 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
             # Process implements relationships at class level
             for impl in chunk.implements:
                 implement_rels.append({
-                    'source_class': chunk_class_name,
-                    'target_class': impl
-                })
-
-            # Process extends relationships at class level
-            extends = chunk.extends
-            if extends:
-                extend_rels.append({
-                    'source_class': chunk_class_name,
-                    'target_class': extends
+                    'source_class': impl,
+                    'target_class': chunk_class_name
                 })
 
             for used_method in chunk.methods:
@@ -177,9 +168,9 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
                 for inheritance in method.inheritance_info:
                     if inheritance:
                         implement_rels.append({
-                            'source_class': chunk_class_name,
-                            'source_method': method_name,
-                            'target_method': inheritance
+                            'source_method': inheritance,
+                            'target_class': chunk_class_name,
+                            'target_method': method_name
                         })
 
                 # USE relationships from used_types
@@ -190,7 +181,6 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
                             'source_method': method_name,
                             'target_class': used_type
                         })
-        logger.info(f"use_rels {use_rels}")
         # Create batch queries for each relationship type
         if call_rels:
             call_query = """
@@ -220,22 +210,11 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
             if method_implement_rels:
                 method_implement_query = """
                 UNWIND $relationships AS rel
-                MATCH (source {class_name: rel.source_class, method_name: rel.source_method})
-                MATCH (target {method_name: rel.target_method})
+                MATCH (source {rel.source_method})
+                MATCH (target {class_name: rel.target_class, method_name: rel.target_method})
                 MERGE (source)-[:IMPLEMENT]->(target)
                 """
                 all_queries.append((method_implement_query, {'relationships': method_implement_rels}))
-
-        if extend_rels:
-            extend_query = """
-            UNWIND $relationships AS rel
-            MATCH (source {class_name: rel.source_class})
-            WHERE source.method_name IS NULL
-            MATCH (target {class_name: rel.target_class})
-            WHERE target.method_name IS NULL
-            MERGE (source)-[:EXTEND]->(target)
-            """
-            all_queries.append((extend_query, {'relationships': extend_rels}))
 
         if use_rels:
             use_query = """
@@ -423,9 +402,7 @@ class Neo4jConnection:
             raise e
 
     def find_endpoint_node(self, class_name: str, method_name: str | None) -> List[Node]:
-        logger.info(f"Finding endpoint node for class: {class_name}, method: {method_name}")
         with self.driver.session() as session:
-            # Single query that handles both null and non-null method_name
             query = """
             MATCH path = (start)-[:IMPLEMENT|EXTEND|USED_BY|CALLED_BY*1..]->(endpoint:EndpointNode)
             WHERE start.class_name = $class_name 
@@ -445,7 +422,6 @@ class Neo4jConnection:
             return [record['endpoint'] for record in result]
 
     def find_related_nodes(self, class_name: str, method_name: str) -> List[Node]:
-        logger.info(f"Finding related nodes for class: {class_name}, method: {method_name}")
         with self.driver.session() as session:
             query = """
             MATCH (endpoint:EndpointNode {class_name: $class_name, method_name: $method_name})

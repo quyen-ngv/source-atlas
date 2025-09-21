@@ -54,7 +54,6 @@ class Method:
     used_types: Tuple[str, ...]
     field_access: Tuple[str, ...]
     inheritance_info: Tuple[str, ...]
-    extends_info: Tuple[str, ...]
     endpoint: Tuple[RestEndpoint,...]
     type: ChunkType
     project_id: str
@@ -68,7 +67,6 @@ class Method:
             "used_types": self.used_types,
             "field_access": self.field_access,
             "inheritance_fino": self.inheritance_info,
-            "extends_info": self.extends_info,
             "endpoint": self.endpoint,
             "type": self.type,
             "project_id": self.project_id,
@@ -83,7 +81,6 @@ class CodeChunk:
     file_path: str
     content: str
     implements: Tuple[str, ...]
-    extends: Optional[str]
     methods: List[Method]
     parent_class: Optional[str]
     project_id: str
@@ -100,7 +97,6 @@ class CodeChunk:
             "file_path": self.file_path,
             "content": self.content,
             "implements": list(self.implements),
-            "extends": self.extends,
             "methods": [{
                 "name": method.name,
                 "body": method.body,
@@ -109,7 +105,6 @@ class CodeChunk:
                 "used_types": list(method.used_types),
                 "field_access": list(method.field_access),
                 "inheritance_info": list(method.inheritance_info),
-                "extends_info": list(method.extends_info),
                 "endpoint": method.endpoint,
                 "type": method.type,
                 "project_id": self.project_id,
@@ -131,7 +126,6 @@ class CodeChunk:
             file_path=str(file_path),
             content=file_path.read_text(),
             implements=(),
-            extends=None,
             methods=[],
             parent_class=None,
             type=ChunkType.CONFIGURATION,
