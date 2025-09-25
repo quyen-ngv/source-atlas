@@ -42,45 +42,6 @@ class BaseCodeAnalyzer(ABC):
         self.methods_cache = {}
         self._lock = Lock()
         self.lsp_service: LSPService = None
-    #
-    # def parse_project(self, root: Path) -> List[CodeChunk]:
-    #     logger.info(f"Starting analysis for project '{self.project_id}' at {root}")
-    #
-    #     code_files = self._get_code_files(root)
-    #     if not code_files:
-    #         logger.warning("No source files found")
-    #         return []
-    #
-    #     logger.info(f"Found {len(code_files)} source files")
-    #     chunks: List[CodeChunk] = []
-    #
-    #     self.build_source_cache(root)
-    #
-    #     with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-    #         # Submit all file processing tasks
-    #         future_to_file = {
-    #             executor.submit(self.process_file, file): file
-    #             for file in code_files
-    #         }
-    #
-    #         # Collect results as they complete
-    #         for i, future in enumerate(as_completed(future_to_file), 1):
-    #             file = future_to_file[future]
-    #
-    #             with self._lock:  # Thread-safe logging
-    #                 logger.debug(f"[{i}/{len(code_files)}] Completed processing file: {file}")
-    #
-    #             try:
-    #                 file_chunks = future.result()
-    #                 chunks.extend(file_chunks)
-    #             except Exception as e:
-    #                 with self._lock:
-    #                     logger.error(f"Error processing {file}: {e}", exc_info=True)
-    #
-    #     logger.info(f"Extracted {len(chunks)} code chunks total")
-    #
-    #     self._build_knowledge_graph(chunks)
-    #     return chunks
 
     def parse_project(self, root: Path) -> List[CodeChunk]:
         logger.info(f"Starting analysis for project '{self.project_id}' at {root}")
@@ -215,7 +176,7 @@ class BaseCodeAnalyzer(ABC):
         pass
 
     @abstractmethod
-    def _extract_implements_with_lsp(self, class_node: Node, file_path: str, content: str) -> Tuple[str, ...]:
+    def _extract_implements_with_lsp(self, class_node: Node, file_path: str, content: str) -> List[str, ...]:
         pass
 
     @abstractmethod
@@ -253,32 +214,6 @@ class BaseCodeAnalyzer(ABC):
     def build_import_mapping(self, root_node: Node, content: str) -> Dict[str, str]:
         pass
 
-    # def build_source_cache(self, root) -> Dict[str, ClassParsingContext]:
-    #     code_files = self._get_code_files(root)
-    #     cached_nodes = {}
-    #     with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-    #         # Submit all file processing tasks
-    #         future_to_file = {
-    #             executor.submit(self.process_class_cache_file, file): file
-    #             for file in code_files
-    #         }
-    #
-    #         # Collect results as they complete
-    #         for i, future in enumerate(as_completed(future_to_file), 1):
-    #             file = future_to_file[future]
-    #
-    #             with self._lock:  # Thread-safe logging
-    #                 logger.debug(f"[{i}/{len(code_files)}] Completed processing file: {file}")
-    #
-    #             try:
-    #                 cache_data = future.result()
-    #                 cached_nodes.update(cache_data)
-    #             except Exception as e:
-    #                 with self._lock:
-    #                     logger.error(f"Error processing {file}: {e}", exc_info=True)
-    #         self.cached_nodes = cached_nodes
-    #         return cached_nodes
-
     def build_source_cache(self, root) -> Dict[str, ClassParsingContext]:
         code_files = self._get_code_files(root)
         cached_nodes = {}
@@ -315,4 +250,5 @@ class BaseCodeAnalyzer(ABC):
     def _build_knowledge_graph(self, chunks: List[CodeChunk]):
         neo4j_conn = get_neo4j_connection()
         neo4j_conn.import_code_chunks(chunks, 50)
+        neo4j_conn.close()
         pass

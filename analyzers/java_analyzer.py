@@ -369,9 +369,9 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 return child
         return None
 
-    def _extract_implements_with_lsp(self, class_node: Node, file_path: str, content: str) -> Tuple[str, ...]:
+    def _extract_implements_with_lsp(self, class_node: Node, file_path: str, content: str) -> List[str, ...]:
         if not self.lsp_service:
-            return ()
+            return []
 
         try:
             class_name_node = None
@@ -383,12 +383,12 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                     if child.type == 'modifiers':
                         text_modifiers = extract_content(child, content)
                         if ' abstract' not in text_modifiers:
-                            return ()
+                            return []
                 if child.type == 'identifier':
                     class_name_node = child
 
             if not class_name_node:
-                return ()
+                return []
 
             line = class_name_node.start_point[0]
             col = class_name_node.start_point[1]
@@ -398,7 +398,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             return self._resolve_lsp_implements(lsp_results)
         except Exception as e:
             logger.debug(f"LSP resolution failed: {e}")
-            return ()
+            return []
 
     def _resolve_type_with_lsp(self, node: Node, file_path: str) -> Optional[str]:
         if not self.lsp_service:
@@ -414,7 +414,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             logger.debug(f"LSP resolution failed: {e}")
             return node.text.decode('utf8')
 
-    def _resolve_lsp_implements(self, lsp_results) -> Tuple[str, ...]:
+    def _resolve_lsp_implements(self, lsp_results) -> List[str, ...]:
         if not lsp_results:
             return ()
 
@@ -428,7 +428,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 qualified_name = self._extract_qualified_name_from_lsp_result(result)
                 logger.info(f"qualified_name {qualified_name}")
                 response.append(qualified_name)
-        return tuple(response)
+        return response
 
     def _resolve_lsp_method_implements(self, lsp_results) -> List[str]:
         if not lsp_results:
@@ -891,37 +891,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             path = path[len(prefix):]
         return path
 
-    def _build_extends_info(self, method_name: str, extends: Optional[str]) -> List[str]:
-        """Build extends information for method"""
-        if not extends or method_name not in {'equals', 'hashCode', 'toString'}:
-            return []
-        return [f"{extends}.{method_name}"]
-
-    # Utility Methods
-    def _get_relative_path_for_lsp(self, absolute_path: str) -> str:
-        if not self.project_root:
-            return absolute_path
-
-        try:
-            path = Path(absolute_path).resolve()
-            project_root = self.project_root
-
-            # Ensure both paths are absolute
-            if not path.is_absolute():
-                path = path.resolve()
-
-            try:
-                relative_path = path.relative_to(project_root)
-                # Convert to forward slashes for consistency
-                return str(relative_path).replace('\\', '/')
-            except ValueError:
-                # If the path is not relative to project root, return the original
-                logger.debug(f"Path {path} is not relative to project root {project_root}")
-                return absolute_path
-        except Exception as e:
-            logger.debug(f"Error getting relative path for LSP: {e}")
-            return absolute_path
-
     def _extract_qualified_name_from_lsp_result(self, lsp_result: dict) -> str:
         try:
             absolute_path = lsp_result.get('absolutePath')
@@ -968,34 +937,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         except Exception as e:
             logger.debug(f"Error in _strip_root: {e}")
             return ""
-
-    def _extract_qualified_name_from_external_path(self, absolute_path: str, class_name: str) -> str:
-        try:
-            path_str = str(absolute_path).replace('\\', '/')
-
-            # Handle JDK/standard library classes
-            for java_path in ['/java/', '/javax/']:
-                idx = path_str.find(java_path)
-                if idx != -1:
-                    package_path = path_str[idx + 1:].replace('/', '.')
-                    if package_path.endswith('.java'):
-                        package_path = package_path[:-5]
-                    return package_path
-
-            # Try to extract from src/main/java structure
-            path_parts = path_str.split('/')
-            for i, part in enumerate(path_parts):
-                if part in ['src', 'main', 'java'] and i + 1 < len(path_parts):
-                    remaining_parts = path_parts[i + 1:]
-                    package_path = '.'.join(remaining_parts)
-                    if package_path.endswith('.java'):
-                        package_path = package_path[:-5]
-                    return package_path
-
-            return class_name
-        except Exception as e:
-            logger.debug(f"Failed to extract qualified name from external path {absolute_path}: {e}")
-            return class_name
 
     def filter(self, items: list) -> list:
         filtered, seen = [], set()
