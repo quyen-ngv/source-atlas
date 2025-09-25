@@ -297,7 +297,8 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             for child in class_node.children:
                 if child.type == 'identifier':
                     return extract_content(child, content)
-        except Exception:
+        except Exception as ex:
+            logger.info(f"error _extract_class_name {ex}")
             pass
         return None
 
@@ -415,7 +416,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
 
     def _resolve_lsp_implements(self, lsp_results) -> Tuple[str, ...]:
         if not lsp_results:
-            return None
+            return ()
 
         # Normalize to list
         results = lsp_results if isinstance(lsp_results, list) else [lsp_results]
@@ -427,49 +428,26 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 qualified_name = self._extract_qualified_name_from_lsp_result(result)
                 logger.info(f"qualified_name {qualified_name}")
                 response.append(qualified_name)
-        return response
+        return tuple(response)
 
-    def _resolve_lsp_method_implements(self, lsp_results) -> Optional[str]:
+    def _resolve_lsp_method_implements(self, lsp_results) -> List[str]:
         if not lsp_results:
             return None
 
         # Normalize to list
         results = lsp_results if isinstance(lsp_results, list) else [lsp_results]
 
-        response = []
+        response: List[str] = []
         for result in results:
             if isinstance(result, dict):
                 absolute_path = result.get('absolutePath')
                 if absolute_path and isinstance(absolute_path, str):
                     absolute_path = self._extract_qualified_name_from_lsp_result(result)
-                    qualified_name = self.enhanced_extract_qualified_name_from_lsp_result(result)
+                    qualified_name = self.extract_method_with_params_from_lsp_result(result)
                     logger.info(f"qualified_name {absolute_path}.{qualified_name}")
                     response.append(f"{absolute_path}.{qualified_name}")
         return response
 
-    def enhanced_extract_qualified_name_from_lsp_result(self, lsp_result: dict) -> str:
-        """
-        Enhanced version that extracts both qualified name and method details
-
-        Returns:
-            Tuple of (qualified_class_name, method_details_dict)
-        """
-        try:
-            # Extract qualified class name (your existing logic)
-            absolute_path = lsp_result.get('absolutePath')
-            if not absolute_path or not isinstance(absolute_path, str):
-                return "", None
-
-            qualified_class_name = self._strip_root(absolute_path.replace('\\\\', '.'))
-
-            # Extract method details
-            res = self.extract_method_with_params_from_lsp_result(lsp_result)
-
-            return res
-
-        except Exception as e:
-            logger.debug(f"Failed to extract enhanced info from LSP result: {e}")
-            return "", None
     def extract_method_with_params_from_lsp_result(self, lsp_result: dict) -> str:
         try:
             # Get file path and position info
@@ -625,30 +603,41 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             logger.debug(f"Error processing method node: {e}")
             return None
 
-    def _extract_method_calls(self, full_class_name: str, method_node: Node, file_path: str, import_mapping: Dict[str, str], content: str) -> List[MethodCall]:
-        """Extract method calls using tree-sitter query."""
-        method_calls = []
+    def _extract_method_calls(
+            self,
+            full_class_name: str,
+            method_node: Node,
+            file_path: str,
+            import_mapping: Dict[str, str],
+            content: str
+    ) -> List[MethodCall]:
+        method_calls: List[MethodCall] = []
         try:
-            class_cache = self.cached_nodes.get(full_class_name)
             call_query = Query(self.language, """
-                (method_invocation
-                  object: (_) @object
-                  name: (identifier) @method_name
-                  arguments: (argument_list) @arguments
-                ) @call
+            [
+              (method_invocation
+                object: (_) @object
+                name: (identifier) @method_name
+                arguments: (argument_list)? @arguments
+              ) @call
+    
+              (method_invocation
+                name: (identifier) @method_name
+                arguments: (argument_list)? @arguments
+              ) @call
+            ]
             """)
 
             captures = QueryCursor(call_query).captures(method_node)
 
-            # Process each method call
             call_nodes = captures.get("call", [])
             object_nodes = captures.get("object", [])
             method_nodes = captures.get("method_name", [])
             args_nodes = captures.get("arguments", [])
 
             for i, call_node in enumerate(call_nodes):
-                object_name = extract_content(object_nodes[i],content) if i < len(object_nodes) else None
-                args_size = len([c for c in args_nodes[i].named_children]) if i < len(args_nodes) else 0
+                object_node = object_nodes[i] if i < len(object_nodes) else None
+                object_name = extract_content(object_node, content) if object_node else None
 
                 if object_name and object_name in JavaBuiltinPackages.JAVA_PRIMITIVES:
                     continue
@@ -656,8 +645,12 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 try:
                     name_node = method_nodes[i] if i < len(method_nodes) else None
                     args_node = args_nodes[i] if i < len(args_nodes) else None
-                    resolved = self._resolve_method_call(name_node, args_node, file_path)
+
+                    resolved = self._resolve_method_call(name_node, args_node, file_path, content)
                     if resolved:
+                        # nếu MethodCall có field object_name thì gán
+                        if object_name and hasattr(resolved, "object_name"):
+                            resolved.object_name = object_name
                         method_calls.append(resolved)
                 except Exception:
                     pass
@@ -666,6 +659,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             logger.debug(f"Error extracting method calls: {e}")
 
         return method_calls
+
 
     def extract_local_variables(self, body_node: Node, file_path: str, content: str) -> Dict[str, str]:
         variables = {}
@@ -764,7 +758,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         dfs(node)
         return type_identifiers[-1] if type_identifiers else node
 
-    def _resolve_method_call(self, node: Node, args: Node, file_path: str) -> Optional[MethodCall]:
+    def _resolve_method_call(self, node, args, file_path: str, content):
         if not self.lsp_service:
             return None
 
@@ -772,49 +766,35 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             line = node.start_point[0]
             col = node.start_point[1]
 
-            args_val = extract_content(args, Path(file_path).read_text())
-            lsp_result = self.lsp_service.request_hover(file_path, line, col)
+            # args_val = extract_content(args, Path(file_path).read_text())
+            lsp_result = self.lsp_service.request_definition(file_path, line, col)
+            result = lsp_result[0]
+            full_method_def = ""
+            if isinstance(result, dict):
+                raw_absolute_path = result.get('absolutePath')
 
-            if not lsp_result or "contents" not in lsp_result:
+                if raw_absolute_path and isinstance(raw_absolute_path, str):
+                    absolute_path = self._strip_root(raw_absolute_path)
+                    if not absolute_path:
+                        return None
+                    qualified_name = self.extract_method_with_params_from_lsp_result(result)
+                    if not qualified_name:
+                        return None
+                    tree = self.parser.parse(bytes(content, 'utf8'))
+                    class_nodes = self._extract_all_class_nodes(tree.root_node)
+                    if class_nodes and len(class_nodes) > 1:
+                        line = result.get('range').get('start').get('line')
+                        col = result.get('range').get('start').get('character')
+                        lsp_hover = self.lsp_service.request_hover(raw_absolute_path, line, col)
+                        if not lsp_hover:
+                            return None
+                        method_value = lsp_hover.get('contents').get('value')
+                        absolute_path = self._resolve_class_from_hover(method_value)
+                        # request hover to get class name
+                    full_method_def = f"{absolute_path}.{qualified_name}"
+            if not full_method_def:
                 return None
-
-            contents = lsp_result["contents"]
-            if isinstance(contents, dict):
-                method = contents.get("value")
-            elif isinstance(contents, list) and contents:
-                if isinstance(contents[0], dict):
-                    method = contents[0].get("value")
-                else:
-                    method = str(contents[0])
-            elif isinstance(contents, str):
-                method = contents
-            else:
-                return None
-
-            if not method:
-                return None
-
-            sig_pattern = r'^\s*(?P<return>[\w<>, ?]+)\s+(?P<full>\w+(?:\.\w+)*\.\w+\s*\([^)]*\))'
-            match = re.search(sig_pattern, method.strip())
-            if not match:
-                return None
-
-            full_method_def = match.group("full")
-
-            params: List[MethodParam] = []
-            # TODO: extract value in method call
-            # if args_val:
-                # for p in args_val.split(","):
-                #     p = p.strip()
-                #     # parse "String id = \"default\""
-                #     m = re.match(r"([\w<>.\[\]]+)\s+(\w+)(?:\s*=\s*(.+))?", p)
-                #     if m:
-                #         param_type = m.group(1)
-                #         default_val = m.group(3).strip() if m.group(3) else None
-                #         params.append(MethodParam(type=param_type, value=default_val))
-                #     else:
-                #         # fallback khi không match
-                #         params.append(MethodParam(type=p, value=None))
+            params = []
 
             return MethodCall(
                 name=full_method_def,
@@ -824,6 +804,24 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
         except Exception as e:
             logger.debug(f"LSP method call resolution failed: {e}")
             return None
+
+    def _resolve_class_from_hover(self, signature: str) -> str:
+        pattern_with_class = re.compile(
+            r"""^(?P<return>(?:@\w+(?:\([^)]*\))?\s+)*
+        (?:[\w$.]+)
+        (?:<[^>]+>+)?
+        (?:\[\])*
+    )\s+
+    (?P<class>[\w$.]+)\.(?P<method>\w+)\(""",
+            re.VERBOSE,
+        )
+
+        s = signature.strip()
+        m = pattern_with_class.match(s)
+        if not m:
+            return None
+
+        return m.groupdict().get('class')
 
     def _resolve_used_type_with_lsp(self, node: Node, file_path: str, type_name: str) -> Optional[str]:
         if not self.lsp_service:
@@ -941,19 +939,25 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             logger.debug(f"Failed to extract qualified name from LSP result: {e}")
             return ""
 
+    def _get_absolute_path(self, absolute_path: str) -> str:
+        if not absolute_path or not isinstance(absolute_path, str):
+            logger.debug(f"Invalid absolute_path: {absolute_path}")
+            return None
+
+        abs_path = Path(absolute_path).resolve()
+        root = Path(self.project_root).resolve()
+
+        try:
+            relative = abs_path.relative_to(root)
+            return str(relative)
+        except ValueError:
+            return None
+
     def _strip_root(self, absolute_path: str) -> str:
         try:
-            if not absolute_path or not isinstance(absolute_path, str):
-                logger.debug(f"Invalid absolute_path: {absolute_path}")
+            relative = self._get_absolute_path(absolute_path)
+            if not relative:
                 return ""
-
-            abs_path = Path(absolute_path).resolve()
-            root = Path(self.project_root).resolve()
-
-            try:
-                relative = abs_path.relative_to(root)
-            except ValueError:
-                return str(abs_path)
 
             result = str(relative).replace("\\\\",".").replace("\\", ".").replace("/", ".")
             if result.endswith(".java"):

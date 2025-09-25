@@ -140,13 +140,13 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
                     'target_class': chunk_class_name
                 })
 
-            for used_method in chunk.methods:
-                if used_method:
-                    has_rels.append({
-                        'source_class': chunk_class_name,
-                        'target_class': chunk_class_name,
-                        'target_method': used_method.name
-                    })
+            # for used_method in chunk.methods:
+            #     if used_method:
+            #         has_rels.append({
+            #             'source_class': chunk_class_name,
+            #             'target_class': chunk_class_name,
+            #             'target_method': used_method.name
+            #         })
 
             # Process method-level relationships
             methods = chunk.methods
@@ -210,7 +210,7 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
             if method_implement_rels:
                 method_implement_query = """
                 UNWIND $relationships AS rel
-                MATCH (source {rel.source_method})
+                MATCH (source {method_name: rel.source_method})
                 MATCH (target {class_name: rel.target_class, method_name: rel.target_method})
                 MERGE (source)-[:IMPLEMENT]->(target)
                 """
@@ -226,16 +226,15 @@ def generate_cypher_from_json(chunks: List[CodeChunk], batch_size: int = 100) ->
             """
             all_queries.append((use_query, {'relationships': use_rels}))
 
-        if has_rels:
-            use_query = """
-            UNWIND $relationships AS rel
-            MATCH (source {class_name: rel.source_class})
-            MATCH (target {class_name: rel.target_class})
-            MATCH (target {method_name: rel.target_method})
-            WHERE target.method_name IS NOT NULL and source.method_name IS NULL
-            MERGE (source)-[:HAS]->(target)
-            """
-            all_queries.append((use_query, {'relationships': has_rels}))
+        # if has_rels:
+        #     use_query = """
+        #     UNWIND $relationships AS rel
+        #     MATCH (source {class_name: rel.source_class})
+        #     MATCH (target {class_name: rel.target_class, method_name: rel.target_method})
+        #     WHERE source.method_name IS NULL
+        #     MERGE (source)-[:HAS]->(target)
+        #     """
+        #     all_queries.append((use_query, {'relationships': has_rels}))
 
     return all_queries
 
