@@ -369,7 +369,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                 return child
         return None
 
-    def _extract_implements_with_lsp(self, class_node: Node, file_path: str, content: str) -> List[str, ...]:
+    def _extract_implements_with_lsp(self, class_node: Node, file_path: str, content: str) -> List[str]:
         if not self.lsp_service:
             return []
 
@@ -414,9 +414,9 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             logger.debug(f"LSP resolution failed: {e}")
             return node.text.decode('utf8')
 
-    def _resolve_lsp_implements(self, lsp_results) -> List[str, ...]:
+    def _resolve_lsp_implements(self, lsp_results) -> List[str]:
         if not lsp_results:
-            return ()
+            return []
 
         # Normalize to list
         results = lsp_results if isinstance(lsp_results, list) else [lsp_results]
@@ -473,7 +473,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
             # Find the method node at the specified position
             method_node = self._find_method_at_position(root_node, start_line, start_char)
             if not method_node:
-                logger.error(f"No method found at line {start_line}, character {start_char}")
+                logger.error(f"No method found at line {start_line}, character {start_char} file {file_path}")
                 return None
 
             # Extract method details
@@ -780,7 +780,8 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer):
                     qualified_name = self.extract_method_with_params_from_lsp_result(result)
                     if not qualified_name:
                         return None
-                    tree = self.parser.parse(bytes(content, 'utf8'))
+                    method_called_content = Path(raw_absolute_path).read_text(encoding='utf-8')
+                    tree = self.parser.parse(bytes(method_called_content, 'utf8'))
                     class_nodes = self._extract_all_class_nodes(tree.root_node)
                     if class_nodes and len(class_nodes) > 1:
                         line = result.get('range').get('start').get('line')

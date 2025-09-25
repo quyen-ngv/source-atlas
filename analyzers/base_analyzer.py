@@ -176,7 +176,7 @@ class BaseCodeAnalyzer(ABC):
         pass
 
     @abstractmethod
-    def _extract_implements_with_lsp(self, class_node: Node, file_path: str, content: str) -> List[str, ...]:
+    def _extract_implements_with_lsp(self, class_node: Node, file_path: str, content: str) -> List[str]:
         pass
 
     @abstractmethod

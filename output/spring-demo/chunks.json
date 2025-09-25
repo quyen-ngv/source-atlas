@@ -58,12 +58,12 @@
         "method_calls": [],
         "used_types": [],
         "field_access": [
-          "String RETRIES_CONFIG = \"retries\"",
-          "String BOOTSTRAP_SERVERS_CONFIG = \"bootstrap.servers\"",
           "String ACKS_CONFIG = \"acks\"",
+          "String VALUE_SERIALIZER_CLASS_CONFIG = \"value.serializer\"",
           "String KEY_SERIALIZER_CLASS_CONFIG = \"key.serializer\"",
+          "String BOOTSTRAP_SERVERS_CONFIG = \"bootstrap.servers\"",
           "String ENABLE_IDEMPOTENCE_CONFIG = \"enable.idempotence\"",
-          "String VALUE_SERIALIZER_CLASS_CONFIG = \"value.serializer\""
+          "String RETRIES_CONFIG = \"retries\""
         ],
         "inheritance_info": [],
         "endpoint": [],
@@ -94,11 +94,11 @@
         "method_calls": [],
         "used_types": [],
         "field_access": [
+          "String VALUE_DESERIALIZER_CLASS_CONFIG = \"value.deserializer\"",
+          "String ENABLE_AUTO_COMMIT_CONFIG = \"enable.auto.commit\"",
           "String BOOTSTRAP_SERVERS_CONFIG = \"bootstrap.servers\"",
           "String GROUP_ID_CONFIG = \"group.id\"",
-          "String ENABLE_AUTO_COMMIT_CONFIG = \"enable.auto.commit\"",
           "String KEY_DESERIALIZER_CLASS_CONFIG = \"key.deserializer\"",
-          "String VALUE_DESERIALIZER_CLASS_CONFIG = \"value.deserializer\"",
           "String TRUSTED_PACKAGES = \"spring.json.trusted.packages\"",
           "String AUTO_OFFSET_RESET_CONFIG = \"auto.offset.reset\""
         ],
@@ -151,14 +151,6 @@
             "params": []
           },
           {
-            "name": "None.createNotification(User user, String title, String message, \n                                         Notification.NotificationType type, String metadata)",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.controller.NotificationController.CreateNotificationRequest.getTitle()",
-            "params": []
-          },
-          {
             "name": "com.example.springdemo.controller.NotificationController.CreateNotificationRequest.getMessage()",
             "params": []
           },
@@ -169,12 +161,20 @@
           {
             "name": "com.example.springdemo.controller.NotificationController.CreateNotificationRequest.getMetadata()",
             "params": []
+          },
+          {
+            "name": "com.example.springdemo.service.NotificationService.createNotification(User user, String title, String message, \n                                         Notification.NotificationType type, String metadata)",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.controller.NotificationController.CreateNotificationRequest.getTitle()",
+            "params": []
           }
         ],
         "used_types": [
           "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.Notification",
-          "com.example.springdemo.controller.NotificationController.CreateNotificationRequest"
+          "com.example.springdemo.controller.NotificationController.CreateNotificationRequest",
+          "com.example.springdemo.entity.Notification"
         ],
         "field_access": [
           "com.example.springdemo.entity.Notification.NotificationType"
@@ -197,7 +197,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.markAsRead(Long notificationId)",
+            "name": "com.example.springdemo.service.NotificationService.markAsRead(Long notificationId)",
             "params": []
           }
         ],
@@ -223,7 +223,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.getNotificationsByUser(Long userId)",
+            "name": "com.example.springdemo.service.NotificationService.getNotificationsByUser(Long userId)",
             "params": []
           }
         ],
@@ -249,7 +249,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.getUnreadNotificationsByUser(Long userId)",
+            "name": "com.example.springdemo.service.NotificationService.getUnreadNotificationsByUser(Long userId)",
             "params": []
           }
         ],
@@ -275,7 +275,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.getUnreadNotificationCount(Long userId)",
+            "name": "com.example.springdemo.service.NotificationService.getUnreadNotificationCount(Long userId)",
             "params": []
           }
         ],
@@ -463,7 +463,11 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.createOrder(Long userId, List<Long> productIds, List<Integer> quantities)",
+            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getProductIds()",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getQuantities()",
             "params": []
           },
           {
@@ -471,11 +475,7 @@
             "params": []
           },
           {
-            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getProductIds()",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.controller.OrderController.CreateOrderRequest.getQuantities()",
+            "name": "com.example.springdemo.service.OrderService.createOrder(Long userId, List<Long> productIds, List<Integer> quantities)",
             "params": []
           }
         ],
@@ -502,7 +502,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.updateOrderStatus(Long orderId, Order.OrderStatus newStatus)",
+            "name": "com.example.springdemo.service.OrderService.updateOrderStatus(Long orderId, Order.OrderStatus newStatus)",
             "params": []
           }
         ],
@@ -531,7 +531,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.processPayment(Long orderId, Order.PaymentStatus paymentStatus)",
+            "name": "com.example.springdemo.service.OrderService.processPayment(Long orderId, Order.PaymentStatus paymentStatus)",
             "params": []
           }
         ],
@@ -560,7 +560,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.getOrdersByUser(Long userId)",
+            "name": "com.example.springdemo.service.OrderService.getOrdersByUser(Long userId)",
             "params": []
           }
         ],
@@ -586,7 +586,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.getOrdersByStatus(Order.OrderStatus status)",
+            "name": "com.example.springdemo.service.OrderService.getOrdersByStatus(Order.OrderStatus status)",
             "params": []
           }
         ],
@@ -615,7 +615,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.getOrderByNumber(String orderNumber)",
+            "name": "com.example.springdemo.service.OrderService.getOrderByNumber(String orderNumber)",
             "params": []
           }
         ],
@@ -753,14 +753,6 @@
         "body": "",
         "method_calls": [
           {
-            "name": "com.example.springdemo.controller.ProductController.CreateProductRequest.getPrice()",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.controller.ProductController.CreateProductRequest.getStockQuantity()",
-            "params": []
-          },
-          {
             "name": "com.example.springdemo.controller.ProductController.CreateProductRequest.getName()",
             "params": []
           },
@@ -769,18 +761,26 @@
             "params": []
           },
           {
+            "name": "com.example.springdemo.controller.ProductController.CreateProductRequest.getStockQuantity()",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.controller.ProductController.CreateProductRequest.getPrice()",
+            "params": []
+          },
+          {
             "name": "com.example.springdemo.controller.ProductController.CreateProductRequest.getDescription()",
             "params": []
           }
         ],
         "used_types": [
-          "com.example.springdemo.controller.ProductController.CreateProductRequest",
-          "com.example.springdemo.entity.Product"
+          "com.example.springdemo.entity.Product",
+          "com.example.springdemo.controller.ProductController.CreateProductRequest"
         ],
         "field_access": [
-          "com.example.springdemo.entity.Product.ProductCategory",
+          "AVAILABLE",
           "com.example.springdemo.entity.Product.ProductStatus",
-          "AVAILABLE"
+          "com.example.springdemo.entity.Product.ProductCategory"
         ],
         "inheritance_info": [],
         "endpoint": [
@@ -842,13 +842,13 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.findByCategory(Product.ProductCategory category)",
+            "name": "com.example.springdemo.repository.ProductRepository.findByCategory(Product.ProductCategory category)",
             "params": []
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Product.ProductCategory",
-          "com.example.springdemo.entity.Product"
+          "com.example.springdemo.entity.Product",
+          "com.example.springdemo.entity.Product.ProductCategory"
         ],
         "field_access": [
           "com.example.springdemo.entity.Product.ProductCategory"
@@ -871,13 +871,13 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.findByStatus(Product.ProductStatus status)",
+            "name": "com.example.springdemo.repository.ProductRepository.findByStatus(Product.ProductStatus status)",
             "params": []
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Product.ProductStatus",
-          "com.example.springdemo.entity.Product"
+          "com.example.springdemo.entity.Product",
+          "com.example.springdemo.entity.Product.ProductStatus"
         ],
         "field_access": [
           "com.example.springdemo.entity.Product.ProductStatus"
@@ -900,7 +900,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.findAvailableProducts()",
+            "name": "com.example.springdemo.repository.ProductRepository.findAvailableProducts()",
             "params": []
           }
         ],
@@ -926,7 +926,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.findLowStockProducts(@Param(\"threshold\") Integer threshold)",
+            "name": "com.example.springdemo.repository.ProductRepository.findLowStockProducts(@Param(\"threshold\") Integer threshold)",
             "params": []
           }
         ],
@@ -952,7 +952,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.searchProducts(@Param(\"keyword\") String keyword)",
+            "name": "com.example.springdemo.repository.ProductRepository.searchProducts(@Param(\"keyword\") String keyword)",
             "params": []
           }
         ],
@@ -978,7 +978,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice)",
+            "name": "com.example.springdemo.repository.ProductRepository.findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice)",
             "params": []
           }
         ],
@@ -1168,15 +1168,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "com.example.springdemo.controller.UserController.CreateUserRequest.getEmail()",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.controller.UserController.CreateUserRequest.getUsername()",
-            "params": []
-          },
-          {
-            "name": "None.createUser(String username, String email, String firstName, String lastName, User.UserRole role)",
+            "name": "com.example.springdemo.service.UserService.createUser(String username, String email, String firstName, String lastName, User.UserRole role)",
             "params": []
           },
           {
@@ -1188,13 +1180,21 @@
             "params": []
           },
           {
+            "name": "com.example.springdemo.controller.UserController.CreateUserRequest.getUsername()",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.controller.UserController.CreateUserRequest.getEmail()",
+            "params": []
+          },
+          {
             "name": "com.example.springdemo.controller.UserController.CreateUserRequest.getRole()",
             "params": []
           }
         ],
         "used_types": [
-          "com.example.springdemo.controller.UserController.CreateUserRequest",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.controller.UserController.CreateUserRequest"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserRole"
@@ -1217,13 +1217,13 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.updateUserStatus(Long userId, User.UserStatus status)",
+            "name": "com.example.springdemo.service.UserService.updateUserStatus(Long userId, User.UserStatus status)",
             "params": []
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User.UserStatus",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserStatus"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserStatus"
@@ -1246,13 +1246,13 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.updateUserRole(Long userId, User.UserRole role)",
+            "name": "com.example.springdemo.service.UserService.updateUserRole(Long userId, User.UserRole role)",
             "params": []
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User.UserRole",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserRole"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserRole"
@@ -1275,7 +1275,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.getUserByUsername(String username)",
+            "name": "com.example.springdemo.service.UserService.getUserByUsername(String username)",
             "params": []
           }
         ],
@@ -1301,7 +1301,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.getUserByEmail(String email)",
+            "name": "com.example.springdemo.service.UserService.getUserByEmail(String email)",
             "params": []
           }
         ],
@@ -1327,13 +1327,13 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.getUsersByRole(User.UserRole role)",
+            "name": "com.example.springdemo.service.UserService.getUsersByRole(User.UserRole role)",
             "params": []
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User.UserRole",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserRole"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserRole"
@@ -1356,13 +1356,13 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.getUsersByStatus(User.UserStatus status)",
+            "name": "com.example.springdemo.service.UserService.getUsersByStatus(User.UserStatus status)",
             "params": []
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User.UserStatus",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserStatus"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserStatus"
@@ -1385,7 +1385,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "None.getUserCountByRole(User.UserRole role)",
+            "name": "com.example.springdemo.service.UserService.getUserCountByRole(User.UserRole role)",
             "params": []
           }
         ],
@@ -1817,11 +1817,11 @@
         "body": "",
         "method_calls": [
           {
-            "name": "com.example.springdemo.event.NotificationEventConsumer.handleNotificationCreated(Notification notification)",
+            "name": "com.example.springdemo.event.NotificationEventConsumer.handleNotificationRead(Notification notification)",
             "params": []
           },
           {
-            "name": "com.example.springdemo.event.NotificationEventConsumer.handleNotificationRead(Notification notification)",
+            "name": "com.example.springdemo.event.NotificationEventConsumer.handleNotificationCreated(Notification notification)",
             "params": []
           }
         ],
@@ -1899,11 +1899,11 @@
             "params": []
           },
           {
-            "name": "com.example.springdemo.event.OrderEventConsumer.handleOrderCreated(Order order)",
+            "name": "com.example.springdemo.event.OrderEventConsumer.handlePaymentProcessed(Order order)",
             "params": []
           },
           {
-            "name": "com.example.springdemo.event.OrderEventConsumer.handlePaymentProcessed(Order order)",
+            "name": "com.example.springdemo.event.OrderEventConsumer.handleOrderCreated(Order order)",
             "params": []
           }
         ],
@@ -2006,7 +2006,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "com.example.springdemo.event.UserEventConsumer.handleUserCreated(User user)",
+            "name": "com.example.springdemo.event.UserEventConsumer.handleUserStatusChanged(User user)",
             "params": []
           },
           {
@@ -2014,7 +2014,7 @@
             "params": []
           },
           {
-            "name": "com.example.springdemo.event.UserEventConsumer.handleUserStatusChanged(User user)",
+            "name": "com.example.springdemo.event.UserEventConsumer.handleUserCreated(User user)",
             "params": []
           }
         ],
@@ -2237,11 +2237,11 @@
             "params": []
           },
           {
-            "name": "com.example.springdemo.observer.NotificationEvent.getNotificationData()",
+            "name": "com.example.springdemo.observer.NotificationEventListener.handleNotificationRead(NotificationEvent notificationEvent)",
             "params": []
           },
           {
-            "name": "com.example.springdemo.observer.NotificationEventListener.handleNotificationRead(NotificationEvent notificationEvent)",
+            "name": "com.example.springdemo.observer.NotificationEvent.getNotificationData()",
             "params": []
           }
         ],
@@ -2357,7 +2357,7 @@
             "params": []
           },
           {
-            "name": "com.example.springdemo.observer.OrderEvent.getOrderData()",
+            "name": "com.example.springdemo.observer.OrderEvent.getEventType()",
             "params": []
           },
           {
@@ -2369,7 +2369,7 @@
             "params": []
           },
           {
-            "name": "com.example.springdemo.observer.OrderEvent.getEventType()",
+            "name": "com.example.springdemo.observer.OrderEvent.getOrderData()",
             "params": []
           }
         ],
@@ -2499,7 +2499,11 @@
             "params": []
           },
           {
-            "name": "com.example.springdemo.observer.UserEvent.getUserData()",
+            "name": "com.example.springdemo.observer.UserEventListener.handleUserStatusChanged(UserEvent userEvent)",
+            "params": []
+          },
+          {
+            "name": "com.example.springdemo.observer.UserEventListener.handleUserRoleChanged(UserEvent userEvent)",
             "params": []
           },
           {
@@ -2507,11 +2511,7 @@
             "params": []
           },
           {
-            "name": "com.example.springdemo.observer.UserEventListener.handleUserStatusChanged(UserEvent userEvent)",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.observer.UserEventListener.handleUserRoleChanged(UserEvent userEvent)",
+            "name": "com.example.springdemo.observer.UserEvent.getUserData()",
             "params": []
           }
         ],
@@ -2610,8 +2610,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Notification",
-          "com.example.springdemo.entity.Notification.NotificationType"
+          "com.example.springdemo.entity.Notification.NotificationType",
+          "com.example.springdemo.entity.Notification"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -2868,8 +2868,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Product.ProductCategory",
-          "com.example.springdemo.entity.Product"
+          "com.example.springdemo.entity.Product",
+          "com.example.springdemo.entity.Product.ProductCategory"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -2883,8 +2883,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Product.ProductStatus",
-          "com.example.springdemo.entity.Product"
+          "com.example.springdemo.entity.Product",
+          "com.example.springdemo.entity.Product.ProductStatus"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3025,8 +3025,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.User.UserRole",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserRole"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3040,8 +3040,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.User.UserStatus",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserStatus"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3055,9 +3055,9 @@
         "body": "",
         "method_calls": [],
         "used_types": [
+          "com.example.springdemo.entity.User",
           "com.example.springdemo.entity.User.UserRole",
-          "com.example.springdemo.entity.User.UserStatus",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User.UserStatus"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3071,8 +3071,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.User.UserStatus",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserStatus"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3146,13 +3146,13 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Notification",
+          "com.example.springdemo.entity.User",
           "com.example.springdemo.entity.Notification.NotificationType",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.Notification"
         ],
         "field_access": [
-          "UNREAD",
-          "com.example.springdemo.entity.Notification.NotificationStatus"
+          "com.example.springdemo.entity.Notification.NotificationStatus",
+          "UNREAD"
         ],
         "inheritance_info": [],
         "endpoint": [],
@@ -3170,12 +3170,12 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [
-          "ORDER_UPDATE",
-          "com.example.springdemo.entity.Notification.NotificationType"
+          "com.example.springdemo.entity.Notification.NotificationType",
+          "ORDER_UPDATE"
         ],
         "inheritance_info": [],
         "endpoint": [],
@@ -3186,15 +3186,10 @@
       {
         "name": "com.example.springdemo.service.NotificationService.sendPaymentNotification(User user, Order order, String message)",
         "body": "",
-        "method_calls": [
-          {
-            "name": "com.example.springdemo.service.NotificationService.createNotification(User user, String title, String message, \n                                         Notification.NotificationType type, String metadata)",
-            "params": []
-          }
-        ],
+        "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [
           "PAYMENT_CONFIRMATION",
@@ -3219,8 +3214,8 @@
           "com.example.springdemo.entity.User"
         ],
         "field_access": [
-          "com.example.springdemo.entity.Notification.NotificationType",
-          "SYSTEM_ALERT"
+          "SYSTEM_ALERT",
+          "com.example.springdemo.entity.Notification.NotificationType"
         ],
         "inheritance_info": [],
         "endpoint": [],
@@ -3241,8 +3236,8 @@
           "com.example.springdemo.entity.Notification"
         ],
         "field_access": [
-          "READ",
-          "com.example.springdemo.entity.Notification.NotificationStatus"
+          "com.example.springdemo.entity.Notification.NotificationStatus",
+          "READ"
         ],
         "inheritance_info": [],
         "endpoint": [],
@@ -3282,8 +3277,8 @@
           "com.example.springdemo.entity.Notification"
         ],
         "field_access": [
-          "UNREAD",
-          "com.example.springdemo.entity.Notification.NotificationStatus"
+          "com.example.springdemo.entity.Notification.NotificationStatus",
+          "UNREAD"
         ],
         "inheritance_info": [],
         "endpoint": [],
@@ -3344,11 +3339,7 @@
         "body": "",
         "method_calls": [
           {
-            "name": "com.example.springdemo.service.OrderService.createOrderEvent(Order order, OrderEvent.EventType eventType, String eventData)",
-            "params": []
-          },
-          {
-            "name": "com.example.springdemo.service.NotificationService.sendOrderNotification(User user, Order order, String message)",
+            "name": "com.example.springdemo.service.factory.ServiceFactory.getPricingStrategy(User user, com.example.springdemo.entity.Order order)",
             "params": []
           },
           {
@@ -3360,28 +3351,28 @@
             "params": []
           },
           {
-            "name": "com.example.springdemo.service.factory.ServiceFactory.getPricingStrategy(User user, com.example.springdemo.entity.Order order)",
+            "name": "com.example.springdemo.service.OrderService.createOrderEvent(Order order, OrderEvent.EventType eventType, String eventData)",
             "params": []
           },
           {
-            "name": "com.example.springdemo.service.OrderService.publishOrderEvent(Order order, String eventType)",
+            "name": "com.example.springdemo.service.NotificationService.sendOrderNotification(User user, Order order, String message)",
             "params": []
           }
         ],
         "used_types": [
+          "com.example.springdemo.service.strategy.PricingStrategy",
+          "com.example.springdemo.entity.Product",
           "com.example.springdemo.entity.OrderItem",
           "com.example.springdemo.entity.User",
-          "com.example.springdemo.entity.Product",
-          "com.example.springdemo.service.strategy.PricingStrategy",
           "com.example.springdemo.entity.Order"
         ],
         "field_access": [
-          "PENDING",
           "com.example.springdemo.entity.OrderEvent.EventType",
           "BigDecimal ZERO",
-          "com.example.springdemo.entity.Order.PaymentStatus",
           "com.example.springdemo.entity.Order.OrderStatus",
-          "ORDER_CREATED"
+          "PENDING",
+          "ORDER_CREATED",
+          "com.example.springdemo.entity.Order.PaymentStatus"
         ],
         "inheritance_info": [],
         "endpoint": [],
@@ -3411,8 +3402,8 @@
           "com.example.springdemo.entity.Order"
         ],
         "field_access": [
-          "STATUS_CHANGED",
-          "com.example.springdemo.entity.OrderEvent.EventType"
+          "com.example.springdemo.entity.OrderEvent.EventType",
+          "STATUS_CHANGED"
         ],
         "inheritance_info": [],
         "endpoint": [],
@@ -3429,6 +3420,10 @@
             "params": []
           },
           {
+            "name": "com.example.springdemo.service.OrderService.publishOrderEvent(Order order, String eventType)",
+            "params": []
+          },
+          {
             "name": "com.example.springdemo.service.NotificationService.sendOrderNotification(User user, Order order, String message)",
             "params": []
           }
@@ -3438,12 +3433,12 @@
           "com.example.springdemo.entity.Order"
         ],
         "field_access": [
-          "CONFIRMED",
           "com.example.springdemo.entity.OrderEvent.EventType",
-          "PAYMENT_PROCESSED",
+          "com.example.springdemo.entity.Order.OrderStatus",
+          "CONFIRMED",
           "PAID",
           "com.example.springdemo.entity.Order.PaymentStatus",
-          "com.example.springdemo.entity.Order.OrderStatus"
+          "PAYMENT_PROCESSED"
         ],
         "inheritance_info": [],
         "endpoint": [],
@@ -3515,8 +3510,8 @@
         "method_calls": [],
         "used_types": [
           "com.example.springdemo.entity.OrderEvent.EventType",
-          "com.example.springdemo.entity.OrderEvent",
-          "com.example.springdemo.entity.Order"
+          "com.example.springdemo.entity.Order",
+          "com.example.springdemo.entity.OrderEvent"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3578,8 +3573,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User.UserRole",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserRole"
         ],
         "field_access": [
           "com.example.springdemo.entity.User.UserStatus",
@@ -3605,8 +3600,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User.UserStatus",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserStatus"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3629,8 +3624,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User.UserRole",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserRole"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3687,8 +3682,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User.UserRole",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserRole"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3707,8 +3702,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User.UserStatus",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.User.UserStatus"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3777,8 +3772,8 @@
           }
         ],
         "used_types": [
-          "com.example.springdemo.entity.User",
-          "com.example.springdemo.service.strategy.PricingStrategy"
+          "com.example.springdemo.service.strategy.PricingStrategy",
+          "com.example.springdemo.entity.User"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3795,8 +3790,8 @@
           "com.example.springdemo.entity.User.UserRole"
         ],
         "field_access": [
-          "com.example.springdemo.entity.User.UserRole",
-          "GUEST"
+          "GUEST",
+          "com.example.springdemo.entity.User.UserRole"
         ],
         "inheritance_info": [],
         "endpoint": [],
@@ -3877,8 +3872,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [],
         "inheritance_info": [],
@@ -3948,8 +3943,8 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [],
         "inheritance_info": [
@@ -4011,13 +4006,13 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [
-          "com.example.springdemo.entity.User.UserRole",
           "GUEST",
-          "CUSTOMER"
+          "CUSTOMER",
+          "com.example.springdemo.entity.User.UserRole"
         ],
         "inheritance_info": [],
         "endpoint": [],
@@ -4074,12 +4069,12 @@
         "body": "",
         "method_calls": [],
         "used_types": [
-          "com.example.springdemo.entity.Order",
-          "com.example.springdemo.entity.User"
+          "com.example.springdemo.entity.User",
+          "com.example.springdemo.entity.Order"
         ],
         "field_access": [
-          "com.example.springdemo.entity.User.UserRole",
           "ADMIN",
+          "com.example.springdemo.entity.User.UserRole",
           "MANAGER"
         ],
         "inheritance_info": [],
