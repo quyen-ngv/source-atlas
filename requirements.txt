@@ -1,0 +1,11 @@
+loguru~=0.7.3
+python-dotenv~=1.1.1
+cryptography>=41.0.0,<43
+tree-sitter==0.25.1
+tree-sitter-language-pack==0.9.0
+jedi-language-server==0.41.1
+setuptools
+psutil>=7.0.0,<8.0.0
+requests==2.32.3
+neo4j==5.14.0
+pydantic-settings~=2.11.0
