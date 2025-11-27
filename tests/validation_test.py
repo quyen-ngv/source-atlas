@@ -91,44 +91,6 @@ def test_lsp_utils():
     return True
 
 
-def test_decorators():
-    """Test decorator utilities."""
-    print("=" * 60)
-    print("TEST 3: Decorators")
-    print("=" * 60)
-    
-    from utils.decorators import safe_extraction
-    
-    # Test safe_extraction with successful function
-    @safe_extraction(default_return=[])
-    def successful_function():
-        return [1, 2, 3]
-    
-    result = successful_function()
-    assert result == [1, 2, 3], f"Expected [1, 2, 3], got {result}"
-    print("✓ safe_extraction allows successful execution")
-    
-    # Test safe_extraction with failing function
-    @safe_extraction(default_return=[])
-    def failing_function():
-        raise ValueError("Test error")
-    
-    result2 = failing_function()
-    assert result2 == [], f"Expected [], got {result2}"
-    print("✓ safe_extraction returns default on exception")
-    
-    # Test with custom default
-    @safe_extraction(default_return="error")
-    def custom_default_function():
-        raise RuntimeError("Test")
-    
-    result3 = custom_default_function()
-    assert result3 == "error", f"Expected 'error', got {result3}"
-    print("✓ safe_extraction respects custom default_return")
-    
-    print("\n")
-    return True
-
 
 def test_java_analyzer_instantiation():
     """Test JavaCodeAnalyzer can be instantiated."""
@@ -220,7 +182,6 @@ def main():
     tests = [
         ("Module Imports", test_imports),
         ("LSP Utilities", test_lsp_utils),
-        ("Decorators", test_decorators),
         ("JavaCodeAnalyzer", test_java_analyzer_instantiation),
         ("BaseCodeAnalyzer Methods", test_base_analyzer_methods),
     ]

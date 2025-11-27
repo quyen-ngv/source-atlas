@@ -10,7 +10,7 @@ from tree_sitter import Language, Parser, Node, Query, QueryCursor
 from tree_sitter_language_pack import get_language
 
 from source_atlas.analyzers.base_analyzer import BaseCodeAnalyzer
-from source_atlas.analyzers.java_constants import JavaBuiltinPackages, JavaParsingConstants, JavaCodeAnalyzerConstant
+from source_atlas.config.java_constants import JavaBuiltinPackages, JavaParsingConstants, JavaCodeAnalyzerConstant
 from source_atlas.extractors.java.java_extractor import JavaEndpointExtractor
 from source_atlas.lsp.lsp_service import LSPService
 from source_atlas.models.domain_models import Method, MethodCall, ChunkType

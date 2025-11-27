@@ -1,48 +1,95 @@
+"""
+Integration test for Source Atlas - Local source code parsing test.
+
+This test parses a local Java project and displays the extracted code chunks.
+"""
 import sys
-import os
+import logging
 from pathlib import Path
 
-# Add the parent directory of source_atlas to sys.path
-# Assuming this script is in f:/01_projects/source_atlas/tests/integration_test.py
-# We want f:/01_projects to be in sys.path
-project_root = Path(__file__).parent.parent.parent
-sys.path.append(str(project_root))
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
-try:
-    from analyzers.java_analyzer import JavaCodeAnalyzer
-    from extractors.java.java_extractor import JavaEndpointExtractor
-    from analyzers.analyzer_factory import AnalyzerFactory
+from source_atlas.analyzers.analyzer_factory import AnalyzerFactory
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
+def test_parse_local_project():
+    """Test parsing a local Java project."""
     
-    print("Successfully imported modules")
-
+    # Configure your local Java project path here
+    # Example: "F:/01_projects/onestudy" or "./sample_java_project"
+    project_path = input("Enter path to Java project (or press Enter for current directory): ").strip()
+    if not project_path:
+        project_path = "."
+    
+    project_path = Path(project_path).resolve()
+    
+    if not project_path.exists():
+        logger.error(f"Project path does not exist: {project_path}")
+        return
+    
+    logger.info(f"Parsing Java project at: {project_path}")
+    
     try:
-        analyzer = JavaCodeAnalyzer(root_path=".")
-        print("Successfully instantiated JavaCodeAnalyzer")
-    except Exception as e:
-        print(f"Error instantiating JavaCodeAnalyzer: {e}")
-        import traceback
-        traceback.print_exc()
-
-    try:
-        extractor = JavaEndpointExtractor()
-        print("Successfully instantiated JavaEndpointExtractor")
-    except Exception as e:
-        print(f"Error instantiating JavaEndpointExtractor: {e}")
-        import traceback
-        traceback.print_exc()
+        # Create analyzer
+        analyzer = AnalyzerFactory.create_analyzer(
+            language="java",
+            root_path=str(project_path),
+            project_id="test_project",
+            branch="main"
+        )
         
-    try:
-        factory_analyzer = AnalyzerFactory.create_analyzer("java", ".", "test_project", "main")
-        print("Successfully created analyzer via factory")
+        logger.info("Analyzer created successfully")
+        
+        # Parse project
+        with analyzer:
+            chunks = analyzer.parse_project(project_path)
+        
+        logger.info(f"\n{'='*80}")
+        logger.info(f"PARSING RESULTS")
+        logger.info(f"{'='*80}")
+        logger.info(f"Total chunks found: {len(chunks)}")
+        
+        # Display summary
+        if chunks:
+            logger.info(f"\nFirst 5 chunks:")
+            for i, chunk in enumerate(chunks[:5], 1):
+                logger.info(f"\n{i}. Class: {chunk.full_class_name}")
+                logger.info(f"   File: {chunk.file_path}")
+                logger.info(f"   Package: {chunk.package}")
+                logger.info(f"   Methods: {len(chunk.methods)}")
+                logger.info(f"   Type: {chunk.type}")
+                
+                # Display methods
+                if chunk.methods:
+                    logger.info(f"   Method names:")
+                    for method in chunk.methods[:3]:  # Show first 3 methods
+                        logger.info(f"     - {method.name}")
+                    if len(chunk.methods) > 3:
+                        logger.info(f"     ... and {len(chunk.methods) - 3} more")
+        
+        logger.info(f"\n{'='*80}")
+        logger.info(f"✅ Test completed successfully!")
+        logger.info(f"{'='*80}")
+        
+        return chunks
+        
     except Exception as e:
-        print(f"Error creating analyzer via factory: {e}")
+        logger.error(f"Error during parsing: {e}")
         import traceback
         traceback.print_exc()
+        return None
 
-except ImportError as e:
-    print(f"ImportError: {e}")
-    print(f"sys.path: {sys.path}")
-except Exception as e:
-    print(f"Unexpected error: {e}")
-    import traceback
-    traceback.print_exc()
+
+if __name__ == "__main__":
+    print("Source Atlas - Local Source Code Parsing Test")
+    print("=" * 80)
+    test_parse_local_project()

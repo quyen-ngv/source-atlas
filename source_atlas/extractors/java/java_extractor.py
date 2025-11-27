@@ -7,6 +7,7 @@ from source_atlas.extractors.java.kafka_extractor import KafkaAnnotationExtracto
 from source_atlas.extractors.java.rabbit_extractor import RabbitAnnotationExtractor
 from source_atlas.extractors.java.spring_event_extractor import EventAnnotationExtractor
 from source_atlas.extractors.java.springboot_annotation_extractor import SpringBootAnnotationExtractor
+from source_atlas.extractors.java.quarkus_extractor import QuarkusJaxRsExtractor
 from source_atlas.models.domain_models import RestEndpoint
 
 
@@ -23,6 +24,7 @@ class JavaEndpointExtractor:
         if extractors is None:
             self.extractors = [
                 SpringBootAnnotationExtractor(),
+                QuarkusJaxRsExtractor(),
                 KafkaAnnotationExtractor(),
                 RabbitAnnotationExtractor(),
                 EventAnnotationExtractor(),

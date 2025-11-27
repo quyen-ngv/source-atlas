@@ -44,10 +44,6 @@ graph TB
     G --> J
     I --> K
     K --> L
-    
-    style A fill:#e1f5ff
-    style L fill:#ffe1e1
-    style G fill:#e1ffe1
 ```
 
 ## Core Components
@@ -102,7 +98,6 @@ extractors/
 
 **Key Components**:
 - `LSPService`: Base LSP service interface
-- `JavaLSPService`: Java-specific LSP implementation  
 - `multilspy/`: Third-party LSP integration library
 
 **Features**:

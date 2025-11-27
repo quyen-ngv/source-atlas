@@ -3,5 +3,16 @@ include LICENSE
 include CHANGELOG.md
 include requirements.txt
 include requirements-dev.txt
+
+# Include all Python files
 recursive-include source_atlas *.py
 recursive-include source_atlas py.typed
+
+# Include JSON configuration files for LSP servers
+recursive-include source_atlas *.json
+
+# Include other static files that might be needed
+recursive-include source_atlas *.yaml
+recursive-include source_atlas *.yml
+recursive-include source_atlas *.toml
+recursive-include source_atlas *.txt

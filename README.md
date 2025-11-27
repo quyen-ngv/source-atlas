@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/quyen-ngv/source-atlas)
 
 **Source Atlas** is a powerful multi-language code analyzer that combines Tree-sitter parsing, Language Server Protocol (LSP) integration, and Neo4j graph database to create comprehensive code knowledge graphs.
 
@@ -25,10 +26,6 @@ graph TB
     D --> E[Code Analyzer]
     E --> F[Code Chunks]
     F --> G[Neo4j Knowledge Graph]
-    
-    style A fill:#e1f5ff
-    style G fill:#ffe1e1
-    style E fill:#e1ffe1
 ```
 
 **Components**:

@@ -31,15 +31,6 @@ class LSPService(ABC):
           logger = MultilspyLogger()
           lsp = SyncLanguageServer.create(config, logger, repository_root_path)
           return lsp
-
-    @abstractmethod
-    def get_language_id(self) -> str:
-        """
-        Get the language identifier for this service.
-        
-        :return: Language identifier (e.g., "python", "java", "javascript")
-        """
-        pass
     
     @contextmanager
     def start_server(self) -> Iterator["LSPService"]:

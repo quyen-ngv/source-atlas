@@ -308,7 +308,7 @@ class BaseCodeAnalyzer(ABC):
     # Concrete methods for reusability across language analyzers
 
     def filter_builtin_items(self, items: list) -> list:
-        from source_atlas.analyzers.java_constants import JavaBuiltinPackages
+        from source_atlas.config.java_constants import JavaBuiltinPackages
         
         filtered, seen = [], set()
         builtin_packages = self._get_builtin_packages()
