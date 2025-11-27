@@ -136,11 +136,13 @@ neo4j_service = Neo4jService(
     user="neo4j",
     password="your_password"
 )
-neo4j_service.import_code_chunks(
-    chunks=chunks,
-    batch_size=500,
-    main_branch='main'
-)
+neo4j_service.neo4j_service.import_code_chunks(
+                chunks=chunks,
+                batch_size=500,
+                main_branch='main',
+                base_branch='main',
+                pull_request_id=None
+            )
 ```
 
 ## 🔧 Configuration

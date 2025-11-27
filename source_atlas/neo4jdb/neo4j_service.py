@@ -283,7 +283,7 @@ class Neo4jService:
                     WHERE n.method_name IS NOT NULL AND n.pull_request_id IS NULL
                     DETACH DELETE n
                     """
-                all_queries.append((delete_method_query, {'nodes': method_nodes_to_delete}))
+                    all_queries.append((delete_method_query, {'nodes': method_nodes_to_delete}))
 
             # Create new nodes with smart duplicate checking
             if main_branch and base_branch:

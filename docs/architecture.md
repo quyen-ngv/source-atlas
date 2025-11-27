@@ -235,7 +235,13 @@ if self._should_check_implements(class_node):
 
 Neo4j imports use batching for efficiency:
 ```python
-neo4j_service.import_code_chunks(chunks, batch_size=500)
+neo4j_service.neo4j_service.import_code_chunks(
+                chunks=chunks,
+                batch_size=batch_size,
+                main_branch=main_branch,
+                base_branch=base_branch,
+                pull_request_id=pull_request_id
+            )
 ```
 
 ### 4. Context Management
