@@ -548,10 +548,10 @@ class Neo4jService:
                         UNWIND $relationships AS rel
                         MATCH (source {class_name: rel.source_class, project_id: rel.project_id, branch: rel.branch})
                         WHERE source.method_name IS NULL
-                                MATCH (target {class_name: rel.target_class, project_id: rel.project_id, branch: rel.branch})
-                                WHERE target.method_name IS NULL
-                                MERGE (source)-[:USE]->(target)
-                                """
+                        MATCH (target {class_name: rel.target_class, project_id: rel.project_id, branch: rel.branch})
+                        WHERE target.method_name IS NULL
+                        MERGE (source)-[:USE]->(target)
+                        """
                         all_queries.append((class_use_query, {'relationships': class_use_rels}))
 
                 # Handle method-level USE relationships
@@ -594,6 +594,14 @@ class Neo4jService:
                         break
                     except Exception as e:
                         retry_count += 1
+                        logger.error(
+                            "Neo4j query failed (attempt %s/%s): %s\nQuery: %s\nParams: %s",
+                            retry_count,
+                            max_retries,
+                            str(e),
+                            query.strip(),
+                            params
+                        )
                         if retry_count >= max_retries:
                             raise e
 

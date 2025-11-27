@@ -12,8 +12,8 @@ def main():
     start_time = time.perf_counter()
 
     args = {
-        "project_path": "F:/01_projects/onestudy",
-        # "project_path": "F:/01_projects/onestudy",
+        "project_path": "F:\\01_projects\\simple-spring",
+        # "project_path": "F:\\01_projects\\simple-spring",
         "project_id": "onestudy",
         "output": "./output/onestudy",
         "language": "java",
@@ -51,13 +51,17 @@ def main():
 
         # Import chunks vào Neo4j
         logger.info("Importing chunks to Neo4j...")
-        neo4j_service = Neo4jService()
+        neo4j_service = Neo4jService(
+            url="bolt://localhost:7687",
+            user="neo4j",
+            password="your_password"
+        )
         import_start = time.perf_counter()
         neo4j_service.import_code_chunks(
             chunks=chunks,
             batch_size=500,
             main_branch='main',
-            base_branch=None,
+            base_branch='main',
             pull_request_id=None
         )
         import_elapsed = time.perf_counter() - import_start
