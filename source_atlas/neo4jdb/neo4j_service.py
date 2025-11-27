@@ -579,7 +579,7 @@ class Neo4jService:
                         WHERE target.method_name IS NULL
                         MERGE (source)-[:USE]->(target)
                         """
-                    all_queries.append((method_use_query, {'relationships': method_use_rels}))
+                        all_queries.append((method_use_query, {'relationships': method_use_rels}))
 
         return all_queries
 
