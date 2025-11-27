@@ -134,7 +134,11 @@ with analyzer:
     chunks = analyzer.parse_project(Path("/path/to/project"))
 
 # Import to Neo4j
-neo4j_service = Neo4jService()
+neo4j_service = Neo4jService(
+    url="bolt://localhost:7687",
+    user="neo4j",
+    password="your_password"
+)
 neo4j_service.import_code_chunks(
     chunks=chunks,
     batch_size=500,

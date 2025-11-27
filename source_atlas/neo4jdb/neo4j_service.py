@@ -5,6 +5,7 @@ from loguru import logger
 from source_atlas.neo4jdb.neo4j_db import Neo4jDB
 from source_atlas.neo4jdb.neo4j_dto import Neo4jNodeDto, Neo4jPathDto, Neo4jTraversalResultDto
 from source_atlas.models.domain_models import CodeChunk, ChunkType
+from source_atlas.config.config import configs
 
 
 def _escape_for_cypher(text):
@@ -109,32 +110,35 @@ class Neo4jService:
         Initialize Neo4j service.
         
         Args:
-            db: Optional Neo4jDB instance. If None, a new instance will be created.
-            url: Neo4j connection URL (e.g., 'bolt://localhost:7687')
-            user: Neo4j username
-            password: Neo4j password
+            db: Optional Neo4jDB instance. If provided, other arguments are ignored.
+            url: Neo4j connection URL. If not provided, uses APP_NEO4J_URL env var.
+            user: Neo4j username. If not provided, uses APP_NEO4J_USER env var.
+            password: Neo4j password. If not provided, uses APP_NEO4J_PASSWORD env var.
             
-        Example:
-            # Option 1: Use with custom config
-            service = Neo4jService(
-                url="bolt://localhost:7687",
-                user="neo4j",
-                password="mypassword"
-            )
-            
-            # Option 2: Use with existing db instance
-            db = Neo4jDB(url="bolt://localhost:7687", user="neo4j", password="mypassword")
-            service = Neo4jService(db=db)
-            
-            # Option 3: Use default config from environment
-            service = Neo4jService()
+        Raises:
+            ValueError: If connection details are missing from both arguments and environment variables.
         """
         if db is not None:
             self.db = db
-        elif url or user or password:
-            self.db = Neo4jDB(url=url, user=user, password=password)
         else:
-            self.db = Neo4jDB()
+            # Resolve credentials from args or environment
+            final_url = url or configs.APP_NEO4J_URL
+            final_user = user or configs.APP_NEO4J_USER
+            final_password = password or configs.APP_NEO4J_PASSWORD
+            
+            # Validate credentials
+            if not all([final_url, final_user, final_password]):
+                missing = []
+                if not final_url: missing.append("URL")
+                if not final_user: missing.append("User")
+                if not final_password: missing.append("Password")
+                
+                raise ValueError(
+                    f"Missing Neo4j credentials: {', '.join(missing)}. "
+                    "Please provide them as arguments or set APP_NEO4J_URL, APP_NEO4J_USER, APP_NEO4J_PASSWORD environment variables."
+                )
+                
+            self.db = Neo4jDB(url=final_url, user=final_user, password=final_password)
 
     def get_nodes_by_node_specs(self, node_specs: List[Dict], project_id: int, branch: str,
                                 pull_request_id: Optional[str] = None) -> List[Neo4jNodeDto]:
