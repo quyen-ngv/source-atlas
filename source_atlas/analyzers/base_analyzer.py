@@ -12,6 +12,7 @@ from source_atlas.lsp.lsp_service import LSPService
 from source_atlas.models.domain_models import CodeChunk, ChunkType
 from source_atlas.models.domain_models import Method
 from source_atlas.utils.common import convert, read_file_content
+from source_atlas.utils.lsp_utils import process_lsp_results
 
 
 @dataclass
@@ -128,8 +129,8 @@ class BaseCodeAnalyzer(ABC):
 
                 # Annotation processing
                 is_annotation = self._is_annotation_declaration(class_node)
-                annotations = self._extract_annotations(class_node, content, file_path, context.import_mapping)
-                handles_annotation = self._detect_annotation_handler(class_node, content, file_path, context.import_mapping, implements)
+                # annotations = self._extract_annotations(class_node, content, file_path, context.import_mapping)
+                # handles_annotation = self._detect_annotation_handler(class_node, content, file_path, context.import_mapping, implements)
 
                 # Compute AST hash for the class content
                 class_content = content[class_node.start_byte:class_node.end_byte]
@@ -150,9 +151,7 @@ class BaseCodeAnalyzer(ABC):
                     project_id=self.project_id,
                     branch=self.branch,
                     used_types=used_types,
-                    is_annotation=is_annotation,
-                    handles_annotation=handles_annotation,
-                    annotations=tuple(annotations)
+                    is_annotation=is_annotation
                 )
         except Exception as e:
             logger.error(f"Error parsing class node: {e}")
@@ -414,7 +413,6 @@ class BaseCodeAnalyzer(ABC):
         lsp_results, 
         processor: Callable[[dict], Optional[str]]
     ) -> List[str]:
-        from source_atlas.utils.lsp_utils import process_lsp_results
         return process_lsp_results(lsp_results, processor, log_errors=True)
 
     def _filter_files_by_targets(self, code_files: List[Path], target_files: Optional[List[str]]) -> List[Path]:

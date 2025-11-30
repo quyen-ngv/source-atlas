@@ -167,9 +167,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         return False
 
     def _extract_implements_with_lsp(self, class_node: Node, file_path: str, content: str) -> List[str]:
-        if not self._check_lsp_service():
-            return []
-
         try:
             class_name_node = self._find_child_by_type(class_node, 'identifier')
             if not class_name_node:
@@ -520,9 +517,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             return None
 
     def _resolve_method_call(self, node, args, file_path: str, content):
-        if not self._check_lsp_service():
-            return None
-
         try:
             line, col = self._get_node_position(node)
             lsp_result = self.lsp_service.request_definition(file_path, line, col)
@@ -777,9 +771,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
     # ---------- 8.3 LSP Resolution with Specific Types ----------
 
     def _resolve_used_type_with_lsp(self, node: Node, file_path: str, type_name: str) -> Optional[str]:
-        if not self._check_lsp_service():
-            return None
-
         try:
             line, col = self._get_node_position(node)
             lsp_results = self.lsp_service.request_definition(file_path, line, col)
@@ -790,9 +781,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             return None
 
     def _resolve_field_access_with_lsp(self, node: Node, file_path: str) -> Optional[str]:
-        if not self._check_lsp_service():
-            return None
-
         try:
             line = node.end_point[0]
             col = node.end_point[1]
@@ -853,12 +841,28 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                 # Resolve full qualified name (package.class) using LSP
                 full_name = self._resolve_annotation_full_name_with_lsp(name_node, file_path, raw_name, import_mapping)
                 if full_name:
-                    annotations.append(full_name)
+                    # Filter out framework packages (Spring, Java core, etc.)
+                    if not self._is_framework_annotation(full_name):
+                        annotations.append(full_name)
                     
         except Exception as e:
             logger.debug(f"Error extracting annotations: {e}")
             
         return annotations
+
+    def _is_framework_annotation(self, full_name: str) -> bool:
+        """
+        Check if annotation belongs to framework packages (Spring, Java core, etc.).
+        Returns True if annotation should be filtered out.
+        """
+        if not full_name:
+            return False
+        
+        framework_packages = JavaParsingConstants.FRAMEWORK_PACKAGES
+        for framework_pkg in framework_packages:
+            if full_name.startswith(framework_pkg):
+                return True
+        return False
 
     def _resolve_annotation_full_name_with_lsp(self, name_node: Node, file_path: str, raw_name: str, import_mapping: Dict[str, str]) -> Optional[str]:
         """
@@ -874,23 +878,22 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             return import_mapping[raw_name]
         
         # Try LSP definition (most accurate)
-        if self._check_lsp_service():
-            try:
-                line, col = self._get_node_position(name_node)
-                lsp_results = self.lsp_service.request_definition(file_path, line, col)
+        try:
+            line, col = self._get_node_position(name_node)
+            lsp_results = self.lsp_service.request_definition(file_path, line, col)
+            
+            if lsp_results:
+                # Normalize to list
+                results = lsp_results if isinstance(lsp_results, list) else [lsp_results]
                 
-                if lsp_results:
-                    # Normalize to list
-                    results = lsp_results if isinstance(lsp_results, list) else [lsp_results]
+                for result in results:
+                    # Extract qualified name from LSP result (package.class format)
+                    qualified_name = self._extract_qualified_name_from_lsp_result(result)
+                    if qualified_name:
+                        return qualified_name
                     
-                    for result in results:
-                        # Extract qualified name from LSP result (package.class format)
-                        qualified_name = self._extract_qualified_name_from_lsp_result(result)
-                        if qualified_name:
-                            return qualified_name
-                        
-            except Exception as e:
-                logger.debug(f"LSP annotation resolution failed: {e}")
+        except Exception as e:
+            logger.debug(f"LSP annotation resolution failed: {e}")
         
         # Final fallback: return simple name if all else fails
         return raw_name
@@ -1139,7 +1142,3 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         except Exception as e:
             logger.debug(f"Error reading file {file_path}: {e}")
             return None
-
-    def _check_lsp_service(self) -> bool:
-        """Check if LSP service is available."""
-        return self.lsp_service is not None

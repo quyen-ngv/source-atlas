@@ -4,6 +4,12 @@ Test cases for Neo4j Service relationship preservation feature.
 This module demonstrates how the relationship preservation works and validates
 that relationships are correctly maintained when updating code chunks.
 """
+import sys
+from pathlib import Path
+
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 import pytest
 from typing import List

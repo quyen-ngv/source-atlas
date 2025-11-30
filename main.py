@@ -12,8 +12,8 @@ def main():
     start_time = time.perf_counter()
 
     args = {
-        "project_path": "F:\\01_projects\\simple-spring",
-        # "project_path": "F:\\01_projects\\simple-spring",
+        "project_path": "F:\\01_projects\\onestudy",
+        # "project_path": "F:\\01_projects\\onestudy",
         "project_id": "onestudy",
         "output": "./output/onestudy",
         "language": "java",
@@ -51,18 +51,20 @@ def main():
 
         # Import chunks vào Neo4j
         logger.info("Importing chunks to Neo4j...")
-        neo4j_service = Neo4jService(
+        from source_atlas.neo4jdb.neo4j_db import Neo4jDB
+        
+        db = Neo4jDB(
             url="bolt://localhost:7687",
             user="neo4j",
             password="your_password"
         )
+        neo4j_service = Neo4jService(db=db)
         import_start = time.perf_counter()
-        neo4j_service.import_code_chunks(
+        # Use import_code_chunks_simple for initial import
+        # This ensures all relationships (including annotations) are created properly
+        neo4j_service.import_code_chunks_simple(
             chunks=chunks,
-            batch_size=500,
-            main_branch='main',
-            base_branch='main',
-            pull_request_id=None
+            batch_size=500
         )
         import_elapsed = time.perf_counter() - import_start
         logger.info(f"Imported {len(chunks)} chunks to Neo4j in {import_elapsed:.2f} seconds")

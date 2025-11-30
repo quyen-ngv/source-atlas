@@ -276,7 +276,7 @@ class JavaParsingConstants:
         # Common Libs
         "org.apache.commons.", "com.google.guava.", "com.fasterxml.jackson.",
         "org.hibernate.", "io.swagger.", "io.micrometer.",
-        "lombok.",
+        "lombok.", "org.aspectj."
     }
 
     HANDLER_INTERFACES = {

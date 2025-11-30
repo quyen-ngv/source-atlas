@@ -397,6 +397,58 @@ class Neo4jService:
                                 'project_id': chunk_project_id,
                                 'branch': chunk_branch
                             })
+                    
+                    # Add USE relationships for method annotations
+                    # Method C uses annotation D, E... -> C USE D, C USE E
+                    if hasattr(method, 'annotations') and method.annotations:
+                        for annotation in method.annotations:
+                            if annotation:
+                                use_rels.append({
+                                    'source_class': chunk_class_name,
+                                    'source_method': method_name,
+                                    'target_class': annotation,
+                                    'project_id': chunk_project_id,
+                                    'branch': chunk_branch
+                                })
+                                logger.debug(f"Added method annotation USE: {chunk_class_name}.{method_name} -> {annotation}")
+                    
+                    # Add USE relationships for handles_annotation (reverse: annotation node USE handler method)
+                    # Method A handles annotation B -> B USE A (reverse relationship)
+                    if hasattr(method, 'handles_annotation') and method.handles_annotation:
+                        # Node B (annotation) USE Node A (handler method)
+                        use_rels.append({
+                            'source_class': method.handles_annotation,
+                            'target_class': chunk_class_name,
+                            'target_method': method_name,
+                            'project_id': chunk_project_id,
+                            'branch': chunk_branch
+                        })
+                        logger.debug(f"Added handles_annotation USE (method): {method.handles_annotation} -> {chunk_class_name}.{method_name}")
+                
+                # Add USE relationships for class annotations
+                # Class C uses annotation D, E... -> C USE D, C USE E
+                if hasattr(chunk, 'annotations') and chunk.annotations:
+                    for annotation in chunk.annotations:
+                        if annotation:
+                            use_rels.append({
+                                'source_class': chunk_class_name,
+                                'target_class': annotation,
+                                'project_id': chunk_project_id,
+                                'branch': chunk_branch
+                            })
+                            logger.debug(f"Added class annotation USE: {chunk_class_name} -> {annotation}")
+                
+                # Add USE relationships for handles_annotation at class level (reverse: annotation node USE handler class)
+                # Class A handles annotation B -> B USE A (reverse relationship)
+                if hasattr(chunk, 'handles_annotation') and chunk.handles_annotation:
+                    # Node B (annotation) USE Node A (handler class)
+                    use_rels.append({
+                        'source_class': chunk.handles_annotation,
+                        'target_class': chunk_class_name,
+                        'project_id': chunk_project_id,
+                        'branch': chunk_branch
+                    })
+                    logger.debug(f"Added handles_annotation USE (class): {chunk.handles_annotation} -> {chunk_class_name}")
 
             if call_rels:
                 if main_branch:
