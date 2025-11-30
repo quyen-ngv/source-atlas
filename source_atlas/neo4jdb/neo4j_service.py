@@ -5,7 +5,6 @@ from loguru import logger
 from source_atlas.neo4jdb.neo4j_db import Neo4jDB
 from source_atlas.neo4jdb.neo4j_dto import Neo4jNodeDto, Neo4jPathDto, Neo4jTraversalResultDto
 from source_atlas.models.domain_models import CodeChunk, ChunkType
-from source_atlas.config.config import configs
 
 
 def _escape_for_cypher(text):
@@ -99,46 +98,8 @@ def _create_node_summary(node):
 
 
 class Neo4jService:
-    def __init__(
-        self, 
-        db: Neo4jDB | None = None,
-        url: str = None,
-        user: str = None,
-        password: str = None
-    ):
-        """
-        Initialize Neo4j service.
-        
-        Args:
-            db: Optional Neo4jDB instance. If provided, other arguments are ignored.
-            url: Neo4j connection URL. If not provided, uses APP_NEO4J_URL env var.
-            user: Neo4j username. If not provided, uses APP_NEO4J_USER env var.
-            password: Neo4j password. If not provided, uses APP_NEO4J_PASSWORD env var.
-            
-        Raises:
-            ValueError: If connection details are missing from both arguments and environment variables.
-        """
-        if db is not None:
-            self.db = db
-        else:
-            # Resolve credentials from args or environment
-            final_url = url or configs.APP_NEO4J_URL
-            final_user = user or configs.APP_NEO4J_USER
-            final_password = password or configs.APP_NEO4J_PASSWORD
-            
-            # Validate credentials
-            if not all([final_url, final_user, final_password]):
-                missing = []
-                if not final_url: missing.append("URL")
-                if not final_user: missing.append("User")
-                if not final_password: missing.append("Password")
-                
-                raise ValueError(
-                    f"Missing Neo4j credentials: {', '.join(missing)}. "
-                    "Please provide them as arguments or set APP_NEO4J_URL, APP_NEO4J_USER, APP_NEO4J_PASSWORD environment variables."
-                )
-                
-            self.db = Neo4jDB(url=final_url, user=final_user, password=final_password)
+    def __init__(self, db: Neo4jDB | None = None):
+        self.db = db or Neo4jDB()
 
     def get_nodes_by_node_specs(self, node_specs: List[Dict], project_id: int, branch: str,
                                 pull_request_id: Optional[str] = None) -> List[Neo4jNodeDto]:
@@ -284,6 +245,7 @@ class Neo4jService:
                     DETACH DELETE n
                     """
                     all_queries.append((delete_method_query, {'nodes': method_nodes_to_delete}))
+
 
             # Create new nodes with smart duplicate checking
             if main_branch and base_branch:
@@ -438,18 +400,30 @@ class Neo4jService:
 
             if call_rels:
                 if main_branch:
-                    # Use base_branch first, then fallback to main_branch
-                    call_query = """
-                    UNWIND $relationships AS rel
-                    MATCH (source {class_name: rel.source_class, method_name: rel.source_method, project_id: rel.project_id, branch: rel.branch})
-                    OPTIONAL MATCH (target_base {method_name: rel.target_method, project_id: rel.project_id, branch: $base_branch})
-                    OPTIONAL MATCH (target_main {method_name: rel.target_method, project_id: rel.project_id, branch: $main_branch})
-                    WITH source, COALESCE(target_base, target_main) AS target
-                    WHERE target IS NOT NULL
-                    MERGE (source)-[:CALL]->(target)
-                    """
-                    all_queries.append((call_query, {'relationships': call_rels, 'base_branch': base_branch,
-                                                     'main_branch': main_branch}))
+                    # Use base_branch first (if provided), then fallback to main_branch
+                    if base_branch:
+                        call_query = """
+                        UNWIND $relationships AS rel
+                        MATCH (source {class_name: rel.source_class, method_name: rel.source_method, project_id: rel.project_id, branch: rel.branch})
+                        OPTIONAL MATCH (target_base {method_name: rel.target_method, project_id: rel.project_id, branch: $base_branch})
+                        OPTIONAL MATCH (target_main {method_name: rel.target_method, project_id: rel.project_id, branch: $main_branch})
+                        WITH source, COALESCE(target_base, target_main) AS target
+                        WHERE target IS NOT NULL
+                        MERGE (source)-[:CALL]->(target)
+                        """
+                        all_queries.append((call_query, {'relationships': call_rels, 'base_branch': base_branch,
+                                                         'main_branch': main_branch}))
+                    else:
+                        # Only main_branch, no base_branch
+                        call_query = """
+                        UNWIND $relationships AS rel
+                        MATCH (source {class_name: rel.source_class, method_name: rel.source_method, project_id: rel.project_id, branch: rel.branch})
+                        OPTIONAL MATCH (target_main {method_name: rel.target_method, project_id: rel.project_id, branch: $main_branch})
+                        WITH source, target_main AS target
+                        WHERE target IS NOT NULL
+                        MERGE (source)-[:CALL]->(target)
+                        """
+                        all_queries.append((call_query, {'relationships': call_rels, 'main_branch': main_branch}))
                 else:
                     call_query = """
                     UNWIND $relationships AS rel
@@ -458,6 +432,7 @@ class Neo4jService:
                     MERGE (source)-[:CALL]->(target)
                     """
                     all_queries.append((call_query, {'relationships': call_rels}))
+
 
             if implement_rels:
                 class_implement_rels = [rel for rel in implement_rels if 'source_method' not in rel]
@@ -548,10 +523,10 @@ class Neo4jService:
                         UNWIND $relationships AS rel
                         MATCH (source {class_name: rel.source_class, project_id: rel.project_id, branch: rel.branch})
                         WHERE source.method_name IS NULL
-                        MATCH (target {class_name: rel.target_class, project_id: rel.project_id, branch: rel.branch})
-                        WHERE target.method_name IS NULL
-                        MERGE (source)-[:USE]->(target)
-                        """
+                                MATCH (target {class_name: rel.target_class, project_id: rel.project_id, branch: rel.branch})
+                                WHERE target.method_name IS NULL
+                                MERGE (source)-[:USE]->(target)
+                                """
                         all_queries.append((class_use_query, {'relationships': class_use_rels}))
 
                 # Handle method-level USE relationships
@@ -581,7 +556,424 @@ class Neo4jService:
                         """
                         all_queries.append((method_use_query, {'relationships': method_use_rels}))
 
+
         return all_queries
+
+    def copy_unchanged_nodes_from_main(
+            self,
+            project_id: int,
+            main_branch: str,
+            current_branch: str,
+            changed_chunks: List[CodeChunk],
+            batch_size: int = 100,
+            rel_batch_size: int = 500
+    ):
+        """
+        Copy nodes từ main branch sang current branch,
+        ngoại trừ những node đã thay đổi trong changed_chunks.
+        """
+        changed_node_hashes = self._build_changed_node_hashes(changed_chunks)
+        params = self._build_copy_params(project_id, main_branch, current_branch, changed_node_hashes)
+
+        logger.info(
+            f"Copying unchanged nodes from '{main_branch}' to '{current_branch}' "
+            f"(project_id={project_id}, skipping {len(changed_node_hashes)} changed nodes)"
+        )
+
+        try:
+            with self.db.driver.session() as session:
+                self._cleanup_existing_mappings(session, params, project_id)
+                total_copied = self._copy_nodes_in_batches(session, params, batch_size)
+                self._copy_all_relationships(session, params, rel_batch_size)
+                self._remove_duplicate_nodes(session, params)
+                self._cleanup_mapping_nodes(session, params)
+                return total_copied
+        except Exception as e:
+            logger.error(f"Failed to copy unchanged nodes and relationships: {str(e)}")
+            raise e
+
+
+    def _build_changed_node_hashes(self, changed_chunks: List[CodeChunk]) -> dict:
+        if not changed_chunks:
+            logger.info("No changed chunks provided, copying all nodes from main branch")
+            return {}
+
+        changed_node_hashes = {}
+        for chunk in changed_chunks:
+            changed_node_hashes[chunk.full_class_name] = chunk.ast_hash
+            for method in chunk.methods:
+                method_key = f"{chunk.full_class_name}.{method.name}"
+                changed_node_hashes[method_key] = method.ast_hash
+        return changed_node_hashes
+
+    def _build_copy_params(self, project_id: int, main_branch: str, current_branch: str,
+                           changed_node_hashes: dict) -> dict:
+        return {
+            'project_id': str(project_id),
+            'main_branch': main_branch,
+            'current_branch': current_branch,
+            'changed_node_hashes': changed_node_hashes
+        }
+
+    def _cleanup_existing_mappings(self, session, params: dict, project_id: int):
+        cleanup_old_mappings = """
+            MATCH (mapping:NodeMapping {project_id: $project_id, branch: $current_branch})
+            DELETE mapping
+            RETURN count(mapping) AS cleaned_old_mappings
+            """
+        cleanup_result = session.run(cleanup_old_mappings, params)
+        cleanup_record = cleanup_result.single()
+        cleaned_old = cleanup_record['cleaned_old_mappings'] if cleanup_record else 0
+        if cleaned_old > 0:
+            logger.info(f"Cleaned up {cleaned_old} old mapping nodes from previous runs")
+
+        cleanup_orphaned = """
+            MATCH (mapping:NodeMapping {project_id: $project_id})
+            WHERE NOT EXISTS {
+                MATCH (n {project_id: $project_id}) WHERE id(n) = mapping.old_id OR id(n) = mapping.new_id
+            }
+            DELETE mapping
+            RETURN count(mapping) AS cleaned_orphaned
+            """
+        orphaned_result = session.run(cleanup_orphaned, params)
+        orphaned_record = orphaned_result.single()
+        cleaned_orphaned = orphaned_record['cleaned_orphaned'] if orphaned_record else 0
+        if cleaned_orphaned > 0:
+            logger.info(f"Cleaned up {cleaned_orphaned} orphaned mapping nodes for project {project_id}")
+
+    def _copy_nodes_in_batches(self, session, params: dict, batch_size: int) -> int:
+        count_query = """
+        MATCH(main_node {project_id: $project_id, branch: $main_branch})
+        WHERE main_node.pull_request_id IS NULL
+        WITH main_node,
+            CASE
+                WHEN main_node.method_name IS NOT NULL
+                THEN main_node.class_name + '.' + main_node.method_name
+                ELSE main_node.class_name
+            END AS node_key
+        WHERE(node_key IN keys($changed_node_hashes) AND main_node.ast_hash = $changed_node_hashes[node_key])
+            OR(NOT node_key IN keys($changed_node_hashes))
+        RETURN count(main_node) AS total_nodes
+        """
+
+        count_result = session.run(count_query, params)
+        total_nodes = count_result.single()['total_nodes']
+        logger.info(f"Found {total_nodes} nodes to copy from '{params['main_branch']}' to '{params['current_branch']}'")
+
+        total_copied = 0
+        skip = 0
+        while skip < total_nodes:
+            batch_copy_query = self._create_batch_copy_query(skip, batch_size)
+            batch_result = session.run(batch_copy_query, params)
+            batch_record = batch_result.single()
+            batch_copied = batch_record['copied_count'] if batch_record else 0
+            total_copied += batch_copied
+            skip += batch_size
+
+            logger.info(f"Copied batch: {batch_copied} nodes (total: {total_copied}/{total_nodes})")
+            if batch_copied == 0:
+                break
+
+        logger.info(
+            f"Completed copying {total_copied} nodes from '{params['main_branch']}' to '{params['current_branch']}'")
+        return total_copied
+
+    def _copy_all_relationships(self, session, params: dict, rel_batch_size: int):
+        self._copy_internal_relationships(session, params, rel_batch_size)
+        self._copy_cross_relationships(session, params, rel_batch_size)
+        self._copy_reverse_cross_relationships(session, params, rel_batch_size)
+
+    def _copy_internal_relationships(self, session, params: dict, rel_batch_size: int):
+        rel_count_query = """
+        MATCH (main_source {project_id: $project_id, branch: $main_branch})-[rel]->(main_target {project_id: $project_id, branch: $main_branch})
+        WHERE main_source.pull_request_id IS NULL AND main_target.pull_request_id IS NULL
+        MATCH (source_mapping:NodeMapping {old_id: id(main_source), project_id: $project_id, branch: $current_branch})
+        MATCH (target_mapping:NodeMapping {old_id: id(main_target), project_id: $project_id, branch: $current_branch})
+        RETURN count(rel) AS total_rels
+        """
+
+        rel_count_result = session.run(rel_count_query, params)
+        total_rels = rel_count_result.single()['total_rels']
+        logger.info(f"Found {total_rels} relationships to copy")
+
+        total_rel_copied = 0
+        rel_skip = 0
+        while rel_skip < total_rels:
+            batch_rel_query = self._create_batch_relationship_query(rel_skip, rel_batch_size)
+            batch_rel_result = session.run(batch_rel_query, params)
+            batch_rel_record = batch_rel_result.single()
+            batch_rel_copied = batch_rel_record['copied_rel_count'] if batch_rel_record else 0
+            total_rel_copied += batch_rel_copied
+            rel_skip += rel_batch_size
+
+            logger.info(f"Copied batch: {batch_rel_copied} relationships (total: {total_rel_copied}/{total_rels})")
+            if batch_rel_copied == 0:
+                break
+
+        logger.info(f"Completed copying {total_rel_copied} relationships")
+
+    def _copy_cross_relationships(self, session, params: dict, rel_batch_size: int):
+        cross_count_query = """
+        MATCH(main_source {project_id: $project_id, branch: $main_branch})-[rel]->(main_target {project_id: $project_id, branch: $main_branch})
+        WHERE main_source.pull_request_id IS NULL AND main_target.pull_request_id IS NULL
+        MATCH(source_mapping: NodeMapping {old_id: id(main_source), project_id: $project_id, branch: $current_branch})
+        WITH main_source, main_target, rel, source_mapping
+        WHERE NOT EXISTS {
+            MATCH(tm: NodeMapping {old_id: id(main_target), project_id: $project_id, branch: $current_branch})
+        }
+        RETURN count(rel) AS total_cross_rels
+        """
+
+        cross_count_result = session.run(cross_count_query, params)
+        total_cross_rels = cross_count_result.single()['total_cross_rels']
+        logger.info(f"Found {total_cross_rels} cross-relationships to create")
+
+        cross_rel_copied = 0
+        cross_rel_skip = 0
+        while cross_rel_skip < total_cross_rels:
+            batch_cross_query = self._create_cross_relationship_query(cross_rel_skip, rel_batch_size)
+            batch_cross_result = session.run(batch_cross_query, params)
+            batch_cross_record = batch_cross_result.single()
+            batch_cross_copied = batch_cross_record['cross_rel_count'] if batch_cross_record else 0
+            cross_rel_copied += batch_cross_copied
+            cross_rel_skip += rel_batch_size
+
+            logger.info(
+                f"Created batch: {batch_cross_copied} cross-relationships (total: {cross_rel_copied}/{total_cross_rels})")
+            if batch_cross_copied == 0:
+                break
+
+        logger.info(f"Completed creating {cross_rel_copied} cross-relationships from copied to changed")
+
+    def _copy_reverse_cross_relationships(self, session, params: dict, rel_batch_size: int):
+        reverse_count_query = """
+        MATCH(main_source {project_id: $project_id, branch: $main_branch})-[rel]->(main_target {project_id: $project_id, branch: $main_branch})
+        WHERE main_source.pull_request_id IS NULL AND main_target.pull_request_id IS NULL
+        WITH main_source, main_target, rel
+        WHERE NOT EXISTS {
+            MATCH(sm: NodeMapping {old_id: id(main_source), project_id: $project_id, branch: $current_branch})
+        }
+        MATCH(target_mapping: NodeMapping {old_id: id(main_target), project_id: $project_id, branch: $current_branch})
+        RETURN count(rel) AS total_reverse_rels
+        """
+
+        reverse_count_result = session.run(reverse_count_query, params)
+        total_reverse_rels = reverse_count_result.single()['total_reverse_rels']
+        logger.info(f"Found {total_reverse_rels} reverse cross-relationships to create")
+
+        reverse_rel_copied = 0
+        reverse_rel_skip = 0
+        while reverse_rel_skip < total_reverse_rels:
+            batch_reverse_query = self._create_reverse_cross_relationship_query(reverse_rel_skip, rel_batch_size)
+            batch_reverse_result = session.run(batch_reverse_query, params)
+            batch_reverse_record = batch_reverse_result.single()
+            batch_reverse_copied = batch_reverse_record['reverse_rel_count'] if batch_reverse_record else 0
+            reverse_rel_copied += batch_reverse_copied
+            reverse_rel_skip += rel_batch_size
+
+            logger.info(
+                f"Created batch: {batch_reverse_copied} reverse cross-relationships (total: {reverse_rel_copied}/{total_reverse_rels})")
+            if batch_reverse_copied == 0:
+                break
+
+        logger.info(f"Completed creating {reverse_rel_copied} cross-relationships from changed to copied")
+
+    def _remove_duplicate_nodes(self, session, params: dict):
+        duplicate_check_query = """
+        MATCH(n {project_id: $project_id, branch: $current_branch})
+        WHERE n.pull_request_id IS NULL
+        WITH n.class_name AS class_name,
+            n.method_name AS method_name,
+            collect(n) AS nodes
+        WHERE size(nodes) > 1
+        WITH nodes[1..] AS duplicates
+        UNWIND duplicates AS duplicate
+        DETACH DELETE duplicate
+        RETURN count(duplicate) AS removed_duplicates
+        """
+
+        dup_result = session.run(duplicate_check_query, params)
+        dup_record = dup_result.single()
+        removed_dups = dup_record['removed_duplicates'] if dup_record else 0
+        if removed_dups > 0:
+            logger.warning(f"Removed {removed_dups} duplicate nodes")
+
+    def _cleanup_mapping_nodes(self, session, params: dict):
+        cleanup_query = """
+        MATCH(mapping: NodeMapping {project_id: $project_id, branch: $current_branch})
+        DELETE mapping
+        RETURN count(mapping) AS deleted_mappings
+        """
+
+        try:
+            cleanup_result = session.run(cleanup_query, params)
+            cleanup_record = cleanup_result.single()
+            deleted_mappings = cleanup_record['deleted_mappings'] if cleanup_record else 0
+            logger.info(f"Cleaned up {deleted_mappings} temporary mapping nodes")
+        except Exception as cleanup_error:
+            logger.error(f"Failed to cleanup mapping nodes: {str(cleanup_error)}")
+
+    def _create_batch_copy_query(self, skip_count: int, limit_count: int) -> str:
+        return f""" 
+        MATCH(main_node {{project_id: $project_id, branch: $main_branch}})
+        WHERE main_node.pull_request_id IS NULL
+        WITH main_node,
+            CASE
+                WHEN main_node.method_name IS NOT NULL
+                THEN main_node.class_name + '.' + main_node.method_name
+                ELSE main_node.class_name
+            END AS node_key
+        WHERE(node_key IN keys($changed_node_hashes) AND main_node.ast_hash = $changed_node_hashes[node_key])
+            OR(NOT node_key IN keys($changed_node_hashes))
+        WITH main_node
+        SKIP {skip_count}
+        LIMIT {limit_count}
+        WITH main_node, labels(main_node) AS node_labels
+        CALL
+            apoc.create.node(
+                node_labels,
+                main_node {{
+                    . *,
+                    branch: $current_branch
+                }}
+        ) YIELD node AS copied_node
+        WITH main_node, copied_node
+        MERGE(mapping: NodeMapping {{
+            old_id: id(main_node),
+            new_id: id(copied_node),
+            project_id: $project_id,
+            branch: $current_branch
+        }})
+        RETURN count(copied_node) AS copied_count
+        """
+
+    def _create_batch_relationship_query(self, skip_count: int, limit_count: int) -> str:
+        return f"""
+        MATCH(main_source
+        {{project_id: $project_id, branch: $main_branch}})-[rel]->(main_target {{project_id: $project_id, branch: $main_branch}})
+        WHERE main_source.pull_request_id IS NULL AND main_target.pull_request_id IS NULL
+        MATCH(source_mapping: NodeMapping {{old_id: id(main_source), project_id: $project_id, branch: $current_branch}})
+        MATCH(target_mapping: NodeMapping {{old_id: id(main_target), project_id: $project_id, branch: $current_branch}})
+        WITH main_source, main_target, rel, source_mapping, target_mapping
+        SKIP {skip_count}
+        LIMIT {limit_count}
+        MATCH(copied_source) WHERE id(copied_source) = source_mapping.new_id
+        MATCH(copied_target) WHERE id(copied_target) = target_mapping.new_id
+        WITH copied_source, copied_target, rel
+        CALL
+            apoc.create.relationship(
+                copied_source,
+                type(rel),
+                properties(rel),
+                copied_target
+            )
+        YIELD rel AS copied_rel
+        RETURN count(copied_rel) AS copied_rel_count
+        """
+
+    def _create_cross_relationship_query(self, skip_count: int, limit_count: int) -> str:
+        return f"""
+        MATCH(main_source {{project_id: $project_id, branch: $main_branch}})-[rel]->(main_target {{project_id: $project_id, branch: $main_branch}})
+        WHERE main_source.pull_request_id IS NULL AND main_target.pull_request_id IS NULL
+        MATCH(source_mapping: NodeMapping {{old_id: id(main_source), project_id: $project_id, branch: $current_branch}})
+        WITH main_source, main_target, rel, source_mapping
+        WHERE NOT EXISTS {{
+            MATCH(tm: NodeMapping {{old_id: id(main_target), project_id: $project_id, branch: $current_branch}})
+        }}
+        WITH main_source, main_target, rel, source_mapping
+        SKIP {skip_count}
+        LIMIT {limit_count}
+        MATCH(copied_source) WHERE id(copied_source) = source_mapping.new_id
+        MATCH(changed_target {{
+            project_id: $project_id,
+            branch: $current_branch,
+            class_name: main_target.class_name
+        }})
+        WHERE(main_target.method_name IS NULL AND changed_target.method_name IS NULL)
+        OR(main_target.method_name IS NOT NULL AND changed_target.method_name = main_target.method_name)
+        CALL
+        apoc.create.relationship(
+            copied_source,
+            type(rel),
+            properties(rel),
+            changed_target
+        )
+        YIELD rel AS cross_rel
+        RETURN count(cross_rel) AS cross_rel_count
+        """
+
+    def _create_reverse_cross_relationship_query(self, skip_count: int, limit_count: int) -> str:
+        return f"""
+        MATCH(main_source
+        {{project_id: $project_id, branch: $main_branch}})-[rel]->(main_target {{project_id: $project_id, branch: $main_branch}})
+        WHERE main_source.pull_request_id IS NULL AND main_target.pull_request_id IS NULL
+        WITH main_source, main_target, rel 
+        WHERE NOT EXISTS {{
+            MATCH(sm: NodeMapping {{old_id: id(main_source), project_id: $project_id, branch: $current_branch}})
+        }}
+        MATCH(target_mapping: NodeMapping {{old_id: id(main_target), project_id: $project_id, branch: $current_branch}})
+        WITH main_source, main_target, rel, target_mapping
+        SKIP {skip_count}
+        LIMIT {limit_count}
+        MATCH(changed_source {{
+            project_id: $project_id,
+            branch: $current_branch,
+            class_name: main_source.class_name
+        }})
+        WHERE(main_source.method_name IS NULL AND changed_source.method_name IS NULL)
+        OR(main_source.method_name IS NOT NULL AND changed_source.method_name = main_source.method_name)
+        MATCH(copied_target) WHERE id(copied_target) = target_mapping.new_id
+        CALL
+            apoc.create.relationship(
+                changed_source,
+                type(rel),
+                properties(rel),
+                copied_target
+            )
+        YIELD rel AS reverse_rel
+        RETURN count(reverse_rel) AS reverse_rel_count
+        """
+
+    def delete_branch_nodes(self, project_id: int, branch_name: str, pull_request_id: str = None):
+
+        if pull_request_id:
+            # Delete nodes with specific pull_request_id
+            delete_query = """
+            MATCH(n {project_id: $project_id, branch: $branch_name, pull_request_id: $pull_request_id})
+            DETACH DELETE n
+            RETURN count(n) as deleted_count
+            """
+            params = {
+                'project_id': str(project_id),
+                'branch_name': branch_name,
+                'pull_request_id': pull_request_id
+            }
+        else:
+            # Delete ALL nodes for this branch (regardless of pull_request_id)
+            delete_query = """
+            MATCH(n {project_id: $project_id, branch: $branch_name})
+            DETACH DELETE n
+            RETURN count(n) as deleted_count
+            """
+            params = {
+                'project_id': str(project_id),
+                'branch_name': branch_name
+            }
+
+        try:
+            with self.db.driver.session() as session:
+                result = session.run(delete_query, params)
+                record = result.single()
+                deleted_count = record['deleted_count'] if record else 0
+                logger.info(
+                    f"Deleted {deleted_count} nodes for branch '{branch_name}' "
+                    f"in project {project_id} "
+                    f"(pull_request_id: {pull_request_id or 'ALL'})"
+                )
+                return deleted_count
+        except Exception as e:
+            logger.error(f"Failed to delete branch nodes: {str(e)}")
+        raise e
 
     def execute_queries_batch(self, queries_with_params: List[Tuple[str, Dict]], max_retries: int = 3):
         with self.db.driver.session() as session:
@@ -594,21 +986,467 @@ class Neo4jService:
                         break
                     except Exception as e:
                         retry_count += 1
-                        logger.error(
-                            "Neo4j query failed (attempt %s/%s): %s\nQuery: %s\nParams: %s",
-                            retry_count,
-                            max_retries,
-                            str(e),
-                            query.strip(),
-                            params
-                        )
                         if retry_count >= max_retries:
                             raise e
 
     def import_code_chunks(self, chunks: List[CodeChunk], batch_size: int = 500, main_branch: Optional[str] = None,
                            base_branch: Optional[str] = None, pull_request_id: Optional[str] = None):
+        """
+        Import code chunks with relationship preservation.
+        
+        This method ensures that relationships between unchanged nodes and changed nodes
+        are preserved during the update process by:
+        1. Saving relationships from unchanged → changed nodes before deletion
+        2. Deleting old nodes and creating new nodes
+        3. Restoring relationships from unchanged → new changed nodes
+        4. Creating new relationships from chunk data
+        5. Cleaning up duplicate relationships
+        
+        Args:
+            chunks: List of code chunks to import
+            batch_size: Batch size for processing
+            main_branch: Main branch name for comparison
+            base_branch: Base branch name for comparison (takes priority over main_branch)
+            pull_request_id: Pull request ID if importing for a PR
+        """
+        if not chunks:
+            logger.warning("No chunks to import")
+            return
+        
         self.create_indexes()
-        queries_with_params = self.generate_cypher_from_chunks(chunks, batch_size, main_branch, base_branch,
-                                                               pull_request_id)
-        self.execute_queries_batch(queries_with_params)
+        
+        # Get project_id and branch from first chunk (all chunks should have same project_id and branch)
+        project_id = chunks[0].project_id
+        branch = chunks[0].branch
+        
+        # Default base_branch to current branch if not provided
+        # This ensures relationship queries always have valid branch parameters
+        if base_branch is None:
+            base_branch = branch
+        
+        # Step 1: Save relationships from unchanged → changed nodes before deletion
+        logger.info(f"Step 1/5: Saving relationships from unchanged to changed nodes...")
+        saved_rels = self.save_changed_nodes_relationships(
+            project_id=project_id,
+            branch=branch,
+            changed_chunks=chunks
+        )
+        logger.info(f"Saved {len(saved_rels)} relationships from unchanged to changed nodes")
+        
+        # Step 2 & 3: Delete old nodes and create new nodes (combined in generate_cypher_from_chunks)
+        logger.info(f"Step 2/5: Importing changed nodes only...")
+        self.import_changed_chunk_nodes_only(
+            chunks=chunks,
+            main_branch=main_branch,
+            base_branch=base_branch,
+            batch_size=batch_size,
+            pull_request_id=pull_request_id
+        )
+        
+        # Step 4: Restore relationships from unchanged → new changed nodes
+        if saved_rels:
+            logger.info(f"Step 3/5: Restoring relationships from unchanged to new changed nodes...")
+            self.restore_changed_nodes_relationships(
+                project_id=project_id,
+                branch=branch,
+                saved_relationships=saved_rels,
+                changed_chunks=chunks
+            )
+        else:
+            logger.info(f"Step 3/5: No relationships to restore")
+        
+        # Step 5: Create relationships from chunk data (changed → unchanged, changed → changed)
+        logger.info(f"Step 4/5: Creating relationships from chunk data...")
+        self.import_changed_chunk_relationships(
+            chunks=chunks,
+            current_branch=branch,
+            main_branch=main_branch,
+            base_branch=base_branch,
+            batch_size=batch_size
+        )
+        
+        # Step 6: Clean up duplicate relationships
+        logger.info(f"Step 5/5: Cleaning up duplicate relationships...")
+        self.remove_duplicate_relationships(
+            project_id=project_id,
+            branch=branch
+        )
+        
+        logger.info(f"✅ Successfully imported {len(chunks)} changed chunks with relationship preservation")
 
+    def import_code_chunks_simple(self, chunks: List[CodeChunk], batch_size: int = 500, 
+                                  main_branch: Optional[str] = None,
+                                  base_branch: Optional[str] = None, 
+                                  pull_request_id: Optional[str] = None):
+        """
+        Simple import without relationship preservation.
+        
+        Use this method for:
+        - Initial import of a new branch
+        - Full rebuild of the graph
+        - Cases where you don't need to preserve relationships between unchanged and changed nodes
+        
+        For incremental updates where relationship preservation is important, use import_code_chunks() instead.
+        
+        Args:
+            chunks: List of code chunks to import
+            batch_size: Batch size for processing
+            main_branch: Main branch name for comparison
+            base_branch: Base branch name for comparison (takes priority over main_branch)
+            pull_request_id: Pull request ID if importing for a PR
+        """
+        if not chunks:
+            logger.warning("No chunks to import")
+            return
+            
+        self.create_indexes()
+        queries_with_params = self.generate_cypher_from_chunks(
+            chunks, batch_size, main_branch, base_branch, pull_request_id
+        )
+        self.execute_queries_batch(queries_with_params)
+        logger.info(f"✅ Imported {len(chunks)} chunks (simple mode)")
+
+
+    def import_changed_chunk_nodes_only(self, chunks: List[CodeChunk], main_branch: str, base_branch: str = None,
+                                        batch_size: int = 500, pull_request_id: str = None):
+
+        self.create_indexes()
+
+        # Generate queries with base_branch and main_branch comparison to filter by ast_hash
+        queries_with_params = self.generate_cypher_from_chunks(
+            chunks,
+            batch_size,
+            main_branch=main_branch,  # Pass main_branch for ast_hash comparison
+            base_branch=base_branch,  # Pass base_branch for ast_hash comparison (priority)
+            pull_request_id=pull_request_id
+        )
+
+        # Filter to only include node creation queries (not relationship queries)
+        node_queries = []
+        for query, params in queries_with_params:
+            # Skip relationship queries (they contain MERGE with relationship patterns)
+            if '-[' not in query and 'MERGE (source)-[' not in query:
+                node_queries.append((query, params))
+
+        self.execute_queries_batch(node_queries)
+        logger.info(
+            f"Imported changed chunk nodes with different ast_hash from main branch (relationships will be created later)")
+
+    def import_changed_chunk_relationships(self, chunks: List[CodeChunk], current_branch: str, main_branch: str = None,
+                                           base_branch: str = None, batch_size: int = 500):
+
+        queries_with_params = self.generate_cypher_from_chunks(
+            chunks,
+            batch_size,
+            main_branch=main_branch,
+            base_branch=base_branch,
+            pull_request_id=None
+        )
+
+        # Filter to only include relationship queries
+        relationship_queries = []
+        for query, params in queries_with_params:
+            # Only include relationship queries (they contain MERGE with relationship patterns or relationship keywords)
+            if any(keyword in query for keyword in
+                   ['MERGE (source)-[', 'MERGE (target)-[', ']->(target)', 'CALL]', 'IMPLEMENT]', 'USE]', 'EXTEND]']):
+                relationship_queries.append((query, params))
+
+        self.execute_queries_batch(relationship_queries)
+        logger.info(f"Imported relationships for {len(chunks)} changed chunks")
+
+    def get_related_nodes(
+            self,
+            target_nodes: List[Neo4jNodeDto],
+            max_level: int = 20,
+            min_level: int = 1,
+            relationship_filter: str = "CALL>|<IMPLEMENT|<EXTEND|USE>|<BRANCH"
+    ) -> List[Neo4jTraversalResultDto]:
+        query = """
+        WITH $targets AS targets
+        MATCH (endpoint)
+        WHERE endpoint.project_id = $targets[0].project_id
+        AND any(t IN targets WHERE
+          t.class_name = endpoint.class_name AND
+          t.branch = endpoint.branch AND
+          (
+            (t.method_name IS NULL AND endpoint.method_name IS NULL)
+            OR (t.method_name = endpoint.method_name)
+          )
+        )
+        CALL apoc.path.expandConfig(endpoint, {
+          relationshipFilter: "CALL>|<IMPLEMENT|<EXTEND|USE>|<BRANCH",
+          minLevel: $min_level,
+          maxLevel: $max_level,
+          bfs: true,
+          uniqueness: "NODE_GLOBAL",
+          filterStartNode: false
+        }) YIELD path
+        WITH endpoint, path,
+             nodes(path) AS node_list,
+             relationships(path) AS rel_list
+        WITH endpoint, path, node_list, rel_list, 
+            [i IN range(0, size(rel_list) - 1) |
+            CASE 
+                WHEN type(rel_list[i]) = 'BRANCH'
+                    AND node_list[i + 1].branch = 'develop'
+                    AND node_list[i].branch = 'main'
+                THEN node_list[i+1]
+                ELSE null
+            END
+            ] AS exclude_nodes
+        WITH endpoint, path, node_list, rel_list, exclude_nodes,
+             [i IN range(0, size(rel_list)-1) |
+                CASE
+                  WHEN type(rel_list[i]) = 'CALL'
+                       AND node_list[i+1].method_name IS NOT NULL
+                  THEN node_list[i+1]
+
+                  WHEN type(rel_list[i]) IN ['IMPLEMENT', 'EXTEND', 'BRANCH']
+                  THEN node_list[i+1]
+
+                  WHEN type(rel_list[i]) = 'USE'
+                       AND node_list[i+1].method_name IS NULL
+                  THEN node_list[i+1]
+                  ELSE null
+                END
+             ] AS filtered_nodes
+        RETURN endpoint, path,
+               [node IN filtered_nodes WHERE node IS NOT NULL AND NOT node IN exclude_nodes] AS visited_nodes
+        ORDER BY path
+        """
+
+        params = {
+            'targets': [node.model_dump() for node in target_nodes],
+            'relationship_filter': relationship_filter,
+            'min_level': min_level,
+            'max_level': max_level
+        }
+
+        with self.db.driver.session() as session:
+            result = session.run(query, params)
+            return [
+                Neo4jTraversalResultDto(
+                    endpoint=_node_to_dto(record['endpoint']),
+                    path=_path_to_dto(record['path']),
+                    visited_nodes=[_node_to_dto(node) for node in record['visited_nodes']]
+                )
+                for record in result
+            ]
+
+    def get_left_target_nodes(
+            self,
+            target_nodes: List[Neo4jNodeDto],
+            max_level: int = 20,
+            min_level: int = 1  # at least one relation with other nodes
+    ) -> List[Neo4jTraversalResultDto]:
+
+        query = """
+        WITH $targets AS targets
+
+        MATCH (endpoint)
+        WHERE endpoint.project_id = $targets[0].project_id
+        AND any(t IN targets WHERE
+          t.class_name = endpoint.class_name AND
+          (
+            (t.method_name IS NULL AND endpoint.method_name IS NULL)
+            OR (t.method_name = endpoint.method_name)
+          )
+        )
+
+        CALL apoc.path.expandConfig(endpoint, {
+          relationshipFilter: '<CALL|IMPLEMENT>|EXTEND>|<USE',
+          minLevel: $min_level,
+          maxLevel: $max_level,
+          bfs: true,
+          uniqueness: "NODE_GLOBAL",
+          filterStartNode: false
+        }) YIELD path
+
+        WITH endpoint, path,
+             nodes(path) AS node_list,
+             relationships(path) AS rel_list
+
+        WITH endpoint, path, node_list, rel_list,
+             [i IN range(0, size(rel_list)-1) |
+                CASE
+                  WHEN type(rel_list[i]) = 'CALL'
+                       AND node_list[i+1].method_name IS NOT NULL
+                  THEN node_list[i+1]
+
+                  WHEN type(rel_list[i]) IN ['IMPLEMENT', 'EXTEND']
+                  THEN node_list[i+1]
+
+                  WHEN type(rel_list[i]) = 'USE'
+                       AND node_list[i+1].method_name IS NULL
+                  THEN node_list[i+1]
+                  ELSE null
+                END
+             ] AS filtered_nodes
+
+        RETURN endpoint, path,
+               [node IN filtered_nodes WHERE node IS NOT NULL] AS visited_nodes
+        ORDER BY path
+        """
+
+        params = {
+            'targets': [node.model_dump() for node in target_nodes],
+            'min_level': min_level,
+            'max_level': max_level
+        }
+
+        with self.db.driver.session() as session:
+            result = session.run(query, params)
+            return [
+                Neo4jTraversalResultDto(
+                    endpoint=_node_to_dto(record['endpoint']),
+                    path=_path_to_dto(record['path']),
+                    visited_nodes=[_node_to_dto(node) for node in record['visited_nodes']]
+                )
+                for record in result
+            ]
+    def get_nodes_by_condition(
+            self,
+            project_id: int,
+            branch: str,
+            pull_request_id: str = None,
+            class_name: str = None,
+            method_name: str = None
+    ) -> List[Neo4jNodeDto]:
+        properties = {
+            'project_id': str(project_id),
+            'branch': branch
+        }
+
+        if pull_request_id is not None:
+            properties['pull_request_id'] = pull_request_id
+
+        if class_name is not None:
+            properties['class_name'] = class_name
+
+        if method_name is not None:
+            properties['method_name'] = method_name
+
+        # Build property string for query
+        property_pairs = [f"{key}: '{value}'" for key, value in properties.items()]
+        property_string = ', '.join(property_pairs)
+
+        query = f"MATCH (n {{{property_string}}}) RETURN n"
+
+        try:
+            with self.db.driver.session() as session:
+                result = session.run(query)
+                nodes = [_node_to_dto(record['n']) for record in result]
+                logger.info(f"Retrieved {len(nodes)} nodes with query: {query}")
+                return nodes
+        except Exception as e:
+            logger.error(f"Failed to get nodes by condition: {str(e)}", exc_info=True)
+        raise
+
+    def get_config_nodes(self, project_id: int, branch: str) -> List[Neo4jNodeDto]:
+        """Get all configuration nodes for a project and branch"""
+        query = """
+            MATCH (n:ConfigurationNode {project_id: $project_id, branch: $branch})
+            RETURN n
+            ORDER BY n.class_name, n.method_name
+            """
+
+        try:
+            with self.db.driver.session() as session:
+                result = session.run(query, {
+                    'project_id': str(project_id),
+                    'branch': branch
+                })
+                nodes = [_node_to_dto(record['n']) for record in result]
+                logger.info(f"Retrieved {len(nodes)} config nodes for project {project_id}, branch {branch}")
+                return nodes
+        except Exception as e:
+            logger.error(f"Failed to get config nodes: {str(e)}")
+            return []
+
+    def save_changed_nodes_relationships(self, project_id: int, branch: str, changed_chunks: List[CodeChunk]) -> List[
+        Dict]:
+        """Save relationships between unchanged nodes and changed nodes before deletion"""
+        changed_node_keys = set()
+        for chunk in changed_chunks:
+            changed_node_keys.add(chunk.full_class_name)
+            for method in chunk.methods:
+                changed_node_keys.add(f"{chunk.full_class_name}.{method.name}")
+
+        query = """
+        MATCH (unchanged {project_id: $project_id, branch: $branch})-[r]->(changed {project_id: $project_id, branch: $branch})
+        WHERE unchanged.pull_request_id IS NULL AND changed.pull_request_id IS NULL
+        WITH unchanged, r, changed,
+             CASE WHEN changed.method_name IS NOT NULL 
+                  THEN changed.class_name + '.' + changed.method_name 
+                  ELSE changed.class_name END AS changed_key
+        WHERE changed_key IN $changed_keys
+        WITH unchanged, r, changed,
+             CASE WHEN unchanged.method_name IS NOT NULL 
+                  THEN unchanged.class_name + '.' + unchanged.method_name 
+                  ELSE unchanged.class_name END AS unchanged_key
+        WHERE NOT unchanged_key IN $changed_keys
+        RETURN 
+            unchanged.class_name AS unchanged_class,
+            unchanged.method_name AS unchanged_method,
+            type(r) AS rel_type,
+            changed.class_name AS changed_class,
+            changed.method_name AS changed_method
+        """
+
+        with self.db.driver.session() as session:
+            result = session.run(query, {
+                'project_id': str(project_id),
+                'branch': branch,
+                'changed_keys': list(changed_node_keys)
+            })
+            return [dict(record) for record in result]
+
+    def restore_changed_nodes_relationships(self, project_id: int, branch: str, saved_relationships: List[Dict],
+                                            changed_chunks: List[CodeChunk]):
+        """Restore relationships between unchanged nodes and newly created changed nodes"""
+        if not saved_relationships:
+            return
+
+        query = """
+        UNWIND $rels AS rel
+        MATCH (unchanged {project_id: $project_id, branch: $branch, class_name: rel.unchanged_class})
+        WHERE unchanged.pull_request_id IS NULL
+          AND (rel.unchanged_method IS NULL AND unchanged.method_name IS NULL 
+               OR unchanged.method_name = rel.unchanged_method)
+        MATCH (changed {project_id: $project_id, branch: $branch, class_name: rel.changed_class})
+        WHERE changed.pull_request_id IS NULL
+          AND (rel.changed_method IS NULL AND changed.method_name IS NULL 
+               OR changed.method_name = rel.changed_method)
+        CALL apoc.create.relationship(unchanged, rel.rel_type, {}, changed) YIELD rel AS created_rel
+        RETURN count(created_rel) AS restored_count
+        """
+
+        with self.db.driver.session() as session:
+            result = session.run(query, {
+                'project_id': str(project_id),
+                'branch': branch,
+                'rels': saved_relationships
+            })
+            record = result.single()
+            restored = record['restored_count'] if record else 0
+            logger.info(f"Restored {restored} relationships")
+
+    def remove_duplicate_relationships(self, project_id: int, branch: str):
+        """Remove duplicate relationships for a branch"""
+        query = """
+        MATCH (a {project_id: $project_id, branch: $branch})-[r]->(b {project_id: $project_id, branch: $branch})
+        WITH a, b, type(r) AS rel_type, collect(r) AS rels
+        WHERE size(rels) > 1
+        FOREACH (rel IN rels[1..] | DELETE rel)
+        RETURN count(rels[1..]) AS removed_count
+        """
+
+        with self.db.driver.session() as session:
+            result = session.run(query, {
+                'project_id': str(project_id),
+                'branch': branch
+            })
+            record = result.single()
+            removed = record['removed_count'] if record else 0
+            if removed > 0:
+                logger.info(f"Removed {removed} duplicate relationships")
