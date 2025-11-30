@@ -260,6 +260,32 @@ class JavaParsingConstants:
         "ConstrainValidator"
     }
 
+    FRAMEWORK_PACKAGES = {
+        # Java Core
+        "java.", "javax.", "jakarta.", "sun.", "com.sun.", "jdk.",
+        
+        # Spring
+        "org.springframework.",
+        
+        # Testing
+        "org.junit.", "org.mockito.", "org.assertj.", "org.hamcrest.",
+        
+        # Logging
+        "org.slf4j.", "org.apache.logging.", "ch.qos.logback.",
+        
+        # Common Libs
+        "org.apache.commons.", "com.google.guava.", "com.fasterxml.jackson.",
+        "org.hibernate.", "io.swagger.", "io.micrometer.",
+        "lombok.",
+    }
+
+    HANDLER_INTERFACES = {
+        # Interface -> Index of the generic type argument that represents the handled annotation
+        "javax.validation.ConstraintValidator": 0,
+        "jakarta.validation.ConstraintValidator": 0,
+        "org.springframework.validation.Validator": None, # Special handling might be needed
+    }
+
 
 class JavaCodeAnalyzerConstant:
     JAVA_CONFIG_EXTENSIONS = {

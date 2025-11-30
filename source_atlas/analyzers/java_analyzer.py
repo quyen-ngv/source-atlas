@@ -424,7 +424,9 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                 endpoint=tuple(endpoint),
                 type=method_type,
                 project_id=self.project_id,
-                branch=self.branch
+                branch=self.branch,
+                annotations=tuple(self._extract_annotations(method_node, content, file_path, import_mapping)),
+                handles_annotation=self._detect_method_annotation_handler(method_node, content, file_path, import_mapping)
             )
         except Exception as e:
             logger.debug(f"Error processing method node: {e}")
@@ -820,6 +822,208 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             return None
 
         return field
+
+    # ============================================================================
+    # SECTION 9: ANNOTATION PROCESSING
+    # ============================================================================
+
+    def _is_annotation_declaration(self, node: Node) -> bool:
+        return node.type == 'annotation_type_declaration'
+
+    def _extract_annotations(self, node: Node, content: str, file_path: str, import_mapping: Dict[str, str]) -> List[str]:
+        annotations = []
+        try:
+            captures = self._query_captures("""
+                (modifiers (annotation) @annotation)
+                (modifiers (marker_annotation) @annotation)
+            """, node)
+            
+            annotation_nodes = captures.get("annotation", [])
+            for ann_node in annotation_nodes:
+                # Extract name: @Validation(value="...") -> Validation
+                # marker_annotation: @Validation -> Validation
+                name_node = self._find_child_by_type(ann_node, 'identifier') or \
+                            self._find_child_by_type(ann_node, 'scoped_identifier')
+                
+                if not name_node:
+                    continue
+                    
+                raw_name = extract_content(name_node, content)
+                
+                # Resolve full qualified name (package.class) using LSP
+                full_name = self._resolve_annotation_full_name_with_lsp(name_node, file_path, raw_name, import_mapping)
+                if full_name:
+                    annotations.append(full_name)
+                    
+        except Exception as e:
+            logger.debug(f"Error extracting annotations: {e}")
+            
+        return annotations
+
+    def _resolve_annotation_full_name_with_lsp(self, name_node: Node, file_path: str, raw_name: str, import_mapping: Dict[str, str]) -> Optional[str]:
+        """
+        Resolve full qualified name of annotation (e.g., com.test.java.helo.annotation.AnyAnnotation).
+        Uses LSP to get the full package path.
+        """
+        # If already fully qualified, return as is
+        if '.' in raw_name:
+            return raw_name
+        
+        # Try import mapping first (fast)
+        if raw_name in import_mapping:
+            return import_mapping[raw_name]
+        
+        # Try LSP definition (most accurate)
+        if self._check_lsp_service():
+            try:
+                line, col = self._get_node_position(name_node)
+                lsp_results = self.lsp_service.request_definition(file_path, line, col)
+                
+                if lsp_results:
+                    # Normalize to list
+                    results = lsp_results if isinstance(lsp_results, list) else [lsp_results]
+                    
+                    for result in results:
+                        # Extract qualified name from LSP result (package.class format)
+                        qualified_name = self._extract_qualified_name_from_lsp_result(result)
+                        if qualified_name:
+                            return qualified_name
+                        
+            except Exception as e:
+                logger.debug(f"LSP annotation resolution failed: {e}")
+        
+        # Final fallback: return simple name if all else fails
+        return raw_name
+
+    def _detect_annotation_handler(self, class_node: Node, content: str, file_path: str, import_mapping: Dict[str, str], implements: List[str]) -> Optional[str]:
+        """
+        Detect if this class handles a specific annotation.
+        Checks if it implements a known handler interface (e.g. ConstraintValidator<Annotation, Type>).
+        """
+        try:
+            # Optimization: If we have LSP implements list, check if any handler interface is present.
+            # However, LSP list usually contains fully qualified names, while we need to find the *node* to get generics.
+            # So we still need to query the AST, but we can skip if we know for sure it's not there (if implements is populated).
+            # Note: implements is often empty for concrete classes in current logic, so we can't rely on it being exhaustive.
+            
+            # Query for generic interfaces
+            captures = self._query_captures("""
+                (super_interfaces 
+                    (type_list 
+                        (generic_type 
+                            (type_identifier) @interface 
+                            (type_arguments) @args
+                        )
+                    )
+                )
+            """, class_node)
+            
+            interfaces = captures.get("interface", [])
+            args_lists = captures.get("args", [])
+            
+            for i, interface_node in enumerate(interfaces):
+                interface_name = extract_content(interface_node, content)
+                resolved_interface = self._resolve_type_name(interface_name, interface_node, file_path, import_mapping)
+                
+                # Check if it's a known handler interface
+                if resolved_interface in JavaParsingConstants.HANDLER_INTERFACES:
+                    arg_index = JavaParsingConstants.HANDLER_INTERFACES[resolved_interface]
+                    if arg_index is not None and i < len(args_lists):
+                        # Extract the type argument at the specified index
+                        args_node = args_lists[i]
+                        # args_node children: "(", type1, ",", type2, ")"
+                        # We need to parse the type arguments carefully
+                        type_args = self._extract_type_arguments(args_node, content)
+                        if len(type_args) > arg_index:
+                            annotation_type = type_args[arg_index]
+                            # Resolve the annotation type
+                            # Note: type_args are strings, we might need the node for LSP. 
+                            # For now, try import mapping.
+                            # To do it properly with LSP, we'd need the node of the argument.
+                            # Let's try to find the node.
+                            arg_node = self._get_type_argument_node(args_node, arg_index)
+                            if arg_node:
+                                return self._resolve_type_name(annotation_type, arg_node, file_path, import_mapping)
+                                
+        except Exception as e:
+            logger.debug(f"Error detecting annotation handler: {e}")
+            
+        return None
+
+    def _detect_method_annotation_handler(self, method_node: Node, content: str, file_path: str, import_mapping: Dict[str, str]) -> Optional[str]:
+        """
+        Detect if this method handles an annotation (e.g. AOP).
+        Checks for @Around("@annotation(com.example.MyAnno)")
+        """
+        try:
+            captures = self._query_captures("""
+                (modifiers (annotation 
+                    name: (identifier) @anno_name 
+                    arguments: (annotation_argument_list (string_literal) @arg)
+                ))
+            """, method_node)
+            
+            anno_names = captures.get("anno_name", [])
+            args = captures.get("arg", [])
+            
+            for i, name_node in enumerate(anno_names):
+                name = extract_content(name_node, content)
+                if name in {"Around", "Before", "After"}: # Simple check, ideally resolve to org.aspectj.lang.annotation...
+                    if i < len(args):
+                        arg_content = extract_content(args[i], content).strip('"')
+                        # Regex to find @annotation(...)
+                        match = re.search(r'@annotation\(([^)]+)\)', arg_content)
+                        if match:
+                            annotation_ref = match.group(1)
+                            # This ref might be fully qualified or simple
+                            # If simple, we need to resolve it.
+                            # Since it's inside a string, we can't easily use LSP on the node.
+                            # We have to rely on import mapping.
+                            if '.' in annotation_ref:
+                                return annotation_ref
+                            else:
+                                return import_mapping.get(annotation_ref, annotation_ref)
+                                
+        except Exception as e:
+            logger.debug(f"Error detecting method annotation handler: {e}")
+            
+        return None
+
+    def _resolve_type_name(self, name: str, node: Node, file_path: str, import_mapping: Dict[str, str]) -> Optional[str]:
+        """Helper to resolve a type name using imports or LSP."""
+        if '.' in name:
+            return name
+            
+        # Try import mapping first (fast)
+        if name in import_mapping:
+            return import_mapping[name]
+            
+        # Try LSP (slow but accurate)
+        resolved = self._resolve_used_type_with_lsp(node, file_path, name)
+        if resolved:
+            return resolved
+            
+        # Fallback: check if it's in the same package (implicit) - hard to know without scanning package
+        # Or assume it's a builtin if not found? 
+        # For now return name (simple name) if resolution fails, or maybe None?
+        # Returning simple name is better than nothing.
+        return name
+
+    def _extract_type_arguments(self, args_node: Node, content: str) -> List[str]:
+        args = []
+        for child in args_node.children:
+            if child.type == 'type_identifier' or child.type == 'generic_type':
+                args.append(extract_content(child, content))
+        return args
+
+    def _get_type_argument_node(self, args_node: Node, index: int) -> Optional[Node]:
+        count = 0
+        for child in args_node.children:
+            if child.type in ('type_identifier', 'generic_type', 'scoped_type_identifier'):
+                if count == index:
+                    return child
+                count += 1
+        return None
 
     def _resolve_class_path_with_hover(self, result: dict, file_path: str) -> Optional[str]:
         try:

@@ -59,6 +59,8 @@ class Method:
     type: ChunkType
     project_id: str
     branch: str
+    handles_annotation: Optional[str] = None
+    annotations: Tuple[str, ...] = field(default_factory=tuple)
 
     def to_dict(self):
         return {
@@ -72,7 +74,9 @@ class Method:
             "endpoint": self.endpoint,
             "type": self.type,
             "project_id": self.project_id,
-            "branch": str
+            "branch": self.branch,
+            "handles_annotation": self.handles_annotation,
+            "annotations": list(self.annotations)
         }
 
 @dataclass
@@ -91,6 +95,9 @@ class CodeChunk:
     used_types: Tuple[str,...]
     is_nested: bool = False
     type: ChunkType = ChunkType.REGULAR
+    is_annotation: bool = False
+    handles_annotation: Optional[str] = None
+    annotations: Tuple[str, ...] = field(default_factory=tuple)
 
     def to_dict(self) -> Dict:
         """Convert CodeChunk to a JSON-serializable dictionary."""
@@ -120,7 +127,10 @@ class CodeChunk:
             "parent_class": self.parent_class,
             "type": self.type,
             "project_id": self.project_id,
-            "branch": self.branch
+            "branch": self.branch,
+            "is_annotation": self.is_annotation,
+            "handles_annotation": self.handles_annotation,
+            "annotations": list(self.annotations)
         }
 
     @classmethod

@@ -126,6 +126,11 @@ class BaseCodeAnalyzer(ABC):
 
                 used_types = self.extract_class_use_types(class_node, content, file_path)
 
+                # Annotation processing
+                is_annotation = self._is_annotation_declaration(class_node)
+                annotations = self._extract_annotations(class_node, content, file_path, context.import_mapping)
+                handles_annotation = self._detect_annotation_handler(class_node, content, file_path, context.import_mapping, implements)
+
                 # Compute AST hash for the class content
                 class_content = content[class_node.start_byte:class_node.end_byte]
                 ast_hash = self.compute_ast_hash(class_content)
@@ -144,7 +149,10 @@ class BaseCodeAnalyzer(ABC):
                     type=ChunkType.CONFIGURATION if context.is_config else ChunkType.REGULAR,
                     project_id=self.project_id,
                     branch=self.branch,
-                    used_types=used_types
+                    used_types=used_types,
+                    is_annotation=is_annotation,
+                    handles_annotation=handles_annotation,
+                    annotations=tuple(annotations)
                 )
         except Exception as e:
             logger.error(f"Error parsing class node: {e}")
@@ -304,6 +312,15 @@ class BaseCodeAnalyzer(ABC):
     @abstractmethod
     def _remove_source_prefix(self, path: str) -> str:
         pass
+
+    def _extract_annotations(self, node: Node, content: str, file_path: str, import_mapping: Dict[str, str]) -> List[str]:
+        return []
+
+    def _detect_annotation_handler(self, node: Node, content: str, file_path: str, import_mapping: Dict[str, str], implements: List[str]) -> Optional[str]:
+        return None
+
+    def _is_annotation_declaration(self, node: Node) -> bool:
+        return False
 
     # Concrete methods for reusability across language analyzers
 
