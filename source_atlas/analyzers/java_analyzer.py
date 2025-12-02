@@ -4,6 +4,7 @@ from abc import ABC
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict
+from functools import lru_cache
 
 from loguru import logger
 from tree_sitter import Language, Parser, Node, Query, QueryCursor
@@ -49,6 +50,17 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         
         # Performance: Cache compiled Query objects
         self._query_cache = {}
+        
+        # Performance: Cache file contents to avoid redundant I/O
+        # Using instance method with lru_cache via wrapper
+        @lru_cache(maxsize=500)
+        def _cached_read_file(file_path_str: str) -> Optional[str]:
+            try:
+                return Path(file_path_str).read_text(encoding='utf-8')
+            except Exception as e:
+                logger.debug(f"Error reading file {file_path_str}: {e}")
+                return None
+        self._cached_read_file = _cached_read_file
 
     def __enter__(self):
         self._server_ctx = self.lsp_service.start_server()
@@ -243,9 +255,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             for capture_name, nodes in captures.items():
                 if capture_name in {"field_type", "generic_type"}:
                     for node in nodes:
-                        type_text = extract_content(node, content)
-                        if type_text in JavaBuiltinPackages.JAVA_PRIMITIVES:
-                            continue
                         resolved_type = self._resolve_used_type_with_lsp(node, file_path, type_text)
                         if resolved_type:
                             used_types.add(resolved_type)
@@ -504,7 +513,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         name_node = method_nodes[index] if index < len(method_nodes) else None
         method_name = normalize_whitespace(extract_content(name_node, content))
         if method_name and method_name not in self.methods_cache:
-            logger.info(f"Method {method_name} not in methods cache")
+            # logger.info(f"Method {method_name} not in methods cache")
             return None
         try:
             args_node = args_nodes[index] if index < len(args_nodes) else None
@@ -577,9 +586,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                     "generic_type", "array_element_type", "first_scoped"
                 }:
                     for node in nodes:
-                        text = extract_content(node, content)
-                        if text in JavaBuiltinPackages.JAVA_PRIMITIVES:
-                            continue
                         variable_ref = import_mapping.get(text, self._resolve_used_type_with_lsp(node, file_path, text))
                         if variable_ref:
                             used_types.add(variable_ref)
@@ -672,14 +678,12 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             return None
 
         def processor(result):
-            qualified_name = self._extract_method_signature_from_lsp(result)
+            qualified_name = self._extract_qualified_name_from_lsp_result(result)  # ✅ ĐÚNG
             if qualified_name:
                 return self._adjust_qualified_name_for_type(qualified_name, type_name)
             return None
         
-        # Use same pattern as other LSP processors
         results = self._normalize_and_process_lsp_results(lsp_results, processor)
-        # Return first valid result
         return results[0] if results else None
 
     # ---------- 8.2 LSP Extraction Helpers ----------
@@ -694,6 +698,8 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             file_path, start_line, start_char = file_info
             method_node = self._find_method_from_file(file_path, start_line, start_char)
             
+            # If no method found, it might be a class definition (e.g., Lombok @Data)
+            # Return None silently - this is expected for type resolution
             if not method_node:
                 return None
             
@@ -712,12 +718,13 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         """Extract file path and position from LSP result."""
         file_path = lsp_result.get('absolutePath') or lsp_result.get('uri', '').replace('file:///', '')
         if not file_path:
-            logger.debug("No file path found in LSP result")
+            return None
+        file_path_check = self._get_absolute_path(file_path)
+        if not file_path_check:
             return None
 
         range_info = lsp_result.get('range')
         if not range_info:
-            logger.debug("No range info found in LSP result")
             return None
 
         start_line = range_info['start']['line']
@@ -775,6 +782,9 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
 
     def _resolve_used_type_with_lsp(self, node: Node, file_path: str, type_name: str) -> Optional[str]:
         try:
+            type_text = extract_content(node, content)
+            if type_text in JavaBuiltinPackages.JAVA_PRIMITIVES:
+                return type_text
             line, col = self._get_node_position(node)
             lsp_results = self.lsp_service.request_definition(file_path, line, col)
             return self._resolve_lsp_type_response(lsp_results, type_name)
@@ -1009,10 +1019,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         if resolved:
             return resolved
             
-        # Fallback: check if it's in the same package (implicit) - hard to know without scanning package
-        # Or assume it's a builtin if not found? 
-        # For now return name (simple name) if resolution fails, or maybe None?
-        # Returning simple name is better than nothing.
         return name
 
     def _extract_type_arguments(self, args_node: Node, content: str) -> List[str]:
@@ -1144,8 +1150,4 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
 
     def _read_file_content(self, file_path: str) -> Optional[str]:
         """Read file content with UTF-8 encoding and error handling."""
-        try:
-            return Path(file_path).read_text(encoding='utf-8')
-        except Exception as e:
-            logger.debug(f"Error reading file {file_path}: {e}")
-            return None
+        return self._cached_read_file(file_path)

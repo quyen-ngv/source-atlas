@@ -154,6 +154,54 @@ class JavaBuiltinPackages:
 
         # --- Miscellaneous ---
         "UUID"
+
+        "?", "T", "E", "K", "V", "N", "S", "I", "O", "P", "Q", "R", "U", "X", "Y", "Z",
+
+        "List<String>", "Set<String>", "Map<String, String>", "Queue<String>", "Deque<String>",
+        "List<Integer>", "Set<Integer>", "Map<Integer, Integer>", "Queue<Integer>", "Deque<Integer>",
+        "List<Double>", "Set<Double>", "Map<Double, Double>", "Queue<Double>", "Deque<Double>",
+        "List<Float>", "Set<Float>", "Map<Float, Float>", "Queue<Float>", "Deque<Float>",
+        "List<Long>", "Set<Long>", "Map<Long, Long>", "Queue<Long>", "Deque<Long>",
+        "List<Short>", "Set<Short>", "Map<Short, Short>", "Queue<Short>", "Deque<Short>",
+        "List<Byte>", "Set<Byte>", "Map<Byte, Byte>", "Queue<Byte>", "Deque<Byte>",
+        "List<Character>", "Set<Character>", "Map<Character, Character>", "Queue<Character>", "Deque<Character>",
+        "List<Boolean>", "Set<Boolean>", "Map<Boolean, Boolean>", "Queue<Boolean>", "Deque<Boolean>",
+        "List<Void>", "Set<Void>", "Map<Void, Void>", "Queue<Void>", "Deque<Void>",
+
+        "List<T>", "Set<T>", "Map<T, T>", "Queue<T>", "Deque<T>",
+
+        "List<E>", "Set<E>", "Map<E, E>", "Queue<E>", "Deque<E>",
+
+        "List<K>", "Set<K>", "Map<K, K>", "Queue<K>", "Deque<K>",
+
+        "List<V>", "Set<V>", "Map<V, V>", "Queue<V>", "Deque<V>",
+
+        "List<N>", "Set<N>", "Map<N, N>", "Queue<N>", "Deque<N>",
+
+        "List<S>", "Set<S>", "Map<S, S>", "Queue<S>", "Deque<S>",
+
+        "List<I>", "Set<I>", "Map<I, I>", "Queue<I>", "Deque<I>",
+
+        "List<O>", "Set<O>", "Map<O, O>", "Queue<O>", "Deque<O>",
+
+        "List<P>", "Set<P>", "Map<P, P>", "Queue<P>", "Deque<P>",
+
+        "List<Q>", "Set<Q>", "Map<Q, Q>", "Queue<Q>", "Deque<Q>",
+
+        "List<R>", "Set<R>", "Map<R, R>", "Queue<R>", "Deque<R>",
+
+        "List<U>", "Set<U>", "Map<U, U>", "Queue<U>", "Deque<U>",
+
+        "List<X>", "Set<X>", "Map<X, X>", "Queue<X>", "Deque<X>",
+
+        "List<Y>", "Set<Y>", "Map<Y, Y>", "Queue<Y>", "Deque<Y>",
+
+        "List<Z>", "Set<Z>", "Map<Z, Z>", "Queue<Z>", "Deque<Z>",
+
+        "int[]", "double[]", "float[]", "long[]", "short[]", "byte[]", "char[]", "boolean[]", "void[]", 
+        "String[]", "Integer[]", "Double[]", "Float[]", "Long[]", "Short[]", "Byte[]", "Character[]", "Boolean[]", "Void[]", 
+
+        "Class<T>", "Class<E>", "Class<K>", "Class<V>", "Class<N>", "Class<S>", "Class<I>", "Class<O>", "Class<P>", "Class<Q>", "Class<R>", "Class<U>", "Class<X>", "Class<Y>", "Class<Z>",
     }
 
 
