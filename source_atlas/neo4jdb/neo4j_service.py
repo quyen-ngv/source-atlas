@@ -147,9 +147,70 @@ class Neo4jService:
 
     def generate_cypher_from_chunks(self, chunks: List[CodeChunk], batch_size: int = 100,
                                     main_branch: Optional[str] = None,
-                                    base_branch: Optional[str] = None, pull_request_id: Optional[str] = None) -> \
+                                    base_branch: Optional[str] = None, pull_request_id: Optional[str] = None,
+                                    version: Optional[str] = None,
+                                    base_version: Optional[str] = None,
+                                    deleted_nodes: Optional[List[Dict]] = None) -> \
             List[Tuple[str, Dict]]:
+        """
+        Generate Cypher queries from code chunks with branch-aware support.
+        
+        New parameters for branch-aware design:
+            version: Current commit hash/version for this import
+            base_version: Base branch version when feature branch was created
+            deleted_nodes: List of deleted node info (for creating tombstones)
+                          Each dict should have: {'class_name': str, 'method_name': str or None, 'ast_hash': str}
+        """
         all_queries = []
+        
+        # Step 1: Create tombstone nodes for deleted entities (if any)
+        if deleted_nodes:
+            tombstone_data = []
+            for deleted in deleted_nodes:
+                # Determine node type
+                if deleted.get('method_name'):
+                    node_type = deleted.get('node_type', 'MethodNode')
+                else:
+                    node_type = deleted.get('node_type', 'ClassNode')
+                
+                tombstone = {
+                    'node_type': node_type,
+                    'class_name': deleted['class_name'],
+                    'method_name': deleted.get('method_name'),
+                    'file_path': deleted.get('file_path', ''),
+                    'content': f"[DELETED] {deleted['class_name']}{('.' + deleted.get('method_name')) if deleted.get('method_name') else ''}",
+                    'ast_hash': deleted.get('ast_hash', ''),
+                    'project_id': str(deleted.get('project_id', chunks[0].project_id if chunks else '')),
+                    'branch': deleted.get('branch', chunks[0].branch if chunks else ''),
+                    'version': version or 'unknown',
+                    'status': 'DELETED',
+                    'base_branch': base_branch,
+                    'base_version': base_version
+                }
+                tombstone_data.append(tombstone)
+            
+            # Create tombstone nodes
+            if tombstone_data:
+                tombstone_query = """
+                UNWIND $tombstones AS tomb
+                CALL apoc.create.node([tomb.node_type], {
+                    class_name: tomb.class_name,
+                    method_name: tomb.method_name,
+                    file_path: tomb.file_path,
+                    content: tomb.content,
+                    ast_hash: tomb.ast_hash,
+                    project_id: tomb.project_id,
+                    branch: tomb.branch,
+                    version: tomb.version,
+                    status: tomb.status,
+                    base_branch: tomb.base_branch,
+                    base_version: tomb.base_version
+                }) YIELD node
+                RETURN count(node) AS created_count
+                """
+                all_queries.append((tombstone_query, {'tombstones': tombstone_data}))
+        
+        # Step 2: Process regular nodes (classes and methods)
         for i in range(0, len(chunks), batch_size):
             batch = chunks[i:i + batch_size]
             node_data = []
@@ -168,6 +229,14 @@ class Neo4jService:
                     'project_id': str(chunk.project_id),
                     'branch': chunk.branch
                 })
+                
+                # Determine class node status
+                class_status = 'ACTIVE'
+                if base_branch and base_version:
+                    # For feature branches, status could be MODIFIED if ast_hash changed
+                    # This would require comparing with base, but we'll default to ACTIVE
+                    # Caller can pass pre-computed status if needed
+                    class_status = getattr(chunk, 'status', 'ACTIVE')
 
                 node_data_item = {
                     'node_type': node_type,
@@ -176,7 +245,11 @@ class Neo4jService:
                     'content': content,
                     'ast_hash': chunk.ast_hash,
                     'project_id': str(chunk.project_id),
-                    'branch': chunk.branch
+                    'branch': chunk.branch,
+                    'version': version or 'unknown',
+                    'status': class_status,
+                    'base_branch': base_branch,
+                    'base_version': base_version
                 }
 
                 # Add pull_request_id if branch is not main_branch
@@ -206,6 +279,11 @@ class Neo4jService:
                         'project_id': str(method.project_id),
                         'branch': method.branch
                     })
+                    
+                    # Determine method status
+                    method_status = 'ACTIVE'
+                    if base_branch and base_version:
+                        method_status = getattr(method, 'status', 'ACTIVE')
 
                     method_node_data_item = {
                         'node_type': method_node_type,
@@ -216,6 +294,10 @@ class Neo4jService:
                         'ast_hash': method.ast_hash,
                         'project_id': str(method.project_id),
                         'branch': method.branch,
+                        'version': version or 'unknown',
+                        'status': method_status,
+                        'base_branch': base_branch,
+                        'base_version': base_version,
                         'endpoint': str(method.endpoint) if method.endpoint else None
                     }
 
@@ -247,7 +329,7 @@ class Neo4jService:
                     all_queries.append((delete_method_query, {'nodes': method_nodes_to_delete}))
 
 
-            # Create new nodes with smart duplicate checking
+            # Create new nodes with branch-aware properties
             if main_branch and base_branch:
                 batch_query = """
                 UNWIND $nodes AS node
@@ -279,7 +361,7 @@ class Neo4jService:
                     // ✅ TH3: Node hoàn toàn mới - chưa tồn tại ở cả base và main
                     (base_node IS NULL AND main_node IS NULL)
                 
-                // Tạo node mới
+                // Tạo node mới với branch-aware properties
                 CALL apoc.create.node([node.node_type], {
                     file_path: node.file_path,
                     class_name: node.class_name,
@@ -288,6 +370,10 @@ class Neo4jService:
                     ast_hash: node.ast_hash,
                     project_id: node.project_id,
                     branch: node.branch,
+                    version: node.version,
+                    status: node.status,
+                    base_branch: node.base_branch,
+                    base_version: node.base_version,
                     pull_request_id: CASE WHEN node.pull_request_id IS NOT NULL THEN node.pull_request_id ELSE null END,
                     endpoint: CASE WHEN node.endpoint IS NOT NULL THEN node.endpoint ELSE null END
                 }) YIELD node AS created_node
@@ -314,6 +400,10 @@ class Neo4jService:
                     ast_hash: node.ast_hash,
                     project_id: node.project_id,
                     branch: node.branch,
+                    version: node.version,
+                    status: node.status,
+                    base_branch: node.base_branch,
+                    base_version: node.base_version,
                     pull_request_id: CASE WHEN node.pull_request_id IS NOT NULL THEN node.pull_request_id ELSE null END,
                     endpoint: CASE WHEN node.endpoint IS NOT NULL THEN node.endpoint ELSE null END
                 }) YIELD node AS created_node
@@ -331,6 +421,10 @@ class Neo4jService:
                     ast_hash: node.ast_hash,
                     project_id: node.project_id,
                     branch: node.branch,
+                    version: node.version,
+                    status: node.status,
+                    base_branch: node.base_branch,
+                    base_version: node.base_version,
                     pull_request_id: CASE WHEN node.pull_request_id IS NOT NULL THEN node.pull_request_id ELSE null END,
                     endpoint: CASE WHEN node.endpoint IS NOT NULL THEN node.endpoint ELSE null END
                 }) YIELD node AS created_node
@@ -377,7 +471,9 @@ class Neo4jService:
                                 'source_method': method_name,
                                 'target_method': call_name,
                                 'project_id': chunk_project_id,
-                                'branch': chunk_branch
+                                'branch': chunk_branch,
+                                'version': version or 'unknown',
+                                'status': 'ACTIVE'
                             })
                     for inheritance in method.inheritance_info:
                         if inheritance:
@@ -386,7 +482,9 @@ class Neo4jService:
                                 'target_class': chunk_class_name,
                                 'target_method': method_name,
                                 'project_id': chunk_project_id,
-                                'branch': chunk_branch
+                                'branch': chunk_branch,
+                                'version': version or 'unknown',
+                                'status': 'ACTIVE'
                             })
                     for used_type in method.used_types:
                         if used_type:
@@ -395,7 +493,9 @@ class Neo4jService:
                                 'source_method': method_name,
                                 'target_class': used_type,
                                 'project_id': chunk_project_id,
-                                'branch': chunk_branch
+                                'branch': chunk_branch,
+                                'version': version or 'unknown',
+                                'status': 'ACTIVE'
                             })
                     
                     # Add USE relationships for method annotations
@@ -1042,14 +1142,16 @@ class Neo4jService:
                             raise e
 
     def import_code_chunks(self, chunks: List[CodeChunk], batch_size: int = 500, main_branch: Optional[str] = None,
-                           base_branch: Optional[str] = None, pull_request_id: Optional[str] = None):
+                           base_branch: Optional[str] = None, pull_request_id: Optional[str] = None,
+                           version: Optional[str] = None, base_version: Optional[str] = None,
+                           deleted_nodes: Optional[List[Dict]] = None):
         """
-        Import code chunks with relationship preservation.
+        Import code chunks with relationship preservation and branch-aware support.
         
         This method ensures that relationships between unchanged nodes and changed nodes
         are preserved during the update process by:
         1. Saving relationships from unchanged → changed nodes before deletion
-        2. Deleting old nodes and creating new nodes
+        2. Deleting old nodes and creating new nodes (with branch-aware properties)
         3. Restoring relationships from unchanged → new changed nodes
         4. Creating new relationships from chunk data
         5. Cleaning up duplicate relationships
@@ -1060,6 +1162,9 @@ class Neo4jService:
             main_branch: Main branch name for comparison
             base_branch: Base branch name for comparison (takes priority over main_branch)
             pull_request_id: Pull request ID if importing for a PR
+            version: Current version/commit hash for this import
+            base_version: Base version when feature branch was created
+            deleted_nodes: List of deleted node info (for tombstone creation)
         """
         if not chunks:
             logger.warning("No chunks to import")
@@ -1092,7 +1197,10 @@ class Neo4jService:
             main_branch=main_branch,
             base_branch=base_branch,
             batch_size=batch_size,
-            pull_request_id=pull_request_id
+            pull_request_id=pull_request_id,
+            version=version,
+            base_version=base_version,
+            deleted_nodes=deleted_nodes
         )
         
         # Step 4: Restore relationships from unchanged → new changed nodes
@@ -1114,7 +1222,8 @@ class Neo4jService:
             current_branch=branch,
             main_branch=main_branch,
             base_branch=base_branch,
-            batch_size=batch_size
+            batch_size=batch_size,
+            version=version
         )
         
         # Step 6: Clean up duplicate relationships
@@ -1129,9 +1238,12 @@ class Neo4jService:
     def import_code_chunks_simple(self, chunks: List[CodeChunk], batch_size: int = 500, 
                                   main_branch: Optional[str] = None,
                                   base_branch: Optional[str] = None, 
-                                  pull_request_id: Optional[str] = None):
+                                  pull_request_id: Optional[str] = None,
+                                  version: Optional[str] = None,
+                                  base_version: Optional[str] = None,
+                                  deleted_nodes: Optional[List[Dict]] = None):
         """
-        Simple import without relationship preservation.
+        Simple import without relationship preservation, with branch-aware support.
         
         Use this method for:
         - Initial import of a new branch
@@ -1146,6 +1258,9 @@ class Neo4jService:
             main_branch: Main branch name for comparison
             base_branch: Base branch name for comparison (takes priority over main_branch)
             pull_request_id: Pull request ID if importing for a PR
+            version: Current version/commit hash for this import
+            base_version: Base version when feature branch was created
+            deleted_nodes: List of deleted node info (for tombstone creation)
         """
         if not chunks:
             logger.warning("No chunks to import")
@@ -1153,14 +1268,17 @@ class Neo4jService:
             
         self.create_indexes()
         queries_with_params = self.generate_cypher_from_chunks(
-            chunks, batch_size, main_branch, base_branch, pull_request_id
+            chunks, batch_size, main_branch, base_branch, pull_request_id,
+            version=version, base_version=base_version, deleted_nodes=deleted_nodes
         )
         self.execute_queries_batch(queries_with_params)
         logger.info(f"✅ Imported {len(chunks)} chunks (simple mode)")
 
 
     def import_changed_chunk_nodes_only(self, chunks: List[CodeChunk], main_branch: str, base_branch: str = None,
-                                        batch_size: int = 500, pull_request_id: str = None):
+                                        batch_size: int = 500, pull_request_id: str = None,
+                                        version: str = None, base_version: str = None,
+                                        deleted_nodes: List[Dict] = None):
 
         self.create_indexes()
 
@@ -1170,7 +1288,10 @@ class Neo4jService:
             batch_size,
             main_branch=main_branch,  # Pass main_branch for ast_hash comparison
             base_branch=base_branch,  # Pass base_branch for ast_hash comparison (priority)
-            pull_request_id=pull_request_id
+            pull_request_id=pull_request_id,
+            version=version,  # Pass version for branch-aware nodes
+            base_version=base_version,
+            deleted_nodes=deleted_nodes  # Pass deleted nodes for tombstone creation
         )
 
         # Filter to only include node creation queries (not relationship queries)
@@ -1185,14 +1306,15 @@ class Neo4jService:
             f"Imported changed chunk nodes with different ast_hash from main branch (relationships will be created later)")
 
     def import_changed_chunk_relationships(self, chunks: List[CodeChunk], current_branch: str, main_branch: str = None,
-                                           base_branch: str = None, batch_size: int = 500):
+                                           base_branch: str = None, batch_size: int = 500, version: str = None):
 
         queries_with_params = self.generate_cypher_from_chunks(
             chunks,
             batch_size,
             main_branch=main_branch,
             base_branch=base_branch,
-            pull_request_id=None
+            pull_request_id=None,
+            version=version  # Pass version for branch-aware relationships
         )
 
         # Filter to only include relationship queries
