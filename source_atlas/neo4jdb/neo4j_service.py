@@ -717,7 +717,7 @@ class Neo4jService:
             main_branch: str,
             current_branch: str,
             changed_chunks: List[CodeChunk],
-            batch_size: int = 100,
+            batch_size: int = 500,
             rel_batch_size: int = 500
     ):
         """

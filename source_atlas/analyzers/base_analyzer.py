@@ -3,7 +3,7 @@ import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Dict, Callable
+from typing import List, Optional, Dict, Callable, Any
 
 from loguru import logger
 from tree_sitter import Language, Parser, Node
@@ -25,6 +25,10 @@ class ClassParsingContext:
     methods: List[str]
     import_mapping: Dict[str, str] = None
     parent_class: Optional[str] = None
+    # Performance optimization: cache parsed tree, class count, and file path
+    class_count: int = 1
+    parsed_tree: Optional[Any] = None
+    file_path: Optional[str] = None
 
 
 class BaseCodeAnalyzer(ABC):
@@ -90,7 +94,17 @@ class BaseCodeAnalyzer(ABC):
 
             content = self.comment_remover.remove_comments(content)
 
-            tree = self.parser.parse(bytes(content, 'utf8'))
+            # Check if we have a cached tree for this file
+            tree = None
+            for context in self.cached_nodes.values():
+                if context.file_path == str(file_path) and context.parsed_tree is not None:
+                    tree = context.parsed_tree
+                    break
+            
+            # Parse tree only if not found in cache
+            if tree is None:
+                tree = self.parser.parse(bytes(content, 'utf8'))
+            
             class_nodes = self._extract_all_class_nodes(tree.root_node)
 
             chunks = []
@@ -309,7 +323,7 @@ class BaseCodeAnalyzer(ABC):
         pass
 
     @abstractmethod
-    def _remove_source_prefix(self, path: str) -> str:
+    def _strip_source_directory_prefix(self, path: str) -> str:
         pass
 
     def _extract_annotations(self, node: Node, content: str, file_path: str, import_mapping: Dict[str, str]) -> List[str]:
@@ -371,7 +385,7 @@ class BaseCodeAnalyzer(ABC):
         except ValueError:
             return None
 
-    def _strip_root(self, absolute_path: str) -> str:
+    def _convert_absolute_to_relative_package_path(self, absolute_path: str) -> str:
         try:
             relative = self._get_absolute_path(absolute_path)
             if not relative:
@@ -384,10 +398,10 @@ class BaseCodeAnalyzer(ABC):
                 result = result[:-5]
 
             # Remove language-specific prefix
-            result = self._remove_source_prefix(result)
+            result = self._strip_source_directory_prefix(result)
             return result
         except Exception as e:
-            logger.debug(f"Error in _strip_root: {e}")
+            logger.debug(f"Error in _convert_absolute_to_relative_package_path: {e}")
             return ""
 
     def _extract_qualified_name_from_lsp_result(self, lsp_result: dict) -> str:
@@ -403,7 +417,7 @@ class BaseCodeAnalyzer(ABC):
                 return ""
             
             absolute_path = absolute_path.replace('\\\\', '.')
-            return self._strip_root(absolute_path)
+            return self._convert_absolute_to_relative_package_path(absolute_path)
         except Exception as e:
             logger.debug(f"Failed to extract qualified name from lsp result: {e}")
             return ""
@@ -460,9 +474,17 @@ class BaseCodeAnalyzer(ABC):
 
         tree = self.parser.parse(bytes(content, 'utf8'))
         class_nodes = self._extract_all_class_nodes(tree.root_node)
+        
         chunks = {}
+        class_count = len(class_nodes)
+        file_path_str = str(file_path)
+        
         for class_node in class_nodes:
             context = self._build_class_context(class_node, content, tree.root_node)
             if context:
+                # Store tree, class count, and file path for performance optimization
+                context.parsed_tree = tree
+                context.class_count = class_count
+                context.file_path = file_path_str
                 chunks[context.full_class_name] = context
         return chunks
