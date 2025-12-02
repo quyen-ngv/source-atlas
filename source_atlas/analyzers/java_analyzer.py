@@ -912,16 +912,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         return raw_name
 
     def _detect_annotation_handler(self, class_node: Node, content: str, file_path: str, import_mapping: Dict[str, str], implements: List[str]) -> Optional[str]:
-        """
-        Detect if this class handles a specific annotation.
-        Checks if it implements a known handler interface (e.g. ConstraintValidator<Annotation, Type>).
-        """
         try:
-            # Optimization: If we have LSP implements list, check if any handler interface is present.
-            # However, LSP list usually contains fully qualified names, while we need to find the *node* to get generics.
-            # So we still need to query the AST, but we can skip if we know for sure it's not there (if implements is populated).
-            # Note: implements is often empty for concrete classes in current logic, so we can't rely on it being exhaustive.
-            
             # Query for generic interfaces
             captures = self._query_captures("""
                 (super_interfaces 
@@ -952,11 +943,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                         type_args = self._extract_type_arguments(args_node, content)
                         if len(type_args) > arg_index:
                             annotation_type = type_args[arg_index]
-                            # Resolve the annotation type
-                            # Note: type_args are strings, we might need the node for LSP. 
-                            # For now, try import mapping.
-                            # To do it properly with LSP, we'd need the node of the argument.
-                            # Let's try to find the node.
                             arg_node = self._get_type_argument_node(args_node, arg_index)
                             if arg_node:
                                 return self._resolve_type_name(annotation_type, arg_node, file_path, import_mapping)
@@ -991,10 +977,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                         match = re.search(r'@annotation\(([^)]+)\)', arg_content)
                         if match:
                             annotation_ref = match.group(1)
-                            # This ref might be fully qualified or simple
-                            # If simple, we need to resolve it.
-                            # Since it's inside a string, we can't easily use LSP on the node.
-                            # We have to rely on import mapping.
                             if '.' in annotation_ref:
                                 return annotation_ref
                             else:
