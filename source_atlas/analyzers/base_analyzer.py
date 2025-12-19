@@ -25,7 +25,6 @@ class ClassParsingContext:
     methods: List[str]
     import_mapping: Dict[str, str] = None
     parent_class: Optional[str] = None
-    # Performance optimization: cache parsed tree, class count, and file path
     class_count: int = 1
     parsed_tree: Optional[Any] = None
     file_path: Optional[str] = None
@@ -128,8 +127,6 @@ class BaseCodeAnalyzer(ABC):
                 if not context:
                     return None
 
-                # Lazy evaluation: only compute implements if class is interface/abstract
-                # This avoids expensive LSP calls for regular classes
                 implements = []
                 if self._should_check_implements(class_node, content):
                     implements = self._extract_implements_with_lsp(class_node, file_path, content)
@@ -139,14 +136,12 @@ class BaseCodeAnalyzer(ABC):
                     context.full_class_name, file_path, context.import_mapping
                 )
 
-                used_types = self.extract_class_use_types(class_node, content, file_path)
+                used_types = self.extract_class_use_types(class_node, content, file_path, context.import_mapping)
 
-                # Annotation processing
                 is_annotation = self._is_annotation_declaration(class_node)
-                # annotations = self._extract_annotations(class_node, content, file_path, context.import_mapping)
-                # handles_annotation = self._detect_annotation_handler(class_node, content, file_path, context.import_mapping, implements)
+                annotations = self._extract_annotations(class_node, content, file_path, context.import_mapping)
+                handles_annotation = self._detect_annotation_handler(class_node, content, file_path, context.import_mapping, implements)
 
-                # Compute AST hash for the class content
                 class_content = content[class_node.start_byte:class_node.end_byte]
                 ast_hash = self.compute_ast_hash(class_content)
 
@@ -315,7 +310,7 @@ class BaseCodeAnalyzer(ABC):
 
 
     @abstractmethod
-    def extract_class_use_types(self, class_node, content, file_path):
+    def extract_class_use_types(self, class_node, content, file_path, import_mapping: dict):
         pass
 
     @abstractmethod

@@ -2,6 +2,11 @@ from typing import Set
 
 class JavaBuiltinPackages:
     # Core Java packages
+    JAVA_EXCLUDE_TYPE_FORMAT = {
+        "List<", "Map<", "Set<", "Queue<", "Deque<", "Collections<", "Iterable<","Iterator<","Stream<","Optional<",
+        "ArrayList<","LinkedList<","HashSet<","TreeSet<","HashMap<","TreeMap","HashTable<","Vector<","Collections<",
+        "Arrays<","Objects<"
+    }
     JAVA_CORE_PACKAGES = {
         'java.lang',
         'java.util',

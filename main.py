@@ -12,10 +12,10 @@ def main():
     start_time = time.perf_counter()
 
     args = {
-        "project_path": "F:\\01_projects\\onestudy",
-        # "project_path": "F:\\01_projects\\onestudy",
-        "project_id": "onestudy",
-        "output": "./output/onestudy",
+        "project_path": "F:\\01_projects\\spring-demo",
+        # "project_path": "F:\\01_projects\\spring-demo",
+        "project_id": "spring-demo",
+        "output": "./output/spring-demo",
         "language": "java",
         "remove_comments": True,
         "verbose": True

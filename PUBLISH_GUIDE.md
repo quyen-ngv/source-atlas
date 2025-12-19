@@ -1,75 +1,75 @@
-# Hướng Dẫn Test và Publish Package
+# Package Testing and Publishing Guide
 
-## ✅ Bước 1: Verify Package (Đã làm)
+## ✅ Step 1: Verify Package (Completed)
 
 ```bash
 twine check dist/*
 ```
 
-Kết quả mong đợi:
+Expected result:
 ```
 Checking dist/source-atlas-0.1.0.tar.gz: PASSED
 Checking dist/source_atlas-0.1.0-py3-none-any.whl: PASSED
 ```
 
-## 📦 Bước 2: Test Cài Đặt Local
+## 📦 Step 2: Test Local Installation
 
-### Option A: Test trong virtual environment mới
+### Option A: Test in a new virtual environment
 
 ```bash
-# Tạo venv mới để test
+# Create a new venv for testing
 python -m venv test_install_venv
 test_install_venv\Scripts\activate
 
-# Cài package từ wheel file
+# Install package from wheel file
 pip install dist/source_atlas-0.1.0-py3-none-any.whl
 
 # Test import
-python -c "from source_atlas import AnalyzerFactory; print('✅ Import thành công!')"
+python -c "from source_atlas import AnalyzerFactory; print('✅ Import successful!')"
 
 # Test CLI
 source-atlas --version
 
-# Deactivate khi xong
+# Deactivate when done
 deactivate
 ```
 
-### Option B: Test trong project venv hiện tại
+### Option B: Test in current project venv
 
 ```bash
-# Trong .venv hiện tại
+# In current .venv
 pip install -e .
 
 # Test
-python -c "from source_atlas import AnalyzerFactory; print('✅ Import thành công!')"
+python -c "from source_atlas import AnalyzerFactory; print('✅ Import successful!')"
 source-atlas --version
 ```
 
-## 🚀 Bước 3: Publish lên TestPyPI (Khuyến nghị)
+## 🚀 Step 3: Publish to TestPyPI (Recommended)
 
-### Tạo TestPyPI account & token
+### Create TestPyPI account & token
 
-1. Đăng ký tại: https://test.pypi.org/account/register/
-2. Tạo API token tại: https://test.pypi.org/manage/account/token/
+1. Register at: https://test.pypi.org/account/register/
+2. Create API token at: https://test.pypi.org/manage/account/token/
 
-### Upload lên TestPyPI
+### Upload to TestPyPI
 
 ```bash
 twine upload --repository testpypi dist/*
 
-# Nhập:
+# Input:
 # Username: __token__
 # Password: <your-testpypi-api-token>
 ```
 
-### Test cài từ TestPyPI
+### Test installation from TestPyPI
 
 ```bash
-# Tạo venv mới
+# Create new venv
 python -m venv test_pypi_venv
 test_pypi_venv\Scripts\activate
 
-# Cài từ TestPyPI
+# Install from TestPyPI
 pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ source-atlas
 
 # Test
@@ -79,37 +79,37 @@ source-atlas --version
 deactivate
 ```
 
-## 🎯 Bước 4: Publish lên PyPI Chính Thức
+## 🎯 Step 4: Publish to Official PyPI
 
-**⚠️ CHỈ CHẠY KHI ĐÃ TEST KỸ!**
+**⚠️ ONLY RUN AFTER THOROUGH TESTING!**
 
-### Tạo PyPI account & token
+### Create PyPI account & token
 
-1. Đăng ký tại: https://pypi.org/account/register/
-2. Tạo API token tại: https://pypi.org/manage/account/token/
+1. Register at: https://pypi.org/account/register/
+2. Create API token at: https://pypi.org/manage/account/token/
 
-### Upload lên PyPI
+### Upload to PyPI
 
 ```bash
 twine upload dist/*
 
-# Nhập:
+# Input:
 # Username: __token__
 # Password: <your-pypi-api-token>
 ```
 
-### Verify trên PyPI
+### Verify on PyPI
 
-1. Truy cập: https://pypi.org/project/source-atlas/
-2. Kiểm tra:
-   - Package description hiển thị đúng
-   - Dependencies đầy đủ
-   - Classifiers chính xác
+1. Visit: https://pypi.org/project/source-atlas/
+2. Check:
+   - Package description displays correctly
+   - Dependencies are complete
+   - Classifiers are accurate
 
-### Cài và test từ PyPI
+### Install and test from PyPI
 
 ```bash
-# Trong venv mới
+# In new venv
 pip install source-atlas
 
 # Test
@@ -117,28 +117,28 @@ from source_atlas import AnalyzerFactory
 source-atlas --version
 ```
 
-## 📝 Checklist Trước Khi Publish
+## 📝 Pre-Publish Checklist
 
-- [x] Build package thành công
+- [x] Package build successful
 - [ ] `twine check dist/*` PASS
-- [ ] Test cài local wheel thành công
-- [ ] Import `from source_atlas import AnalyzerFactory` hoạt động
-- [ ] CLI `source-atlas --version` hoạt động
-- [ ] Upload lên TestPyPI thành công (khuyến nghị)
-- [ ] Test cài từ TestPyPI thành công (khuyến nghị)
-- [ ] README.md cập nhật hướng dẫn cài `pip install source-atlas`
+- [ ] Local wheel installation test successful
+- [ ] Import `from source_atlas import AnalyzerFactory` works
+- [ ] CLI `source-atlas --version` works
+- [ ] Upload to TestPyPI successful (recommended)
+- [ ] Installation from TestPyPI successful (recommended)
+- [ ] README.md updated with `pip install source-atlas` instructions
 
-## 🔄 Nếu Cần Update Version Mới
+## 🔄 When Updating to New Version
 
 ```bash
-# 1. Cập nhật version trong pyproject.toml và __init__.py
-# 2. Xóa dist cũ
+# 1. Update version in pyproject.toml and __init__.py
+# 2. Remove old dist
 rm -rf dist/ build/ *.egg-info
 
-# 3. Build lại
+# 3. Rebuild
 python -m build
 
-# 4. Upload version mới
+# 4. Upload new version
 twine upload dist/*
 ```
 
@@ -149,8 +149,8 @@ twine upload dist/*
   - `0.2.0` = Minor features
   - `1.0.0` = Stable production release
   
-- **API Token**: Lưu tokens an toàn, KHÔNG commit vào git
+- **API Token**: Store tokens securely, DO NOT commit to git
 
-- **TestPyPI**: Luôn test ở TestPyPI trước khi publish chính thức
+- **TestPyPI**: Always test on TestPyPI before official release
 
-- **Documentation**: Cập nhật README.md với installation instructions
+- **Documentation**: Update README.md with installation instructions

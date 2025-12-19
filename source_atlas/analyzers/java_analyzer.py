@@ -1,10 +1,9 @@
-import hashlib
 import re
 from abc import ABC
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict
-from functools import lru_cache
 
 from loguru import logger
 from tree_sitter import Language, Parser, Node, Query, QueryCursor
@@ -28,13 +27,7 @@ class MethodDependencies:
 
 
 class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
-
-    # ============================================================================
-    # SECTION 1: INITIALIZATION & CONTEXT MANAGEMENT
-    # ============================================================================
-
     def __init__(self, root_path: str = None, project_id: str = None, branch: str = None):
-        # Tree-sitter setup
         language: Language = get_language("java")
         parser = Parser(language)
         super().__init__(language, parser, project_id, branch)
@@ -47,10 +40,10 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         self.branch = branch
         self._server_ctx = None
         self.project_root = Path(root_path).resolve() if root_path else None
-        
+
         # Performance: Cache compiled Query objects
         self._query_cache = {}
-        
+
         # Performance: Cache file contents to avoid redundant I/O
         # Using instance method with lru_cache via wrapper
         @lru_cache(maxsize=500)
@@ -60,6 +53,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             except Exception as e:
                 logger.debug(f"Error reading file {file_path_str}: {e}")
                 return None
+
         self._cached_read_file = _cached_read_file
 
     def __enter__(self):
@@ -70,10 +64,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._server_ctx:
             self._server_ctx.__exit__(exc_type, exc_val, exc_tb)
-
-    # ============================================================================
-    # SECTION 2: ABSTRACT METHOD IMPLEMENTATIONS (from BaseCodeAnalyzer)
-    # ============================================================================
 
     def _get_builtin_packages(self) -> List[str]:
         """Return Java builtin packages to be filtered."""
@@ -241,7 +231,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
 
         return import_mapping
 
-    def extract_class_use_types(self, class_node, content, file_path) -> Tuple[str, ...]:
+    def extract_class_use_types(self, class_node, content, file_path, import_mapping: dict) -> Tuple[str, ...]:
         used_types = set()
         try:
             captures = self._query_captures("""
@@ -255,7 +245,8 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             for capture_name, nodes in captures.items():
                 if capture_name in {"field_type", "generic_type"}:
                     for node in nodes:
-                        resolved_type = self._resolve_used_type_with_lsp(node, file_path, type_text)
+                        type_text = extract_content(node, content)
+                        resolved_type = self._resolve_used_type_with_lsp(node, file_path, type_text, import_mapping)
                         if resolved_type:
                             used_types.add(resolved_type)
 
@@ -264,17 +255,13 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
 
         return tuple(self.filter_builtin_items(list(used_types)))
 
-    # ============================================================================
-    # SECTION 3: ANNOTATION CHECKING
-    # ============================================================================
-
     def _has_any_annotation_from_set(self, node: Node, content: str, annotation_set: set) -> bool:
         try:
             captures = self._query_captures("""
                 (modifiers (annotation) @annotation)
                 (modifiers (marker_annotation) @annotation)
             """, node)
-            
+
             for nodes in captures.values():
                 for annotation_node in nodes:
                     annotation_text = extract_content(annotation_node, content)
@@ -294,21 +281,17 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         implemented_classes = self._extract_implements_extends(node, content)
         return any(class_name in JavaParsingConstants.CONFIG_INTERFACES_CLASSES for class_name in implemented_classes)
 
-    def _is_lombok_generated_position(self, root_node: Node, target_line: int, content: str) -> bool:
+    def _is_lombok_generated_position(self, target_line: int, content: str) -> bool:
         """Check if the target line contains Lombok annotations that generate methods."""
         try:
             lines = content.split('\n')
             if target_line < len(lines):
                 line_content = lines[target_line].strip()
-                return any(lombok_ann in line_content 
-                          for lombok_ann in JavaParsingConstants.LOMBOK_METHOD_ANNOTATIONS)
+                return any(lombok_ann in line_content
+                           for lombok_ann in JavaParsingConstants.LOMBOK_METHOD_ANNOTATIONS)
         except Exception:
             pass
         return False
-
-    # ============================================================================
-    # SECTION 4: CLASS PARSING
-    # ============================================================================
 
     def _extract_implements_extends(self, class_node: Node, content: str) -> List[str]:
         """Extract class names from implements and extends clauses using tree-sitter query"""
@@ -335,10 +318,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             if child.type == 'class_body' or child.type == 'interface_body':
                 return child
         return None
-
-    # ============================================================================
-    # SECTION 5: METHOD PARSING
-    # ============================================================================
 
     def _extract_method_name(self, class_node: Node, content: str) -> Tuple[Optional[str], Optional[Node]]:
         if class_node.type != 'method_declaration':
@@ -393,8 +372,9 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
 
             body = ""
             method_calls = self.filter_builtin_items(
-                self._extract_method_calls(full_class_name, method_node, file_path, import_mapping, content))
-            used_types = self.filter_builtin_items(self._extract_used_types(method_node, file_path, content, import_mapping))
+                self._extract_method_calls(method_node, file_path, content))
+            used_types = self.filter_builtin_items(
+                self._extract_used_types(method_node, file_path, content, import_mapping))
             field_access = self.filter_builtin_items(self._extract_field_access(method_node, file_path))
 
             for child in method_node.children:
@@ -407,7 +387,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             # Lazy evaluation: only check inheritance for methods without body (abstract/interface methods)
             inheritance_info = []
             if implements and self._is_abstract_or_interface_method(method_node):
-                inheritance_info = self._build_inheritance_info(method_node, method_name_node, file_path)
+                inheritance_info = self._build_inheritance_info(method_name_node, file_path)
 
             is_configuration = self._is_config_node(method_node, content)
 
@@ -418,7 +398,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                 method_type = ChunkType.CONFIGURATION
 
             # Compute AST hash for method body
-            method_ast_hash = self.compute_ast_hash(body)
+            method_ast_hash = self.compute_ast_hash(body) if body else ""
 
             return Method(
                 name=f"{full_class_name}.{method_name}",
@@ -433,7 +413,8 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                 project_id=self.project_id,
                 branch=self.branch,
                 annotations=tuple(self._extract_annotations(method_node, content, file_path, import_mapping)),
-                handles_annotation=self._detect_method_annotation_handler(method_node, content, file_path, import_mapping)
+                handles_annotation=self._detect_method_annotation_handler(method_node, content, file_path,
+                                                                          import_mapping)
             )
         except Exception as e:
             logger.debug(f"Error processing method node: {e}")
@@ -445,21 +426,16 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                 return False
         return True
 
-    def _build_inheritance_info(self, method_node: Node, method_name_node: Node, file_path: str) -> List[str]:
+    def _build_inheritance_info(self, method_name_node: Node, file_path: str) -> List[str]:
         line, col = self._get_node_position(method_name_node)
         lsp_results = self.lsp_service.request_implementation(file_path, line, col)
         return self._resolve_lsp_method_implements(lsp_results)
 
-    # ============================================================================
-    # SECTION 6: METHOD CALL ANALYSIS
-    # ============================================================================
 
     def _extract_method_calls(
             self,
-            full_class_name: str,
             method_node: Node,
             file_path: str,
-            import_mapping: Dict[str, str],
             content: str
     ) -> List[MethodCall]:
         method_calls: List[MethodCall] = []
@@ -508,7 +484,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         object_node = object_nodes[index] if index < len(object_nodes) else None
         object_name = extract_content(object_node, content) if object_node else None
 
-        if object_name and object_name in JavaBuiltinPackages.JAVA_PRIMITIVES:
+        if object_name and self._check_primitive_types(object_name):
             return None
         name_node = method_nodes[index] if index < len(method_nodes) else None
         method_name = normalize_whitespace(extract_content(name_node, content))
@@ -518,7 +494,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         try:
             args_node = args_nodes[index] if index < len(args_nodes) else None
 
-            resolved = self._resolve_method_call(name_node, args_node, file_path, content)
+            resolved = self._resolve_method_call(name_node, file_path)
             if resolved and object_name and hasattr(resolved, "object_name"):
                 resolved.object_name = object_name
 
@@ -526,7 +502,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         except Exception:
             return None
 
-    def _resolve_method_call(self, node, args, file_path: str, content):
+    def _resolve_method_call(self, node, file_path: str):
         try:
             line, col = self._get_node_position(node)
             lsp_result = self.lsp_service.request_definition(file_path, line, col)
@@ -560,10 +536,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
 
         return f"{absolute_path}.{qualified_name}"
 
-    # ============================================================================
-    # SECTION 7: TYPE ANALYSIS
-    # ============================================================================
-
     def _extract_used_types(self, body_node: Node, file_path: str, content: str, import_mapping: Dict[str, str]) -> \
             List[str]:
         used_types = set()
@@ -586,7 +558,8 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                     "generic_type", "array_element_type", "first_scoped"
                 }:
                     for node in nodes:
-                        variable_ref = import_mapping.get(text, self._resolve_used_type_with_lsp(node, file_path, text))
+                        text = extract_content(node, content)
+                        variable_ref = self._resolve_used_type_with_lsp(node, file_path, text, import_mapping)
                         if variable_ref:
                             used_types.add(variable_ref)
         except Exception as e:
@@ -599,7 +572,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             captures = self._query_captures("""
                 (field_access field: (_) @field_name)
             """, body_node)
-            
+
             for capture_name, nodes in captures.items():
                 if capture_name == "field_name":
                     for node in nodes:
@@ -610,58 +583,20 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             logger.debug(f"Error extracting field access from {file_path}: {e}")
         return list(field_access)
 
-    def extract_local_variables(self, body_node: Node, file_path: str, content: str) -> Dict[str, str]:
-        variables = {}
-
-        try:
-            captures = self._query_captures("""
-                [
-                  (local_variable_declaration
-                    type: (_) @type
-                    declarator: (variable_declarator
-                      name: (identifier) @var_name
-                    )
-                  ) @declaration
-                  
-                  (formal_parameter
-                    type: (_) @type
-                    name: (identifier) @var_name
-                  ) @param
-                ]
-            """, body_node)
-
-            type_nodes = captures.get("type", [])
-            var_nodes = captures.get("var_name", [])
-
-            for i in range(min(len(type_nodes), len(var_nodes))):
-                # Extract type text (handles List<String>, String[], etc.)
-                type_text = extract_content(type_nodes[i], content)
-                var_name = extract_content(var_nodes[i], content)
-                variables[var_name] = type_text
-
-        except Exception as e:
-            logger.debug(f"Error extracting variables: {e}")
-
-        return variables
-
-    # ============================================================================
-    # SECTION 8: LSP RESULT PROCESSING
-    # ============================================================================
-
-    # ---------- 8.1 Core LSP Processors ----------
-
     def _resolve_lsp_implements(self, lsp_results) -> List[str]:
         """Process LSP implementation results."""
+
         def processor(result):
             absolute_path = self._extract_and_validate_absolute_path(result)
             if absolute_path:
                 return self._extract_qualified_name_from_lsp_result(result)
             return None
-        
+
         return self._normalize_and_process_lsp_results(lsp_results, processor)
 
     def _resolve_lsp_method_implements(self, lsp_results) -> List[str]:
         """Process LSP method implementation results."""
+
         def processor(result):
             absolute_path = self._extract_and_validate_absolute_path(result)
             if absolute_path:
@@ -670,7 +605,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                 if class_path and method_name:
                     return f"{class_path}.{method_name}"
             return None
-        
+
         return self._normalize_and_process_lsp_results(lsp_results, processor)
 
     def _resolve_lsp_type_response(self, lsp_results, type_name: str = None) -> Optional[str]:
@@ -678,38 +613,33 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             return None
 
         def processor(result):
-            qualified_name = self._extract_qualified_name_from_lsp_result(result)  # ✅ ĐÚNG
+            qualified_name = self._extract_qualified_name_from_lsp_result(result)
             if qualified_name:
                 return self._adjust_qualified_name_for_type(qualified_name, type_name)
             return None
-        
+
         results = self._normalize_and_process_lsp_results(lsp_results, processor)
         return results[0] if results else None
 
-    # ---------- 8.2 LSP Extraction Helpers ----------
-
-    def _extract_method_with_params_from_lsp_result(self, lsp_result: dict) -> str:
+    def _extract_method_with_params_from_lsp_result(self, lsp_result: dict) -> Optional[str]:
         """Extract method signature from LSP result."""
         try:
             file_info = self._extract_file_info_from_lsp(lsp_result)
             if not file_info:
                 return None
-            
+
             file_path, start_line, start_char = file_info
             method_node = self._find_method_from_file(file_path, start_line, start_char)
-            
-            # If no method found, it might be a class definition (e.g., Lombok @Data)
-            # Return None silently - this is expected for type resolution
+
             if not method_node:
                 return None
-            
-            # Extract method name and return
+
             content = self._read_file_content(file_path)
             if not content:
                 return None
             method_name, _ = self._extract_method_name(method_node, content)
             return method_name
-            
+
         except Exception as e:
             logger.debug(f"Error extracting method from lsp result: {e}")
             return None
@@ -729,7 +659,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
 
         start_line = range_info['start']['line']
         start_char = range_info['start']['character']
-        
+
         return (file_path, start_line, start_char)
 
     def _find_method_from_file(self, file_path: str, line: int, character: int) -> Optional[Node]:
@@ -738,23 +668,23 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             content = self._read_file_content(file_path)
             if not content:
                 return None
-                
+
             tree = self.parser.parse(content.encode('utf-8'))
             root_node = tree.root_node
 
             # Find the method node at the specified position
             method_node = self._find_method_at_position(root_node, line, character)
-            
+
             if not method_node:
                 # Check if this might be a Lombok-generated method
-                if self._is_lombok_generated_position(root_node, line, content):
+                if self._is_lombok_generated_position(line, content):
                     logger.debug(f"Skipping Lombok-generated method at line {line} in {file_path}")
                 else:
                     logger.debug(f"No method found at line {line}, character {character} file {file_path}")
                 return None
-                
+
             return method_node
-            
+
         except Exception as e:
             logger.debug(f"Error parsing file {file_path}: {e}")
             return None
@@ -778,13 +708,13 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         else:
             return qualified_name.rstrip(".") + "." + type_name
 
-    # ---------- 8.3 LSP Resolution with Specific Types ----------
-
-    def _resolve_used_type_with_lsp(self, node: Node, file_path: str, type_name: str) -> Optional[str]:
+    def _resolve_used_type_with_lsp(self, node: Node, file_path: str, type_name: str, import_mapping: dict) -> Optional[
+        str]:
         try:
-            type_text = extract_content(node, content)
-            if type_text in JavaBuiltinPackages.JAVA_PRIMITIVES:
-                return type_text
+            if self._check_primitive_types(type_name):
+                return None
+            if type_name in import_mapping:
+                return import_mapping[type_name]
             line, col = self._get_node_position(node)
             lsp_results = self.lsp_service.request_definition(file_path, line, col)
             return self._resolve_lsp_type_response(lsp_results, type_name)
@@ -824,43 +754,40 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
 
         return field
 
-    # ============================================================================
-    # SECTION 9: ANNOTATION PROCESSING
-    # ============================================================================
-
     def _is_annotation_declaration(self, node: Node) -> bool:
         return node.type == 'annotation_type_declaration'
 
-    def _extract_annotations(self, node: Node, content: str, file_path: str, import_mapping: Dict[str, str]) -> List[str]:
+    def _extract_annotations(self, node: Node, content: str, file_path: str, import_mapping: Dict[str, str]) -> List[
+        str]:
         annotations = []
         try:
             captures = self._query_captures("""
                 (modifiers (annotation) @annotation)
                 (modifiers (marker_annotation) @annotation)
             """, node)
-            
+
             annotation_nodes = captures.get("annotation", [])
             for ann_node in annotation_nodes:
                 # Extract name: @Validation(value="...") -> Validation
                 # marker_annotation: @Validation -> Validation
                 name_node = self._find_child_by_type(ann_node, 'identifier') or \
                             self._find_child_by_type(ann_node, 'scoped_identifier')
-                
+
                 if not name_node:
                     continue
-                    
+
                 raw_name = extract_content(name_node, content)
-                
+
                 # Resolve full qualified name (package.class) using LSP
                 full_name = self._resolve_annotation_full_name_with_lsp(name_node, file_path, raw_name, import_mapping)
                 if full_name:
                     # Filter out framework packages (Spring, Java core, etc.)
                     if not self._is_framework_annotation(full_name):
                         annotations.append(full_name)
-                    
+
         except Exception as e:
             logger.debug(f"Error extracting annotations: {e}")
-            
+
         return annotations
 
     def _is_framework_annotation(self, full_name: str) -> bool:
@@ -870,14 +797,15 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         """
         if not full_name:
             return False
-        
+
         framework_packages = JavaParsingConstants.FRAMEWORK_PACKAGES
         for framework_pkg in framework_packages:
             if full_name.startswith(framework_pkg):
                 return True
         return False
 
-    def _resolve_annotation_full_name_with_lsp(self, name_node: Node, file_path: str, raw_name: str, import_mapping: Dict[str, str]) -> Optional[str]:
+    def _resolve_annotation_full_name_with_lsp(self, name_node: Node, file_path: str, raw_name: str,
+                                               import_mapping: Dict[str, str]) -> Optional[str]:
         """
         Resolve full qualified name of annotation (e.g., com.test.java.helo.annotation.AnyAnnotation).
         Uses LSP to get the full package path.
@@ -885,33 +813,34 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         # If already fully qualified, return as is
         if '.' in raw_name:
             return raw_name
-        
+
         # Try import mapping first (fast)
         if raw_name in import_mapping:
             return import_mapping[raw_name]
-        
+
         # Try LSP definition (most accurate)
         try:
             line, col = self._get_node_position(name_node)
             lsp_results = self.lsp_service.request_definition(file_path, line, col)
-            
+
             if lsp_results:
                 # Normalize to list
                 results = lsp_results if isinstance(lsp_results, list) else [lsp_results]
-                
+
                 for result in results:
                     # Extract qualified name from LSP result (package.class format)
                     qualified_name = self._extract_qualified_name_from_lsp_result(result)
                     if qualified_name:
                         return qualified_name
-                    
+
         except Exception as e:
             logger.debug(f"LSP annotation resolution failed: {e}")
-        
+
         # Final fallback: return simple name if all else fails
         return raw_name
 
-    def _detect_annotation_handler(self, class_node: Node, content: str, file_path: str, import_mapping: Dict[str, str], implements: List[str]) -> Optional[str]:
+    def _detect_annotation_handler(self, class_node: Node, content: str, file_path: str, import_mapping: Dict[str, str],
+                                   implements: List[str]) -> Optional[str]:
         try:
             # Query for generic interfaces
             captures = self._query_captures("""
@@ -924,14 +853,14 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                     )
                 )
             """, class_node)
-            
+
             interfaces = captures.get("interface", [])
             args_lists = captures.get("args", [])
-            
+
             for i, interface_node in enumerate(interfaces):
                 interface_name = extract_content(interface_node, content)
                 resolved_interface = self._resolve_type_name(interface_name, interface_node, file_path, import_mapping)
-                
+
                 # Check if it's a known handler interface
                 if resolved_interface in JavaParsingConstants.HANDLER_INTERFACES:
                     arg_index = JavaParsingConstants.HANDLER_INTERFACES[resolved_interface]
@@ -946,13 +875,14 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                             arg_node = self._get_type_argument_node(args_node, arg_index)
                             if arg_node:
                                 return self._resolve_type_name(annotation_type, arg_node, file_path, import_mapping)
-                                
+
         except Exception as e:
             logger.debug(f"Error detecting annotation handler: {e}")
-            
+
         return None
 
-    def _detect_method_annotation_handler(self, method_node: Node, content: str, file_path: str, import_mapping: Dict[str, str]) -> Optional[str]:
+    def _detect_method_annotation_handler(self, method_node: Node, content: str, file_path: str,
+                                          import_mapping: Dict[str, str]) -> Optional[str]:
         """
         Detect if this method handles an annotation (e.g. AOP).
         Checks for @Around("@annotation(com.example.MyAnno)")
@@ -964,13 +894,14 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                     arguments: (annotation_argument_list (string_literal) @arg)
                 ))
             """, method_node)
-            
+
             anno_names = captures.get("anno_name", [])
             args = captures.get("arg", [])
-            
+
             for i, name_node in enumerate(anno_names):
                 name = extract_content(name_node, content)
-                if name in {"Around", "Before", "After"}: # Simple check, ideally resolve to org.aspectj.lang.annotation...
+                if name in {"Around", "Before",
+                            "After"}:  # Simple check, ideally resolve to org.aspectj.lang.annotation...
                     if i < len(args):
                         arg_content = extract_content(args[i], content).strip('"')
                         # Regex to find @annotation(...)
@@ -981,26 +912,23 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                                 return annotation_ref
                             else:
                                 return import_mapping.get(annotation_ref, annotation_ref)
-                                
+
         except Exception as e:
             logger.debug(f"Error detecting method annotation handler: {e}")
-            
+
         return None
 
-    def _resolve_type_name(self, name: str, node: Node, file_path: str, import_mapping: Dict[str, str]) -> Optional[str]:
+    def _resolve_type_name(self, name: str, node: Node, file_path: str, import_mapping: Dict[str, str]) -> Optional[
+        str]:
         """Helper to resolve a type name using imports or LSP."""
         if '.' in name:
             return name
-            
-        # Try import mapping first (fast)
-        if name in import_mapping:
-            return import_mapping[name]
-            
+
         # Try LSP (slow but accurate)
-        resolved = self._resolve_used_type_with_lsp(node, file_path, name)
+        resolved = self._resolve_used_type_with_lsp(node, file_path, name, import_mapping)
         if resolved:
             return resolved
-            
+
         return name
 
     def _extract_type_arguments(self, args_node: Node, content: str) -> List[str]:
@@ -1033,7 +961,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         except Exception:
             return None
 
-    def _resolve_class_from_hover(self, signature: str) -> str:
+    def _resolve_class_from_hover(self, signature: str) -> Optional[str]:
         pattern_with_class = re.compile(
             r"""^(?P<return>(?:@\w+(?:\([^)]*\))?\s+)*
         (?:[\w$.]+)
@@ -1050,10 +978,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             return None
 
         return m.groupdict().get('class')
-
-    # ============================================================================
-    # SECTION 9: TREE-SITTER UTILITIES
-    # ============================================================================
 
     def _find_method_at_position(self, root_node: Node, target_line: int, target_char: int) -> Optional[Node]:
         """Find the method declaration node that contains the target position"""
@@ -1086,10 +1010,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         except Exception as e:
             logger.debug(f"Error checking multiple classes in {file_path}: {e}")
             return False
-
-    # ============================================================================
-    # SECTION 10: HELPER UTILITIES (Eliminate Code Duplication)
-    # ============================================================================
 
     def _get_node_position(self, node: Node) -> Tuple[int, int]:
         """Extract line and column from node's start position."""
@@ -1133,3 +1053,11 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
     def _read_file_content(self, file_path: str) -> Optional[str]:
         """Read file content with UTF-8 encoding and error handling."""
         return self._cached_read_file(file_path)
+
+    def _check_primitive_types(self, object_name: str) -> bool:
+        if object_name in JavaBuiltinPackages.JAVA_PRIMITIVES:
+            return True
+        for i in JavaBuiltinPackages.JAVA_EXCLUDE_TYPE_FORMAT:
+            if object_name.startswith(i):
+                return True
+        return False
