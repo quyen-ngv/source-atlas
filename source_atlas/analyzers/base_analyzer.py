@@ -139,7 +139,7 @@ class BaseCodeAnalyzer(ABC):
                 used_types = self.extract_class_use_types(class_node, content, file_path, context.import_mapping)
 
                 is_annotation = self._is_annotation_declaration(class_node)
-                annotations = self._extract_annotations(class_node, content, file_path, context.import_mapping)
+                annotations = self._extract_class_annotations(class_node, content, file_path, context.import_mapping)
                 handles_annotation = self._detect_annotation_handler(class_node, content, file_path, context.import_mapping, implements)
 
                 class_content = content[class_node.start_byte:class_node.end_byte]
@@ -322,7 +322,7 @@ class BaseCodeAnalyzer(ABC):
     def _strip_source_directory_prefix(self, path: str) -> str:
         pass
 
-    def _extract_annotations(self, node: Node, content: str, file_path: str, import_mapping: Dict[str, str]) -> List[str]:
+    def _extract_class_annotations(self, node: Node, content: str, file_path: str, import_mapping: Dict[str, str]) -> List[str]:
         return []
 
     def _detect_annotation_handler(self, node: Node, content: str, file_path: str, import_mapping: Dict[str, str], implements: List[str]) -> Optional[str]:

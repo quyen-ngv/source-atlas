@@ -413,7 +413,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                 type=method_type,
                 project_id=self.project_id,
                 branch=self.branch,
-                annotations=tuple(self._extract_annotations(method_node, content, file_path, import_mapping)),
+                annotations=tuple(self._extract_method_annotations(method_node, content, file_path, import_mapping)),
                 handles_annotation=self._detect_method_annotation_handler(method_node, content, file_path,
                                                                           import_mapping)
             )
@@ -431,7 +431,6 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
         line, col = self._get_node_position(method_name_node)
         lsp_results = self.lsp_service.request_implementation(file_path, line, col)
         return self._resolve_lsp_method_implements(lsp_results)
-
 
     def _extract_method_calls(
             self,
@@ -758,14 +757,31 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
     def _is_annotation_declaration(self, node: Node) -> bool:
         return node.type == 'annotation_type_declaration'
 
-    def _extract_annotations(self, node: Node, content: str, file_path: str, import_mapping: Dict[str, str]) -> List[
-        str]:
+    def _extract_class_annotations(self, node: Node, content: str, file_path: str, import_mapping: Dict[str, str]):
+        query = """
+            (class_declaration
+                (modifiers
+                    [(annotation) (marker_annotation)] @annotation
+                )
+            )
+        """
+        return self._extract_annotations(node, content, file_path, import_mapping, query)
+
+    def _extract_method_annotations(self, node: Node, content: str, file_path: str, import_mapping: Dict[str, str]):
+        query = """
+            (method_declaration
+                (modifiers
+                    [(annotation) (marker_annotation)] @annotation
+                )
+            )
+        """
+        return self._extract_annotations(node, content, file_path, import_mapping, query)
+
+    def _extract_annotations(self, node: Node, content: str, file_path: str, import_mapping: Dict[str, str], query: str) \
+            -> List[str]:
         annotations = []
         try:
-            captures = self._query_captures("""
-                (modifiers (annotation) @annotation)
-                (modifiers (marker_annotation) @annotation)
-            """, node)
+            captures = self._query_captures(query, node)
 
             annotation_nodes = captures.get("annotation", [])
             for ann_node in annotation_nodes:
