@@ -163,5 +163,5 @@ test_output/
 .coverage
 htmlcov/
 
-test_install_venv/
-.test_install_venv/
+test/
+.test/

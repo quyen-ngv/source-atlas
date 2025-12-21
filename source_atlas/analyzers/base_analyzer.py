@@ -130,10 +130,10 @@ class BaseCodeAnalyzer(ABC):
                 implements = []
                 if self._should_check_implements(class_node, content):
                     implements = self._extract_implements_with_lsp(class_node, file_path, content)
-                
+
                 methods = self._extract_class_methods(
-                    class_node, content, implements,
-                    context.full_class_name, file_path, context.import_mapping
+                    class_node, content, implements,context.full_class_name,
+                    file_path, context.import_mapping, class_name
                 )
 
                 used_types = self.extract_class_use_types(class_node, content, file_path, context.import_mapping)
@@ -271,9 +271,8 @@ class BaseCodeAnalyzer(ABC):
         pass
 
     @abstractmethod
-    def _extract_class_methods(self, class_node: Node, content: str,
-                               implements: List[str],
-                               full_class_name: str, file_path: str, import_mapping: Dict[str, str]) -> List[Method]:
+    def _extract_class_methods(self, class_node: Node, content: str, implements: List[str],full_class_name: str,
+                               file_path: str, import_mapping: Dict[str, str], short_class_name: str) -> List[Method]:
         pass
 
     @abstractmethod

@@ -50,7 +50,7 @@ class TestRelationshipPreservation:
         """
         # ClassA with methodA
         method_a = Method(
-            name="methodA",
+            full_name="methodA",
             body="public void methodA() { serviceB.methodB(); }",
             ast_hash="hash_method_a_v1",
             project_id="1",
@@ -82,7 +82,7 @@ class TestRelationshipPreservation:
         
         # ClassB with methodB (will be changed)
         method_b = Method(
-            name="methodB",
+            full_name="methodB",
             body="public void methodB() { ClassC c = new ClassC(); }",
             ast_hash="hash_method_b_v1",
             project_id="1",
@@ -143,7 +143,7 @@ class TestRelationshipPreservation:
         """
         # ClassB with methodB (CHANGED - new implementation)
         method_b = Method(
-            name="methodB",
+            full_name="methodB",
             body="public void methodB() { ClassC c = new ClassC(); c.doSomething(); }",  # Added c.doSomething()
             ast_hash="hash_method_b_v2",  # Different hash!
             project_id="1",

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "source-atlas"
-version = "0.1.7"
+version = "0.1.8"
 description = "Multi-language code analyzer with LSP and Neo4j integration"
 authors = [
     {name = "Nguyen Van Quyen", email = "quyennv.4work@gmail.com"}

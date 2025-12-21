@@ -48,7 +48,8 @@ class ChunkType(Enum):
 
 @dataclass
 class Method:
-    name: str
+    name: Optional[str]
+    full_name: str
     body: str
     ast_hash: str
     method_calls: Tuple[MethodCall, ...]
@@ -65,6 +66,7 @@ class Method:
     def to_dict(self):
         return {
             "name": self.name,
+            "full_name": self.full_name,
             "body": self.body,
             "ast_hash": self.ast_hash,
             "method_calls": self.method_calls,
@@ -110,7 +112,7 @@ class CodeChunk:
             "ast_hash": self.ast_hash,
             "implements": list(self.implements),
             "methods": [{
-                "name": method.name,
+                "name": method.full_name,
                 "body": method.body,
                 "ast_hash": method.ast_hash,
                 "method_calls": [{"name": method_call.name,

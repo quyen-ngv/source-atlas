@@ -165,6 +165,7 @@ class Neo4jService:
                     node_type = deleted.get('node_type', 'ClassNode')
                 
                 tombstone = {
+                    'name': deleted['name'],
                     'node_type': node_type,
                     'class_name': deleted['class_name'],
                     'method_name': deleted.get('method_name'),
@@ -185,6 +186,7 @@ class Neo4jService:
                 tombstone_query = """
                 UNWIND $tombstones AS tomb
                 CALL apoc.create.node([tomb.node_type], {
+                    name: tomb.name,
                     class_name: tomb.class_name,
                     method_name: tomb.method_name,
                     file_path: tomb.file_path,
@@ -230,6 +232,7 @@ class Neo4jService:
                     class_status = getattr(chunk, 'status', 'ACTIVE')
 
                 node_data_item = {
+                    'name': chunk.class_name,
                     'node_type': node_type,
                     'file_path': file_path,
                     'class_name': class_name,
@@ -252,7 +255,7 @@ class Neo4jService:
                 for method in chunk.methods:
                     method_file_path = chunk.file_path
                     method_class_name = chunk.full_class_name
-                    method_name = method.name
+                    method_name = method.full_name
                     method_body = _escape_for_cypher(method.body)
                     method_field_access = str(method.field_access)
                     method_content = method_body + " " + method_field_access
@@ -277,6 +280,7 @@ class Neo4jService:
                         method_status = getattr(method, 'status', 'ACTIVE')
 
                     method_node_data_item = {
+                        'name': method.name,
                         'node_type': method_node_type,
                         'file_path': method_file_path,
                         'class_name': method_class_name,
@@ -324,7 +328,6 @@ class Neo4jService:
             if main_branch and base_branch:
                 batch_query = """
                 UNWIND $nodes AS node
-                // Tìm node tương ứng trong main_branch
                 OPTIONAL MATCH (main_node {
                     class_name: node.class_name,
                     project_id: node.project_id,
@@ -332,7 +335,6 @@ class Neo4jService:
                     method_name: CASE WHEN node.method_name IS NOT NULL THEN node.method_name ELSE null END
                 })
                 
-                // Tìm node tương ứng trong base_branch
                 OPTIONAL MATCH (base_node {
                     class_name: node.class_name,
                     project_id: node.project_id,
@@ -340,7 +342,6 @@ class Neo4jService:
                     method_name: CASE WHEN node.method_name IS NOT NULL THEN node.method_name ELSE null END
                 })
                 
-                // Điều kiện lọc - chỉ tạo node mới khi thỏa mãn các điều kiện
                 WITH node, main_node, base_node
                 WHERE 
                     (base_node IS NOT NULL AND node.ast_hash <> base_node.ast_hash)
@@ -349,8 +350,8 @@ class Neo4jService:
                     OR
                     (base_node IS NULL AND main_node IS NULL)
                 
-                // Tạo node mới với branch-aware properties
                 CALL apoc.create.node([node.node_type], {
+                    name: node.name,
                     file_path: node.file_path,
                     class_name: node.class_name,
                     method_name: CASE WHEN node.method_name IS NOT NULL THEN node.method_name ELSE null END,
@@ -381,6 +382,7 @@ class Neo4jService:
                 })
                 WHERE main_node IS NULL OR main_node.ast_hash <> node.ast_hash
                 CALL apoc.create.node([node.node_type], {
+                    name: node.name,
                     file_path: node.file_path,
                     class_name: node.class_name,
                     method_name: CASE WHEN node.method_name IS NOT NULL THEN node.method_name ELSE null END,
@@ -402,6 +404,7 @@ class Neo4jService:
                 batch_query = """
                 UNWIND $nodes AS node
                 CALL apoc.create.node([node.node_type], {
+                    name: node.name,
                     file_path: node.file_path,
                     class_name: node.class_name,
                     method_name: CASE WHEN node.method_name IS NOT NULL THEN node.method_name ELSE null END,
@@ -450,7 +453,7 @@ class Neo4jService:
                         'branch': chunk_branch
                     })
                 for method in chunk.methods:
-                    method_name = method.name
+                    method_name = method.full_name
                     for call in method.method_calls:
                         call_name = call.name
                         if call_name:
@@ -742,7 +745,7 @@ class Neo4jService:
         for chunk in changed_chunks:
             changed_node_hashes[chunk.full_class_name] = chunk.ast_hash
             for method in chunk.methods:
-                method_key = f"{chunk.full_class_name}.{method.name}"
+                method_key = f"{chunk.full_class_name}.{method.full_name}"
                 changed_node_hashes[method_key] = method.ast_hash
         return changed_node_hashes
 
@@ -1532,7 +1535,7 @@ class Neo4jService:
         for chunk in changed_chunks:
             changed_node_keys.add(chunk.full_class_name)
             for method in chunk.methods:
-                changed_node_keys.add(f"{chunk.full_class_name}.{method.name}")
+                changed_node_keys.add(f"{chunk.full_class_name}.{method.full_name}")
 
         query = """
         MATCH (unchanged {project_id: $project_id, branch: $branch})-[r]->(changed {project_id: $project_id, branch: $branch})

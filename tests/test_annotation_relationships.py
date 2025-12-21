@@ -105,7 +105,7 @@ class TestAnnotationRelationships:
         
         # Handler Class: handles @Validation annotation
         handler_method = Method(
-            name="isValid",
+            full_name="isValid",
             body="public boolean isValid(Object value) { return true; }",
             ast_hash="hash_handler_method",
             project_id="1",
@@ -142,7 +142,7 @@ class TestAnnotationRelationships:
         
         # User Class: uses @Validation and @NotNull annotations
         user_method = Method(
-            name="createUser",
+            full_name="createUser",
             body="public void createUser(@Validation String name) { }",
             ast_hash="hash_user_method",
             project_id="1",

@@ -72,7 +72,7 @@ def test_parse_local_project():
                 if chunk.methods:
                     logger.info(f"   Method names:")
                     for method in chunk.methods[:3]:  # Show first 3 methods
-                        logger.info(f"     - {method.name}")
+                        logger.info(f"     - {method.full_name}")
                     if len(chunk.methods) > 3:
                         logger.info(f"     ... and {len(chunk.methods) - 3} more")
         

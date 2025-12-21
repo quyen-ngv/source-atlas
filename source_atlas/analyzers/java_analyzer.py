@@ -183,9 +183,8 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             logger.debug(f"LSP resolution failed for {file_path}:{line}:{col} - {e}")
             return []
 
-    def _extract_class_methods(self, class_node: Node, content: str,
-                               implements: List[str],
-                               full_class_name: str, file_path: str, import_mapping: Dict[str, str]) -> List[Method]:
+    def _extract_class_methods(self, class_node: Node, content: str, implements: List[str], full_class_name: str,
+                               file_path: str, import_mapping: Dict[str, str], class_name: str) -> List[Method]:
         methods = []
         class_body = self._get_class_body(class_node)
         if not class_body:
@@ -196,7 +195,7 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
                 if child.type == 'method_declaration' or child.type == 'constructor_declaration':
                     method = self._process_method_node(
                         child, content, implements,
-                        full_class_name, class_node, file_path, import_mapping
+                        full_class_name, class_node, file_path, import_mapping, class_name
                     )
                     if method:
                         methods.append(method)
@@ -364,7 +363,8 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
 
     def _process_method_node(self, method_node: Node, content: str,
                              implements: List[str], full_class_name: str,
-                             class_node: Node, file_path: str, import_mapping: Dict[str, str]) -> Optional[Method]:
+                             class_node: Node, file_path: str, import_mapping: Dict[str, str],
+                             class_name: str) -> Optional[Method]:
         try:
             method_name, method_name_node = self._extract_method_name(method_node, content)
             if not method_name:
@@ -401,7 +401,8 @@ class JavaCodeAnalyzer(BaseCodeAnalyzer, ABC):
             method_ast_hash = self.compute_ast_hash(body) if body else ""
 
             return Method(
-                name=f"{full_class_name}.{method_name}",
+                name=method_name,
+                full_name=f"{full_class_name}.{method_name}",
                 body=body,
                 ast_hash=method_ast_hash,
                 method_calls=tuple(method_calls),
