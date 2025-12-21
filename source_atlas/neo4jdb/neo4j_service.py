@@ -19,7 +19,6 @@ def _escape_for_cypher(text):
 
 
 def _node_to_dto(node) -> Neo4jNodeDto:
-    """Convert Neo4j node to DTO"""
     if not node:
         return None
 
@@ -32,8 +31,7 @@ def _node_to_dto(node) -> Neo4jNodeDto:
     )
 
 
-def _path_to_dto(path) -> Neo4jPathDto:
-    """Convert Neo4j Path object to DTO"""
+def _path_to_dto(path) -> Optional[Neo4jPathDto]:
     if not path:
         return None
 
@@ -61,15 +59,12 @@ def _path_to_dto(path) -> Neo4jPathDto:
 
 
 def _get_relationship_nodes(nodes, index):
-    """Get start and end nodes for a relationship at given index"""
     start_node = nodes[index] if index < len(nodes) else None
     end_node = nodes[index + 1] if index + 1 < len(nodes) else None
     return start_node, end_node
 
 
 def _create_relationship_data(rel, start_node, end_node):
-    """Create relationship data d"""
-
     return {
         "type": rel.type,
         "start_node": start_node,
@@ -79,7 +74,6 @@ def _create_relationship_data(rel, start_node, end_node):
 
 
 def _create_summary_item(step_index, rel, start_node, end_node):
-    """Create path summary item"""
     return {
         "step": step_index + 1,
         "from": _create_node_summary(start_node) if start_node else None,
@@ -89,7 +83,6 @@ def _create_summary_item(step_index, rel, start_node, end_node):
 
 
 def _create_node_summary(node):
-    """Create node summary for path summary"""
     return {
         "class_name": node.class_name if node else None,
         "method_name": node.method_name if node else None,
@@ -103,7 +96,6 @@ class Neo4jService:
 
     def get_nodes_by_node_specs(self, node_specs: List[Dict], project_id: int, branch: str,
                                 pull_request_id: Optional[str] = None) -> List[Neo4jNodeDto]:
-        """Get nodes by list of node specifications"""
         if not node_specs:
             return []
 
@@ -126,12 +118,11 @@ class Neo4jService:
 
     def create_indexes(self):
         indexes = [
-            # Composite indexes for nodes
             "CREATE INDEX IF NOT EXISTS FOR (n:EndpointNode) ON (n.class_name, n.method_name, n.project_id, n.branch)",
             "CREATE INDEX IF NOT EXISTS FOR (n:MethodNode) ON (n.class_name, n.method_name, n.project_id, n.branch)",
             "CREATE INDEX IF NOT EXISTS FOR (n:ClassNode) ON (n.class_name, n.project_id, n.branch)",
             "CREATE INDEX IF NOT EXISTS FOR (n:ConfigurationNode) ON (n.class_name, n.project_id, n.branch)",
-            # Project and branch indexes
+
             "CREATE INDEX IF NOT EXISTS FOR (n:EndpointNode) ON (n.project_id, n.branch)",
             "CREATE INDEX IF NOT EXISTS FOR (n:MethodNode) ON (n.project_id, n.branch)",
             "CREATE INDEX IF NOT EXISTS FOR (n:ClassNode) ON (n.project_id, n.branch)",
@@ -162,7 +153,7 @@ class Neo4jService:
                           Each dict should have: {'class_name': str, 'method_name': str or None, 'ast_hash': str}
         """
         all_queries = []
-        
+
         # Step 1: Create tombstone nodes for deleted entities (if any)
         if deleted_nodes:
             tombstone_data = []
@@ -352,13 +343,10 @@ class Neo4jService:
                 // Điều kiện lọc - chỉ tạo node mới khi thỏa mãn các điều kiện
                 WITH node, main_node, base_node
                 WHERE 
-                    // ✅ TH1: Có base_branch, so sánh với base_branch bằng AST hash
                     (base_node IS NOT NULL AND node.ast_hash <> base_node.ast_hash)
                     OR
-                    // ✅ TH2: Không có base_branch, so sánh với main_branch bằng AST hash
                     (base_node IS NULL AND main_node IS NOT NULL AND node.ast_hash <> main_node.ast_hash)
                     OR
-                    // ✅ TH3: Node hoàn toàn mới - chưa tồn tại ở cả base và main
                     (base_node IS NULL AND main_node IS NULL)
                 
                 // Tạo node mới với branch-aware properties
@@ -510,7 +498,7 @@ class Neo4jService:
                                     'project_id': chunk_project_id,
                                     'branch': chunk_branch
                                 })
-                                logger.debug(f"Added method annotation USE: {chunk_class_name}.{method_name} -> {annotation}")
+                                # logger.debug(f"Added method annotation USE: {chunk_class_name}.{method_name} -> {annotation}")
                     
                     # Add USE relationships for handles_annotation (reverse: annotation node USE handler method)
                     # Method A handles annotation B -> B USE A (reverse relationship)
@@ -523,7 +511,7 @@ class Neo4jService:
                             'project_id': chunk_project_id,
                             'branch': chunk_branch
                         })
-                        logger.debug(f"Added handles_annotation USE (method): {method.handles_annotation} -> {chunk_class_name}.{method_name}")
+                        # logger.debug(f"Added handles_annotation USE (method): {method.handles_annotation} -> {chunk_class_name}.{method_name}")
                 
                 # Add USE relationships for class annotations
                 # Class C uses annotation D, E... -> C USE D, C USE E
@@ -536,7 +524,7 @@ class Neo4jService:
                                 'project_id': chunk_project_id,
                                 'branch': chunk_branch
                             })
-                            logger.debug(f"Added class annotation USE: {chunk_class_name} -> {annotation}")
+                            # logger.debug(f"Added class annotation USE: {chunk_class_name} -> {annotation}")
                 
                 # Add USE relationships for handles_annotation at class level (reverse: annotation node USE handler class)
                 # Class A handles annotation B -> B USE A (reverse relationship)
@@ -548,7 +536,7 @@ class Neo4jService:
                         'project_id': chunk_project_id,
                         'branch': chunk_branch
                     })
-                    logger.debug(f"Added handles_annotation USE (class): {chunk.handles_annotation} -> {chunk_class_name}")
+                    # logger.debug(f"Added handles_annotation USE (class): {chunk.handles_annotation} -> {chunk_class_name}")
 
             if call_rels:
                 if main_branch:
@@ -721,8 +709,8 @@ class Neo4jService:
             rel_batch_size: int = 500
     ):
         """
-        Copy nodes từ main branch sang current branch,
-        ngoại trừ những node đã thay đổi trong changed_chunks.
+        Copy nodes from main branch to current branch,
+        except for changed nodes in trong changed_chunks.
         """
         changed_node_hashes = self._build_changed_node_hashes(changed_chunks)
         params = self._build_copy_params(project_id, main_branch, current_branch, changed_node_hashes)
@@ -846,7 +834,7 @@ class Neo4jService:
 
         rel_count_result = session.run(rel_count_query, params)
         total_rels = rel_count_result.single()['total_rels']
-        logger.info(f"Found {total_rels} relationships to copy")
+        # logger.info(f"Found {total_rels} relationships to copy")
 
         total_rel_copied = 0
         rel_skip = 0
@@ -858,11 +846,11 @@ class Neo4jService:
             total_rel_copied += batch_rel_copied
             rel_skip += rel_batch_size
 
-            logger.info(f"Copied batch: {batch_rel_copied} relationships (total: {total_rel_copied}/{total_rels})")
+            # logger.info(f"Copied batch: {batch_rel_copied} relationships (total: {total_rel_copied}/{total_rels})")
             if batch_rel_copied == 0:
                 break
 
-        logger.info(f"Completed copying {total_rel_copied} relationships")
+        # logger.info(f"Completed copying {total_rel_copied} relationships")
 
     def _copy_cross_relationships(self, session, params: dict, rel_batch_size: int):
         cross_count_query = """
@@ -895,7 +883,7 @@ class Neo4jService:
             if batch_cross_copied == 0:
                 break
 
-        logger.info(f"Completed creating {cross_rel_copied} cross-relationships from copied to changed")
+        # logger.info(f"Completed creating {cross_rel_copied} cross-relationships from copied to changed")
 
     def _copy_reverse_cross_relationships(self, session, params: dict, rel_batch_size: int):
         reverse_count_query = """
@@ -1510,7 +1498,7 @@ class Neo4jService:
             with self.db.driver.session() as session:
                 result = session.run(query)
                 nodes = [_node_to_dto(record['n']) for record in result]
-                logger.info(f"Retrieved {len(nodes)} nodes with query: {query}")
+                # logger.info(f"Retrieved {len(nodes)} nodes with query: {query}")
                 return nodes
         except Exception as e:
             logger.error(f"Failed to get nodes by condition: {str(e)}", exc_info=True)
@@ -1531,7 +1519,7 @@ class Neo4jService:
                     'branch': branch
                 })
                 nodes = [_node_to_dto(record['n']) for record in result]
-                logger.info(f"Retrieved {len(nodes)} config nodes for project {project_id}, branch {branch}")
+                # logger.info(f"Retrieved {len(nodes)} config nodes for project {project_id}, branch {branch}")
                 return nodes
         except Exception as e:
             logger.error(f"Failed to get config nodes: {str(e)}")

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Source Atlas - Code Knowledge Graph Engine</title>
+    <meta name="description"
+        content="Multi-language code analyzer that combines Tree-sitter, LSP, and Neo4j to create comprehensive code knowledge graphs.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="https://raw.githubusercontent.com/quyen-ngv/source-atlas/main/docs/assets/favicon.ico"
+        type="image/x-icon">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Anton&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <header class="header">
+        <div class="container header-container">
+            <a href="#" class="logo">
+                Source <span>Atlas</span>
+            </a>
+            <nav class="nav">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#architecture" class="nav-link">Architecture</a>
+                <a href="docs.html" class="nav-link">Docs</a>
+                <a href="https://github.com/quyen-ngv/source-atlas" target="_blank" class="nav-link github-link">
+                    GitHub
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container hero-container">
+                <div class="hero-content centered">
+                    <h1 class="hero-title">Turn Your Codebase into a <span style="color:var(--primary-color)">Knowledge
+                            Graph</span></h1>
+                    <p class="hero-subtitle">
+                        Deep multi-language analysis combining Tree-sitter, LSP, and Neo4j.
+                        Query your code structure, dependencies, and relationships with Cypher.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="docs.html#quick-start" class="btn btn-primary">Get Started</a>
+                        <a href="https://github.com/quyen-ngv/source-atlas" target="_blank"
+                            class="btn btn-secondary">View on GitHub</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features section">
+            <div class="container">
+                <h2 class="section-title">Why Source Atlas?</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🌍</div>
+                        <h3 class="feature-title">Multi-Language</h3>
+                        <p class="feature-desc">Native support for Java, Python, Go, and TypeScript. Unified graph model
+                            across languages.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🧠</div>
+                        <h3 class="feature-title">LSP Intelligence</h3>
+                        <p class="feature-desc">Leverages the Language Server Protocol for semantic accuracy, type
+                            resolution, and reference tracking.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3 class="feature-title">Graph Power</h3>
+                        <p class="feature-desc">Stores everything in Neo4j. Run complex Cypher queries to answer
+                            architectural questions.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3 class="feature-title">Incremental</h3>
+                        <p class="feature-desc">Smart change detection and incremental indexing for fast feedback loops.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture" class="architecture section bg-light">
+            <div class="container">
+                <div class="architecture-layout">
+                    <div class="arch-text">
+                        <h2 class="section-title">How it Works</h2>
+                        <ul class="arch-steps">
+                            <li class="arch-step">
+                                <span class="step-num">1</span>
+                                <div class="step-content">
+                                    <strong>Parsing</strong>
+                                    <p>Tree-sitter builds a concrete syntax tree for precise structural analysis.</p>
+                                </div>
+                            </li>
+                            <li class="arch-step">
+                                <span class="step-num">2</span>
+                                <div class="step-content">
+                                    <strong>Semantics</strong>
+                                    <p>LSP Servers resolve symbols, types, and cross-file references.</p>
+                                </div>
+                            </li>
+                            <li class="arch-step">
+                                <span class="step-num">3</span>
+                                <div class="step-content">
+                                    <strong>Graphing</strong>
+                                    <p>Entities and relationships are mapped to a labeled property graph in Neo4j.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="arch-diagram">
+                        <div class="diagram-box">
+                            <div class="diagram-node">
+                                <strong>Input</strong>
+                                <span>Source Code</span>
+                            </div>
+                            <div class="diagram-node">
+                                <strong>Parsing</strong>
+                                <span>Tree-sitter + LSP</span>
+                            </div>
+                            <div class="diagram-node">
+                                <strong>Analysis</strong>
+                                <span>Analyzer Engine</span>
+                            </div>
+                            <div class="diagram-node db">
+                                <strong>Storage</strong>
+                                <span>Neo4j Graph Database</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="quick-start" class="quick-start section">
+            <div class="container">
+                <h2 class="section-title">Ready to Start?</h2>
+                <div class="code-block-wrapper">
+                    <div class="code-tabs">
+                        <button class="code-tab active">CLI</button>
+                    </div>
+                    <div class="code-content">
+                        <pre><code><span class="comment"># Install and Run in seconds</span>
+pip install source-atlas
+
+source-atlas analyze --project-path . --language java</code></pre>
+                    </div>
+                </div>
+                <div class="cta-centered">
+                    <a href="docs.html" class="btn btn-outline">Read the Full Documentation</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-container">
+            <div class="footer-left">
+                <span class="footer-logo">Source Atlas</span>
+                <p>&copy; 2024 Nguyen Van Quyen. Released under MIT.</p>
+            </div>
+            <div class="footer-right">
+                <a href="https://github.com/quyen-ngv/source-atlas" target="_blank">GitHub</a>
+                <a href="https://pypi.org/project/source-atlas/" target="_blank">PyPI</a>
+                <a href="https://github.com/quyen-ngv/source-atlas/issues" target="_blank">Issues</a>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

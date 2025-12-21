@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Documentation - Source Atlas</title>
+     <link rel="stylesheet" href="style.css">
+     <link rel="icon" href="https://raw.githubusercontent.com/quyen-ngv/source-atlas/main/docs/assets/favicon.ico"
+          type="image/x-icon">
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Anton&display=swap"
+          rel="stylesheet">
+</head>
+
+<body>
+     <header class="header">
+          <div class="container header-container">
+               <a href="index.html" class="logo">
+                    Source <span>Atlas</span>
+               </a>
+               <nav class="nav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="docs.html" class="nav-link active">Documentation</a>
+                    <a href="https://github.com/quyen-ngv/source-atlas" target="_blank" class="nav-link github-link">
+                         GitHub
+                    </a>
+               </nav>
+          </div>
+     </header>
+
+     <div class="docs-layout">
+          <aside class="docs-sidebar">
+               <div class="docs-search">
+                    <input type="text" placeholder="Search docs..." disabled>
+               </div>
+
+               <div class="sidebar-group">
+                    <div class="sidebar-title">Getting Started</div>
+                    <a href="#introduction" class="sidebar-link active">Introduction</a>
+                    <a href="#installation" class="sidebar-link">Installation</a>
+                    <a href="#quick-start" class="sidebar-link">Quick Start</a>
+               </div>
+
+               <div class="sidebar-group">
+                    <div class="sidebar-title">Core Concepts</div>
+                    <a href="#architecture" class="sidebar-link">Architecture</a>
+                    <a href="#analyzers" class="sidebar-link">Analyzers</a>
+                    <a href="#knowledge-graph" class="sidebar-link">Knowledge Graph</a>
+               </div>
+
+               <div class="sidebar-group">
+                    <div class="sidebar-title">Configuration</div>
+                    <a href="#environment-variables" class="sidebar-link">Environment Variables</a>
+                    <a href="#neo4j-setup" class="sidebar-link">Neo4j Setup</a>
+               </div>
+          </aside>
+
+          <main class="docs-content">
+               <section id="introduction">
+                    <h1>Introduction</h1>
+                    <p><strong>Source Atlas</strong> is a powerful multi-language code analyzer that combines
+                         Tree-sitter parsing, Language Server Protocol (LSP) integration, and Neo4j graph database to
+                         create comprehensive code knowledge graphs.</p>
+                    <div class="feature-card" style="margin: 20px 0;">
+                         <h3 style="margin-top:0">Key Features</h3>
+                         <ul>
+                              <li>🌍 <strong>Multi-Language Support</strong>: Java, Python, Go, and TypeScript</li>
+                              <li>🔍 <strong>Deep Code Analysis</strong>: Extract classes, methods, dependencies</li>
+                              <li>🧠 <strong>LSP Integration</strong>: Semantic analysis for accurate references</li>
+                              <li>📊 <strong>Knowledge Graph</strong>: Queryable Neo4j database</li>
+                         </ul>
+                    </div>
+               </section>
+
+               <section id="installation">
+                    <h2>Installation</h2>
+                    <p>Prerequisites: Python 3.8+ and Neo4j.</p>
+                    <pre><code># 1. Clone the repository
+git clone https://github.com/quyen-ngv/source-atlas.git
+cd source-atlas
+
+# 2. Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+
+# 3. Install dependencies
+pip install -r requirements.txt</code></pre>
+               </section>
+
+               <section id="quick-start">
+                    <h2>Quick Start</h2>
+                    <p>Get up and running in minutes.</p>
+                    <pre><code># Install from PyPI
+pip install source-atlas
+
+# Analyze a project
+source-atlas analyze --project-path ./my-app --language java
+
+# Query the graph
+cypher-shell "MATCH (n:Class) RETURN n LIMIT 10"</code></pre>
+               </section>
+
+               <div class="divider"></div>
+
+               <section id="architecture">
+                    <h2>Architecture</h2>
+                    <p>Source Atlas uses a pipeline approach to process source code, moving from raw text to a
+                         structured graph.</p>
+
+                    <h3>Data Flow Pipeline</h3>
+                    <div class="diagram-placeholder">
+                         <div class="step">1. Input<br><small>Source Code</small></div>
+                         <div class="arrow">→</div>
+                         <div class="step">2. Parsing<br><small>Tree-sitter</small></div>
+                         <div class="arrow">→</div>
+                         <div class="step">3. Analysis<br><small>LSP Resolution</small></div>
+                         <div class="arrow">→</div>
+                         <div class="step">4. Storage<br><small>Neo4j Graph</small></div>
+                    </div>
+
+                    <h3>Core Components</h3>
+                    <ul>
+                         <li><strong>Parsers:</strong> Tree-sitter generates Abstract Syntax Trees (ASTs).</li>
+                         <li><strong>Analyzers:</strong> Language-specific logic to walk ASTs and extract entities.</li>
+                         <li><strong>LSP Service:</strong> Resolves symbols and cross-file references.</li>
+                         <li><strong>Neo4j Service:</strong> Manages graph storage and relationships.</li>
+                    </ul>
+               </section>
+
+               <section id="analyzers">
+                    <h2>Analyzers</h2>
+                    <p>Analyzers are the heart of Source Atlas. Each supported language has a dedicated analyzer that
+                         orchestrates the extraction process.</p>
+                    <p>Key responsibilities:</p>
+                    <ol>
+                         <li>Scanning project files.</li>
+                         <li>Parsing content with Tree-sitter.</li>
+                         <li>Extracting "Code Chunks" (Classes, Methods, Interfaces).</li>
+                         <li>Enriching chunks with semantic data from LSP.</li>
+                    </ol>
+                    <p><strong>Supported Languages:</strong> Java, Python, Go, TypeScript.</p>
+               </section>
+
+               <section id="knowledge-graph">
+                    <h2>Knowledge Graph</h2>
+                    <p>The result of analysis is a labeled property graph in Neo4j. The schema is designed to be
+                         intuitive for querying.</p>
+
+                    <h3>Graph Schema</h3>
+                    <pre><code>// Nodes
+(:Class {fullClassName, package, filePath, ...})
+(:Method {name, body, ...})
+(:Interface {name, ...})
+
+// Relationships
+(:Class)-[:IMPLEMENTS]->(:Interface)
+(:Class)-[:EXTENDS]->(:Class)
+(:Method)-[:CALLS]->(:Method)
+(:Class)-[:HAS_METHOD]->(:Method)</code></pre>
+               </section>
+
+               <div class="divider"></div>
+
+               <section id="environment-variables">
+                    <h2>Environment Variables</h2>
+                    <p>Configuration is managed via a <code>.env</code> file.</p>
+                    <table>
+                         <thead>
+                              <tr>
+                                   <th>Variable</th>
+                                   <th>Description</th>
+                                   <th>Default</th>
+                              </tr>
+                         </thead>
+                         <tbody>
+                              <tr>
+                                   <td><code>APP_NEO4J_URL</code></td>
+                                   <td>Neo4j connection URL</td>
+                                   <td><code>bolt://localhost:7687</code></td>
+                              </tr>
+                              <tr>
+                                   <td><code>APP_NEO4J_USER</code></td>
+                                   <td>Database username</td>
+                                   <td><code>neo4j</code></td>
+                              </tr>
+                              <tr>
+                                   <td><code>APP_NEO4J_PASSWORD</code></td>
+                                   <td>Database password</td>
+                                   <td><strong>Required</strong></td>
+                              </tr>
+                              <tr>
+                                   <td><code>NEO4J_MAX_CONNECTION_POOL_SIZE</code></td>
+                                   <td>Max pool connections</td>
+                                   <td><code>50</code></td>
+                              </tr>
+                         </tbody>
+                    </table>
+               </section>
+
+               <section id="neo4j-setup">
+                    <h2>Neo4j Setup</h2>
+                    <p>Source Atlas requires a running Neo4j instance (v4.4 or v5.x).</p>
+
+                    <h3>Local Docker Setup</h3>
+                    <pre><code>docker run \
+    --publish=7474:7474 --publish=7687:7687 \
+    --env=NEO4J_AUTH=neo4j/your_password \
+    neo4j:5.15.0</code></pre>
+
+                    <h3>Creating Indexes</h3>
+                    <p>For best performance, create indexes before importing large projects:</p>
+                    <pre><code>CREATE INDEX class_full_name IF NOT EXISTS FOR (c:Class) ON (c.fullClassName);
+CREATE INDEX method_name IF NOT EXISTS FOR (m:Method) ON (m.name);</code></pre>
+               </section>
+          </main>
+     </div>
+</body>
+
+</html>

@@ -23,7 +23,7 @@ def main():
     
     # Configure logging - set to DEBUG to enable debug messages
     logging.basicConfig(
-        level=logging.DEBUG,  # Always set to DEBUG to see debug messages
+        level=logging.INFO,  # Always set to DEBUG to see debug messages
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
             logging.StreamHandler(sys.stdout),

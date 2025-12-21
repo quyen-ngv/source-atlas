@@ -160,7 +160,9 @@ class BaseCodeAnalyzer(ABC):
                     project_id=self.project_id,
                     branch=self.branch,
                     used_types=used_types,
-                    is_annotation=is_annotation
+                    is_annotation=is_annotation,
+                    annotations=annotations,
+                    handles_annotation=handles_annotation
                 )
         except Exception as e:
             logger.error(f"Error parsing class node: {e}")
